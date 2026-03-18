@@ -1,0 +1,78 @@
+﻿[dotenv@17.3.1] injecting env (4) from .env -- tip: ≡ƒ¢á∩╕Å  run anywhere with `dotenvx run -- yourcommand`
+node : 
+MongoParseError: 
+options 
+usenewurlparser, 
+useunifiedtopology are 
+not supported
+At line:1 char:1
++ node src/seed.js 
+*>&1 | Out-File 
+-Encoding utf8 
+seed-utf8.txt
++ ~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (MongoParseErr   
+ or...e not support    
+ed:String) [], Rem    
+oteException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+    at parseOptions 
+(D:\Aethelgard 
+Boutique Hotel & Spa\ba
+ckend\node_modules\mong
+odb\lib\connection_stri
+ng.js:272:15)
+    at new MongoClient 
+(D:\Aethelgard 
+Boutique Hotel & Spa\ba
+ckend\node_modules\mong
+odb\lib\mongo_client.js
+:67:61)
+    at NativeConnection
+.createClient 
+(D:\Aethelgard 
+Boutique Hotel & Spa\ba
+ckend\node_modules\mong
+oose\lib\drivers\node-m
+ongodb-native\connectio
+n.js:334:14)
+    at NativeConnection
+.openUri 
+(D:\Aethelgard 
+Boutique Hotel & Spa\ba
+ckend\node_modules\mong
+oose\lib\connection.js:
+1075:34)
+    at 
+Mongoose.connect 
+(D:\Aethelgard 
+Boutique Hotel & Spa\ba
+ckend\node_modules\mong
+oose\lib\mongoose.js:47
+1:15)
+    at 
+Object.<anonymous> 
+(D:\Aethelgard 
+Boutique Hotel & Spa\ba
+ckend\src\seed.js:15:10
+)
+    at Module._compile 
+(node:internal/modules/
+cjs/loader:1759:14)
+    at Object..js (node
+:internal/modules/cjs/l
+oader:1892:10)
+    at Module.load (nod
+e:internal/modules/cjs/
+loader:1479:32)
+    at Module._load (no
+de:internal/modules/cjs
+/loader:1298:12) {
+  errorLabelSet: 
+Set(0) {}
+}
