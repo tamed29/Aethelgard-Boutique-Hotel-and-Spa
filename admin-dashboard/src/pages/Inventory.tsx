@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { GlassCard } from '../components/ui/GlassCard';
-import { Search, Plus, MoreVertical, Edit2, Trash2, Video, Tag } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Search, Plus, MoreVertical, Edit2, Trash2, Video, Tag, Bed, Users, DollarSign } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../utils/cn';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -12,108 +12,135 @@ interface Room {
     name: string;
     capacity: number;
     price: number;
-    status: string;
+    status: 'available' | 'occupied' | 'maintenance';
 }
 
 export function Inventory() {
-    const [rooms, setRooms] = useState<Room[]>([]);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [loading, setLoading] = useState(true);
+    const queryClient = useQueryClient();
+    const { data: rooms = [], isLoading } = useQuery<Room[]>({
+        queryKey: ['rooms'],
+        queryFn: async () => {
+            const res = await axios.get(`${API_URL}/rooms`, { withCredentials: true });
+            return res.data;
+        }
+    });
 
-    useEffect(() => {
-        const fetchRooms = async () => {
-            try {
-                const res = await axios.get(`${API_URL}/rooms`);
-                setRooms(res.data);
-            } catch (err) {
-                console.error(err);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchRooms();
-    }, []);
+    const deleteRoom = useMutation({
+        mutationFn: async (id: string) => {
+            await axios.delete(`${API_URL}/admin/rooms/${id}`, { withCredentials: true });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['rooms'] });
+        }
+    });
 
-    if (loading) return (
-        <div className="flex items-center justify-center p-12">
-            <div className="animate-pulse text-sage tracking-widest uppercase text-sm">Loading Inventory...</div>
+    if (isLoading) return (
+        <div className="flex h-[60vh] items-center justify-center">
+            <div className="animate-pulse text-sage tracking-[0.4em] uppercase text-xs font-bold">Accessing Estate Records...</div>
         </div>
     );
 
-    const filteredRooms = rooms.filter(r =>
-        r.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
     return (
-        <div className="space-y-8">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div className="relative w-full sm:w-96">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-sage/40" size={18} />
-                    <input
-                        type="text"
-                        placeholder="Search rooms..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-white/5 border border-sage/10 rounded-xl py-3 pl-12 pr-4 text-cream outline-none focus:border-sage/40 transition-all"
-                    />
+        <div className="space-y-8 pb-12">
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                <div>
+                    <h2 className="text-3xl font-serif text-cream">Inventory Control</h2>
+                    <p className="text-sage/40 text-[10px] mt-2 uppercase tracking-[0.3em] font-bold">Suite & Chamber Management Terminal</p>
                 </div>
-                <button className="bg-sage hover:bg-sage-light text-moss-dark font-bold px-6 py-3 rounded-xl transition-all duration-300 flex items-center gap-2 shadow-lg shadow-sage/10 whitespace-nowrap">
-                    <Plus size={20} />
-                    Add New Room
-                </button>
-            </div>
+                <div className="flex gap-4 w-full md:w-auto">
+                    <div className="relative flex-1 md:w-80">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-sage/40" size={16} />
+                        <input
+                            type="text"
+                            placeholder="Filter by Designation..."
+                            className="w-full bg-white/5 border border-sage/10 rounded-2xl py-4 pl-12 pr-4 text-cream outline-none focus:border-sage/40 focus:bg-white/[0.08] transition-all text-sm"
+                        />
+                    </div>
+                    <button className="bg-sage hover:bg-sage-light text-moss-dark font-bold px-8 py-4 rounded-2xl transition-all duration-500 flex items-center gap-3 shadow-2xl shadow-sage/10 group active:scale-95 whitespace-nowrap">
+                        <Plus size={20} className="group-hover:rotate-90 transition-transform duration-500" />
+                        <span>Add Unit</span>
+                    </button>
+                </div>
+            </header>
 
-            <GlassCard className="p-0 border-sage/10 overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left">
+            <GlassCard className="p-0 border-sage/10 overflow-hidden bg-moss-light/5">
+                <div className="overflow-x-auto custom-scrollbar">
+                    <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="bg-white/5 text-[10px] uppercase tracking-[0.2em] text-sage/40 font-bold border-b border-sage/10">
-                                <th className="py-4 px-6">Room Identity</th>
-                                <th className="py-4 px-6">Occupancy</th>
-                                <th className="py-4 px-6">Premium Rate</th>
-                                <th className="py-4 px-6">Current Status</th>
-                                <th className="py-4 px-6 text-right">Actions</th>
+                            <tr className="bg-white/[0.03] text-[10px] uppercase tracking-[0.25em] text-sage/60 font-bold border-b border-white/5">
+                                <th className="py-6 px-8">Unit Designation</th>
+                                <th className="py-6 px-8">Configurations</th>
+                                <th className="py-6 px-8">Floor Level</th>
+                                <th className="py-6 px-8">Premium Rate</th>
+                                <th className="py-6 px-8">Status Protocol</th>
+                                <th className="py-6 px-8 text-right">Directives</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
-                            {filteredRooms.map((room, i) => (
-                                <motion.tr
-                                    key={room._id}
-                                    initial={{ opacity: 0, x: -10 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: i * 0.05 }}
-                                    className="hover:bg-white/5 transition-colors group"
-                                >
-                                    <td className="py-5 px-6">
-                                        <div>
-                                            <p className="text-cream font-medium tracking-wide">{room.name}</p>
-                                            <div className="flex gap-2 mt-1">
-                                                <Video size={12} className="text-sage/30" />
-                                                <Tag size={12} className="text-sage/30" />
+                            <AnimatePresence>
+                                {rooms.map((room, i) => (
+                                    <motion.tr
+                                        key={room._id}
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, x: -20 }}
+                                        transition={{ delay: i * 0.03 }}
+                                        className="hover:bg-white/[0.03] transition-colors group relative"
+                                    >
+                                        <td className="py-6 px-8">
+                                            <div className="flex items-center gap-4">
+                                                <div className="p-3 rounded-xl bg-moss-light/50 border border-sage/10 group-hover:border-sage/30 transition-all">
+                                                    <Bed size={18} className="text-sage" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-cream font-serif text-lg tracking-wide">{room.name}</p>
+                                                    <div className="flex gap-3 mt-2">
+                                                        <Video size={10} className="text-sage/20 group-hover:text-sage/40 transition-colors" />
+                                                        <Tag size={10} className="text-sage/20 group-hover:text-sage/40 transition-colors" />
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </td>
-                                    <td className="py-5 px-6 text-sage/60 text-sm">{room.capacity} Guests</td>
-                                    <td className="py-5 px-6 font-serif text-cream">${room.price}</td>
-                                    <td className="py-5 px-6">
-                                        <span className={cn(
-                                            "text-[10px] uppercase tracking-widest font-bold px-3 py-1 rounded-full",
-                                            room.status === 'available' ? "bg-green-500/10 text-green-400 border border-green-500/20" :
-                                                room.status === 'occupied' ? "bg-red-500/10 text-red-400 border border-red-500/20" :
-                                                    "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20"
-                                        )}>
-                                            {room.status}
-                                        </span>
-                                    </td>
-                                    <td className="py-5 px-6 text-right">
-                                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button className="p-2 hover:bg-white/10 rounded-lg text-sage transition-colors"><Edit2 size={16} /></button>
-                                            <button className="p-2 hover:bg-red-500/10 rounded-lg text-red-400 transition-colors"><Trash2 size={16} /></button>
-                                            <button className="p-2 hover:bg-white/10 rounded-lg text-sage transition-colors"><MoreVertical size={16} /></button>
-                                        </div>
-                                    </td>
-                                </motion.tr>
-                            ))}
+                                        </td>
+                                        <td className="py-6 px-8 shrink-0">
+                                            <div className="flex items-center gap-2 text-sage/60">
+                                                <Users size={14} className="opacity-40" />
+                                                <span className="text-xs font-medium uppercase tracking-widest">{room.capacity} Cap</span>
+                                            </div>
+                                        </td>
+                                        <td className="py-6 px-8 shrink-0">
+                                            <span className="text-xs text-sage/40 font-bold uppercase tracking-widest">Level 0{(room as any).floor || 1}</span>
+                                        </td>
+                                        <td className="py-6 px-8 shrink-0">
+                                            <div className="flex items-center gap-1 text-cream font-serif text-lg group-hover:text-sage transition-colors">
+                                                <DollarSign size={14} className="text-sage/40" />
+                                                <span>{room.price}</span>
+                                            </div>
+                                        </td>
+                                        <td className="py-6 px-8 shrink-0">
+                                            <span className={cn(
+                                                "text-[9px] uppercase tracking-[0.15em] font-bold px-4 py-1.5 rounded-full border shadow-sm",
+                                                room.status === 'available' ? "bg-emerald-500/10 text-emerald-400 border-emerald-400/20 shadow-emerald-500/5" :
+                                                    room.status === 'occupied' ? "bg-rose-500/10 text-rose-400 border-rose-500/20 shadow-rose-500/5" :
+                                                        "bg-amber-500/10 text-amber-400 border-amber-500/20 shadow-amber-500/5"
+                                            )}>
+                                                {room.status}
+                                            </span>
+                                        </td>
+                                        <td className="py-6 px-8 text-right shrink-0">
+                                            <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                                                <button className="p-2.5 hover:bg-white/10 rounded-xl text-sage/60 hover:text-sage transition-all"><Edit2 size={16} /></button>
+                                                <button 
+                                                    onClick={() => deleteRoom.mutate(room._id)}
+                                                    className="p-2.5 hover:bg-rose-500/10 rounded-xl text-rose-400/60 hover:text-rose-400 transition-all"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                                <button className="p-2.5 hover:bg-white/10 rounded-xl text-sage/60 hover:text-sage transition-all"><MoreVertical size={16} /></button>
+                                            </div>
+                                        </td>
+                                    </motion.tr>
+                                ))}
+                            </AnimatePresence>
                         </tbody>
                     </table>
                 </div>

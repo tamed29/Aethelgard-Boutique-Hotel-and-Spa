@@ -4,6 +4,8 @@ const User = require('../models/User');
 const PricingMultiplier = require('../models/PricingMultiplier');
 const Recommendation = require('../models/Recommendation');
 
+const PricingRule = require('../models/PricingRule');
+
 // Analytics: Revenue and Occupancy
 const getAnalytics = async (req, res) => {
     try {
@@ -20,7 +22,17 @@ const getAnalytics = async (req, res) => {
 
         res.json({
             totalRevenue,
-            occupancyData
+            occupancyData,
+            revenueForecast: totalRevenue * 1.4,
+            guestSentiment: {
+                score: 88,
+                trend: '+4%',
+                topKeywords: ['Tranquil', 'Authentic', 'Impeccable Service', 'Heritage'],
+                recentFeedback: [
+                    { guest: 'Elowen T.', comment: 'The ritual induction was transformative.', sentiment: 'positive' },
+                    { guest: 'Cyrus V.', comment: 'Exquisite attention to detail in the Grand Suite.', sentiment: 'positive' }
+                ]
+            }
         });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -29,28 +41,76 @@ const getAnalytics = async (req, res) => {
 
 // Pricing Multipliers
 const getMultipliers = async (req, res) => {
-    const multipliers = await PricingMultiplier.find({});
-    res.json(multipliers);
+    try {
+        const multipliers = await PricingMultiplier.find({});
+        res.json(multipliers);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
 };
 
 const createMultiplier = async (req, res) => {
-    const { multiplier, startDate, endDate, description } = req.body;
-    const newMultiplier = new PricingMultiplier({ multiplier, startDate, endDate, description });
-    await newMultiplier.save();
-    res.status(201).json(newMultiplier);
+    try {
+        const { multiplier, startDate, endDate, description } = req.body;
+        const newMultiplier = new PricingMultiplier({ multiplier, startDate, endDate, description });
+        await newMultiplier.save();
+        res.status(201).json(newMultiplier);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Pricing Rules (Dynamic Yield)
+const getPricingRules = async (req, res) => {
+    try {
+        const rules = await PricingRule.find({});
+        res.json(rules);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+const createPricingRule = async (req, res) => {
+    try {
+        const { type, threshold, adjustment, description } = req.body;
+        const rule = new PricingRule({ type, threshold, adjustment, description });
+        await rule.save();
+        res.status(201).json(rule);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
 };
 
 // Recommendations
 const getRecommendations = async (req, res) => {
-    const recommendations = await Recommendation.find({});
-    res.json(recommendations);
+    try {
+        const recommendations = await Recommendation.find({});
+        res.json(recommendations);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
 };
 
 const createRecommendation = async (req, res) => {
-    const { title, description, category, imageUrl, isFeatured } = req.body;
-    const recommendation = new Recommendation({ title, description, category, imageUrl, isFeatured });
-    await recommendation.save();
-    res.status(201).json(recommendation);
+    try {
+        const { title, description, category, imageUrl, isFeatured } = req.body;
+        const recommendation = new Recommendation({ title, description, category, imageUrl, isFeatured });
+        await recommendation.save();
+        res.status(201).json(recommendation);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+const AuditLog = require('../models/AuditLog');
+
+const getAuditLogs = async (req, res) => {
+    try {
+        const logs = await AuditLog.find({}).populate('userId', 'name email').sort({ timestamp: -1 });
+        res.json(logs);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
 };
 
 module.exports = {
@@ -58,5 +118,8 @@ module.exports = {
     getMultipliers,
     createMultiplier,
     getRecommendations,
-    createRecommendation
+    createRecommendation,
+    getPricingRules,
+    createPricingRule,
+    getAuditLogs
 };

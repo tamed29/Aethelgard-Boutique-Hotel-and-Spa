@@ -1,10 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const { protect, admin } = require('../middleware/authMiddleware');
-const { createBooking, getBookings, getMyBookings, updateBookingStatus } = require('../controllers/bookingController');
+const { createBooking, getBookings, getMyBookings, updateBookingStatus, checkAvailability } = require('../controllers/bookingController');
 
+// Public availability check (no auth needed)
+router.get('/availability', checkAvailability);
+
+// Booking creation - no login required (guest booking)
 router.route('/')
-    .post(protect, createBooking)
+    .post(createBooking)
     .get(protect, admin, getBookings);
 
 router.route('/mybookings')

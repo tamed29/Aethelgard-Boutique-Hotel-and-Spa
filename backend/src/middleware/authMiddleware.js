@@ -7,6 +7,19 @@ const protect = async (req, res, next) => {
         try {
             token = req.cookies.jwt;
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            
+            // Handle fallback admin token (no real DB user needed)
+            if (decoded.userId === 'admin-001' && decoded.role === 'admin') {
+                req.user = {
+                    _id: 'admin-001',
+                    name: 'Aethelgard Admin',
+                    email: process.env.ADMIN_EMAIL || 'admin@aethelgard.com',
+                    role: 'admin'
+                };
+                return next();
+            }
+
+            // Normal DB lookup
             req.user = await User.findById(decoded.userId).select('-password');
             next();
         } catch (error) {
