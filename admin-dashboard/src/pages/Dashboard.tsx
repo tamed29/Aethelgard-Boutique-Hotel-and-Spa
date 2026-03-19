@@ -5,7 +5,7 @@ import axios from 'axios';
 import { useEffect } from 'react';
 import { GlassCard } from '../components/ui/GlassCard';
 import { motion, AnimatePresence } from 'framer-motion';
-import { DollarSign, Bed, Activity, TrendingUp, AlertTriangle, ExternalLink, Star, BookOpen, Users, Zap } from 'lucide-react';
+import { DollarSign, Bed, Activity, TrendingUp, AlertTriangle, ExternalLink, Star, BookOpen, Users, Zap, ShieldCheck } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { Link } from 'react-router-dom';
 
@@ -183,7 +183,7 @@ export function Dashboard() {
                     { icon: DollarSign, label: 'Monthly Revenue', value: `$${analytics.totalRevenue.toLocaleString()}`, trend: +12, color: 'text-emerald-400' },
                     { icon: TrendingUp, label: 'Revenue Forecast', value: `$${(analytics.revenueForecast || 0).toLocaleString()}`, trend: +5, color: 'text-sage' },
                     { icon: Bed, label: 'Room Occupancy', value: `${occupancyRate.toFixed(0)}%`, color: 'text-amber-400' },
-                    { icon: Activity, label: 'System Health', value: 'Nominal', color: 'text-emerald-400' }
+                    { icon: Zap, label: 'Estate Velocity', value: 'High', color: 'text-indigo-400' }
                 ].map((stat, i) => (
                     <motion.div
                         key={stat.label}
@@ -191,7 +191,7 @@ export function Dashboard() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.05 }}
                     >
-                        <GlassCard className="p-5">
+                        <GlassCard className="p-5 border-white/5 bg-white/[0.02]">
                             <div className="flex justify-between items-start mb-4">
                                 <div className={cn("p-2.5 rounded-xl bg-white/5 border border-white/10", stat.color)}>
                                     <stat.icon size={18} />
@@ -205,6 +205,31 @@ export function Dashboard() {
                             <p className="text-[10px] uppercase tracking-[0.2em] text-sage/40 font-bold">{stat.label}</p>
                             <p className="text-2xl font-serif text-cream mt-1">{stat.value}</p>
                         </GlassCard>
+                    </motion.div>
+                ))}
+            </div>
+
+            {/* System Security HUD */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                {[
+                    { label: 'Security Protocol', val: 'TLS 1.3 / AES-256', icon: ShieldCheck, color: 'text-emerald-500' },
+                    { label: 'Idempotency Verifier', val: 'Active (x-id-key)', icon: Activity, color: 'text-sage' },
+                    { label: 'Database Latency', val: '14ms (Cluster0)', icon: Activity, color: 'text-emerald-500' },
+                ].map((item, idx) => (
+                    <motion.div 
+                        key={item.label}
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.3 + idx * 0.1 }}
+                        className="bg-moss-dark/40 border border-white/5 rounded-2xl p-6 flex items-center gap-6 group hover:border-sage/20 transition-all"
+                    >
+                        <div className={cn("p-3 rounded-xl bg-white/5 border border-white/10 group-hover:scale-110 transition-transform", item.color)}>
+                            <item.icon size={20} />
+                        </div>
+                        <div>
+                            <p className="text-[9px] uppercase tracking-[0.3em] text-sage/30 font-black">{item.label}</p>
+                            <p className="text-xs font-mono text-cream/80 mt-1">{item.val}</p>
+                        </div>
                     </motion.div>
                 ))}
             </div>

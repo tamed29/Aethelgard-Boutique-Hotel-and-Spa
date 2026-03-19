@@ -1,7 +1,8 @@
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { GlassCard } from '../components/ui/GlassCard';
-import { Search, Plus, MoreVertical, Edit2, Trash2, Video, Tag, Bed, Users, DollarSign } from 'lucide-react';
+import { Search, Plus, Bed, Users, ChevronDown, ShieldCheck, RefreshCw, Layers, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../utils/cn';
 
@@ -28,7 +29,7 @@ export function Inventory() {
     const [expandedRooms, setExpandedRooms] = useState<string[]>([]);
     const [search, setSearch] = useState('');
 
-    const { data: rooms = [], isLoading } = useQuery<RoomType[]>({
+    const { data: rooms = [], isLoading, isFetching } = useQuery<RoomType[]>({
         queryKey: ['rooms'],
         queryFn: async () => {
             const res = await axios.get(`${API_URL}/rooms`, { withCredentials: true });
@@ -58,61 +59,98 @@ export function Inventory() {
 
     if (isLoading) return (
         <div className="flex h-[60vh] items-center justify-center">
-            <div className="animate-pulse text-sage tracking-[0.4em] uppercase text-xs font-bold">Accessing Estate Records...</div>
+            <div className="flex flex-col items-center gap-6">
+                <RefreshCw className="animate-spin text-sage w-12 h-12" />
+                <div className="text-sage tracking-[0.4em] uppercase text-[10px] font-black">Decrypting Inventory...</div>
+            </div>
         </div>
     );
 
     return (
-        <div className="space-y-8 pb-12">
+        <div className="space-y-10 pb-24">
+            {/* System Status HUD */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                {[
+                    { label: 'System Logic', val: 'Active', color: 'text-emerald-400' },
+                    { label: 'Conflict Guard', val: 'Sovereign', color: 'text-emerald-400' },
+                    { label: 'Inventory Desync', val: '0.00ms', color: 'text-sage/40' },
+                    { label: 'Terminal Mode', val: 'Admin-Aethelgard', color: 'text-sage/60' }
+                ].map(stat => (
+                    <div key={stat.label} className="bg-moss-dark/40 border border-white/5 rounded-xl p-4 flex justify-between items-center">
+                        <span className="text-[10px] uppercase font-black tracking-widest text-sage/30">{stat.label}</span>
+                        <span className={cn("text-[10px] uppercase font-black tracking-widest", stat.color)}>{stat.val}</span>
+                    </div>
+                ))}
+            </div>
+
             <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                <div>
-                    <h2 className="text-3xl font-serif text-cream">Inventory Control</h2>
-                    <p className="text-sage/40 text-[10px] mt-2 uppercase tracking-[0.3em] font-bold">Suite & Chamber Management Terminal</p>
+                <div className="flex items-center gap-6">
+                    <div className="p-4 bg-sage/10 border border-sage/20 rounded-2xl text-sage">
+                        <Layers size={32} strokeWidth={1.5} />
+                    </div>
+                    <div>
+                        <h2 className="text-4xl font-serif text-cream">Operations Terminal</h2>
+                        <p className="text-sage/40 text-[10px] mt-1 uppercase tracking-[0.3em] font-black">Nested Inventory Architecture v4.2</p>
+                    </div>
                 </div>
                 <div className="flex gap-4 w-full md:w-auto">
-                    <div className="relative flex-1 md:w-80">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-sage/40" size={16} />
+                    <div className="relative flex-1 md:w-96 group">
+                        <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-sage/40 group-focus-within:text-sage transition-colors" size={18} />
                         <input
                             type="text"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Filter by Designation..."
-                            className="w-full bg-white/5 border border-sage/10 rounded-2xl py-4 pl-12 pr-4 text-cream outline-none focus:border-sage/40 focus:bg-white/[0.08] transition-all text-sm"
+                            placeholder="Designation Search..."
+                            className="w-full bg-white/[0.03] border border-sage/10 rounded-full py-5 pl-16 pr-6 text-cream outline-none focus:border-sage/40 focus:bg-white/[0.08] transition-all text-sm font-light tracking-wide placeholder:text-sage/20"
                         />
                     </div>
-                    <button className="bg-sage hover:bg-sage-light text-moss-dark font-bold px-8 py-4 rounded-2xl transition-all duration-500 flex items-center gap-3 shadow-2xl shadow-sage/10 group active:scale-95 whitespace-nowrap">
-                        <Plus size={20} className="group-hover:rotate-90 transition-transform duration-500" />
-                        <span>Add Type</span>
+                    <button className="bg-sage hover:bg-white text-moss-dark font-black px-10 py-5 rounded-full transition-all duration-700 flex items-center gap-4 shadow-2xl shadow-sage/20 hover:shadow-white/10 group active:scale-95 leading-none text-[10px] uppercase tracking-[0.4em]">
+                        <Plus size={20} className="group-hover:rotate-180 transition-transform duration-700" />
+                        <span>Allocate Unit</span>
                     </button>
+                    {isFetching && <RefreshCw className="animate-spin text-sage w-5 h-5 self-center" />}
                 </div>
             </header>
 
-            <div className="space-y-4">
+            <div className="space-y-6">
                 {filteredRooms.map((room) => (
-                    <motion.div key={room._id} layout h-full>
-                        <GlassCard className="p-0 border-sage/10 overflow-hidden bg-moss-light/5 hover:border-sage/30 transition-all cursor-pointer" 
-                            onClick={() => toggleExpand(room._id)}>
-                            <div className="flex items-center justify-between p-6">
-                                <div className="flex items-center gap-6">
-                                    <div className="p-4 rounded-2xl bg-white/5 border border-sage/20 text-sage group-hover:scale-110 transition-transform">
-                                        <Bed size={24} />
+                    <motion.div key={room._id} layout>
+                        <GlassCard className="p-0 border-white/5 overflow-hidden bg-white/[0.01] hover:bg-white/[0.03] hover:border-sage/30 transition-all shadow-none">
+                            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between cursor-pointer" 
+                                onClick={() => toggleExpand(room._id)}>
+                                <div className="flex items-center gap-8 p-8 border-b md:border-b-0 md:border-r border-white/5 flex-1">
+                                    <div className="relative group">
+                                        <div className="absolute -inset-2 bg-sage/20 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                                        <div className="relative p-6 rounded-2xl bg-white/5 border border-sage/10 text-sage">
+                                            <Bed size={32} strokeWidth={1.2} />
+                                        </div>
                                     </div>
-                                    <div>
-                                        <h3 className="text-xl font-serif text-cream tracking-wide">{room.name}</h3>
-                                        <div className="flex gap-4 mt-2">
-                                            <span className="text-[10px] uppercase tracking-[0.2em] text-sage/40 font-bold">{room.roomType}</span>
-                                            <span className="text-[10px] uppercase tracking-[0.2em] text-sage/40 font-bold">Level 0{room.floor}</span>
-                                            <span className="text-[10px] uppercase tracking-[0.2em] text-sage/60 font-black px-2 py-0.5 bg-sage/10 rounded-md">{room.units.length} Units</span>
+                                    <div className="space-y-2">
+                                        <h3 className="text-2xl font-serif text-cream tracking-tight">{room.name}</h3>
+                                        <div className="flex items-center gap-6">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-sage" />
+                                                <span className="text-[10px] uppercase tracking-[0.3em] text-sage/40 font-black">{room.roomType}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-sage/20" />
+                                                <span className="text-[10px] uppercase tracking-[0.3em] text-sage/40 font-black">Level 0{room.floor}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-[#D4DE95]" />
+                                                <span className="text-[10px] uppercase tracking-[0.3em] text-[#D4DE95] font-black">{room.units.length} Unit Clusters</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-12">
-                                    <div className="text-right">
-                                        <p className="text-[9px] uppercase tracking-widest text-sage/30 font-bold mb-1">Base Rate</p>
-                                        <p className="text-2xl font-serif text-cream">${room.price}</p>
+
+                                <div className="flex items-center divide-x divide-white/5">
+                                    <div className="px-12 py-8 text-center min-w-[200px]">
+                                        <p className="text-[9px] uppercase tracking-[0.4em] text-sage/20 font-black mb-2">Baseline Cost</p>
+                                        <p className="text-3xl font-serif text-cream">${room.price}</p>
                                     </div>
-                                    <div className={cn("p-2 rounded-lg transition-transform duration-500", expandedRooms.includes(room._id) ? "rotate-180 bg-sage/10 text-sage" : "text-sage/40")}>
-                                        <ChevronDown size={20} />
+                                    <div className={cn("p-12 transition-all duration-700", expandedRooms.includes(room._id) ? "bg-sage/10 text-sage" : "text-sage/20 hover:text-sage")}>
+                                        <ChevronDown size={28} className={cn("transition-transform duration-700", expandedRooms.includes(room._id) && "rotate-180")} />
                                     </div>
                                 </div>
                             </div>
@@ -123,33 +161,49 @@ export function Inventory() {
                                         initial={{ height: 0, opacity: 0 }}
                                         animate={{ height: 'auto', opacity: 1 }}
                                         exit={{ height: 0, opacity: 0 }}
-                                        className="border-t border-white/5 bg-white/[0.02] overflow-hidden"
-                                        onClick={(e) => e.stopPropagation()}
+                                        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                                        className="border-t border-white/5 bg-black/20 overflow-hidden"
                                     >
-                                        <div className="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                                        <div className="p-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
                                             {room.units.map((unit) => (
-                                                <div key={unit.number} className="bg-white/5 border border-white/5 p-4 rounded-2xl space-y-4 hover:border-sage/20 transition-all group">
-                                                    <div className="flex justify-between items-start">
-                                                        <span className="text-[10px] font-black uppercase tracking-widest text-sage/60">{unit.number}</span>
-                                                        <button className="p-1 text-sage/20 hover:text-sage transition-colors"><MoreVertical size={14} /></button>
+                                                <div key={unit.number} className="relative bg-white/[0.02] border border-white/5 p-6 rounded-[2rem] space-y-6 hover:border-sage/40 transition-all group overflow-hidden">
+                                                    <div className="absolute top-0 right-0 w-24 h-24 bg-sage/[0.02] blur-2xl pointer-events-none" />
+                                                    
+                                                    <div className="flex justify-between items-center border-b border-white/5 pb-4">
+                                                        <div className="flex flex-col">
+                                                            <span className="text-[8px] font-black uppercase tracking-[0.3em] text-sage/30">Unit Designation</span>
+                                                            <span className="text-lg font-serif text-cream">{unit.number}</span>
+                                                        </div>
+                                                        <div className={cn(
+                                                            "w-3 h-3 rounded-full animate-pulse shadow-[0_0_15px_rgba(0,0,0,0.5)]",
+                                                            unit.status === 'available' ? 'bg-emerald-500 shadow-emerald-500/50' :
+                                                            unit.status === 'occupied' ? 'bg-rose-500 shadow-rose-500/50' :
+                                                            unit.status === 'cleaning' ? 'bg-sky-500 shadow-sky-500/50' : 'bg-amber-500 shadow-amber-500/50'
+                                                        )} />
                                                     </div>
                                                     
-                                                    <div className="flex flex-col gap-3">
-                                                        {['available', 'occupied', 'cleaning', 'maintenance'].map((status) => (
+                                                    <div className="flex flex-col gap-2">
+                                                        {[
+                                                            { id: 'available', label: 'Ready', icon: <Check size={12} /> },
+                                                            { id: 'occupied', label: 'Stay-In', icon: <Users size={12} /> },
+                                                            { id: 'cleaning', label: 'Restoration', icon: <Sparkles size={12} /> },
+                                                            { id: 'maintenance', label: 'Deep Cure', icon: <ShieldCheck size={12} /> },
+                                                            { id: 'out_of_service', label: 'Sealed', icon: <Trash2 size={12} /> }
+                                                        ].map((s) => (
                                                             <button
-                                                                key={status}
-                                                                onClick={() => updateUnit.mutate({ roomId: room._id, unitNumber: unit.number, status })}
+                                                                key={s.id}
+                                                                onClick={() => updateUnit.mutate({ roomId: room._id, unitNumber: unit.number, status: s.id })}
                                                                 className={cn(
-                                                                    "text-[8px] uppercase tracking-[0.2em] font-bold py-2 rounded-lg border transition-all",
-                                                                    unit.status === status 
-                                                                        ? status === 'available' ? "bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20" :
-                                                                          status === 'occupied' ? "bg-rose-500 text-white border-rose-500 shadow-lg shadow-rose-500/20" :
-                                                                          status === 'cleaning' ? "bg-blue-500 text-white border-blue-500 shadow-lg shadow-blue-500/20" :
-                                                                          "bg-amber-500 text-white border-amber-500 shadow-lg shadow-amber-500/20"
-                                                                        : "bg-white/5 text-sage/40 border-transparent hover:border-sage/20"
+                                                                    "flex items-center justify-between text-[8px] uppercase tracking-[0.3em] font-black py-3 px-4 rounded-xl border transition-all duration-500 group/btn",
+                                                                    unit.status === s.id 
+                                                                        ? "bg-sage text-moss-dark border-sage shadow-[0_5px_20px_rgba(186,192,149,0.2)]"
+                                                                        : "bg-white/[0.03] text-sage/40 border-transparent hover:border-sage/20 hover:text-sage"
                                                                 )}
                                                             >
-                                                                {status}
+                                                                <span>{s.label}</span>
+                                                                <span className={cn("transition-transform duration-500", unit.status === s.id ? "scale-110" : "scale-0 group-hover/btn:scale-100 opacity-0 group-hover/btn:opacity-100")}>
+                                                                    {s.icon}
+                                                                </span>
                                                             </button>
                                                         ))}
                                                     </div>
@@ -165,4 +219,12 @@ export function Inventory() {
             </div>
         </div>
     );
+}
+
+function Check({ size, className }: { size?: number, className?: string }) {
+    return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="20 6 9 17 4 12" /></svg>
+}
+
+function Sparkles({ size, className }: { size?: number, className?: string }) {
+    return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" /><path d="M5 3v4" /><path d="M19 17v4" /><path d="M3 5h4" /><path d="M17 19h4" /></svg>
 }

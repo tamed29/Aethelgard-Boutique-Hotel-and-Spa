@@ -56,54 +56,71 @@ const checkAvailability = async (req, res) => {
     }
 };
 
+const mongoose = require('mongoose');
+
 // @desc    Create new booking (picks first available room of requested type)
 // @route   POST /api/bookings
 const createBooking = async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
         const validated = bookingSchema.parse(req.body);
         const { roomType, checkIn, checkOut, guestName, guestEmail, guests, addons, specialRequests } = validated;
 
-        const room = await Room.findOne({ roomType });
-        if (!room) return res.status(404).json({ message: 'Room type not found' });
+        // 1. Fetch Room Type and Units under transaction
+        const room = await Room.findOne({ roomType }).session(session);
+        if (!room) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(404).json({ message: 'Room type not found' });
+        }
 
-        // Conflict Guard: Find overlapping bookings
+        // 2. Conflict Guard: Find overlapping bookings for this room type
         const overlappingBookings = await Booking.find({
             room: room._id,
             status: 'confirmed',
             $or: [
                 { checkIn: { $lt: new Date(checkOut) }, checkOut: { $gt: new Date(checkIn) } }
             ]
-        });
+        }).session(session);
 
         const bookedRoomNumbers = overlappingBookings.map(b => b.roomNumber);
+        
+        // 3. Select an available unit
         const availableUnit = room.units.find(u => 
             !bookedRoomNumbers.includes(u.number) && 
             u.status !== 'maintenance' &&
-            u.status !== 'out_of_service' // status mapping might vary
+            u.status !== 'out_of_service'
         );
 
         if (!availableUnit) {
+            await session.abortTransaction();
+            session.endSession();
             return res.status(409).json({
                 available: false,
                 message: `All ${roomType} units are currently occupied for the selected dates.`
             });
         }
 
+        // 4. Calculate Price
         const msPerDay = 1000 * 60 * 60 * 24;
         const days = Math.ceil((new Date(checkOut) - new Date(checkIn)) / msPerDay);
-        if (days <= 0) return res.status(400).json({ message: 'Invalid dates selected' });
+        if (days <= 0) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(400).json({ message: 'Invalid dates selected' });
+        }
 
-        const peakSetting = await Settings.findOne({ key: 'peakSeasonMultiplier' }).catch(() => null);
+        const peakSetting = await Settings.findOne({ key: 'peakSeasonMultiplier' }).session(session).catch(() => null);
         const multiplier = peakSetting ? parseFloat(peakSetting.value) || 1 : 1;
 
         const addonCosts = { champagne: 120, spa: 350, late_checkout: 75, airport_transfer: 80 };
         const addonsPrice = addons ? addons.reduce((sum, a) => sum + (addonCosts[a] || 50), 0) : 0;
         const totalPrice = (room.price * days * multiplier) + addonsPrice;
 
-        // Create guest user object (no account required)
-        const guestUser = { name: guestName, email: guestEmail, _id: guestName };
-
-        const booking = await Booking.create({
+        // 5. Atomic Creation
+        const booking = await Booking.create([{
             user: req.user ? req.user._id : null,
             guestName,
             guestEmail,
@@ -116,32 +133,45 @@ const createBooking = async (req, res) => {
             addons: addons || [],
             specialRequests,
             guests: guests || 2
-        });
+        }], { session });
 
-        const fullBooking = await Booking.findById(booking._id).populate('room', 'name roomType price');
+        await session.commitTransaction();
+        session.endSession();
 
-        // Emit real-time events
+        const fullBooking = await Booking.findById(booking[0]._id).populate('room', 'name roomType price');
+
+        // 6. Real-time Dashboard Sync
         const io = req.app.get('io');
         if (io) {
-            io.emit('newBooking', { ...fullBooking.toObject(), guestName, guestEmail });
-            io.emit('roomStatusUpdate', { roomId: room._id, status: 'occupied' });
+            io.emit('newBooking', { 
+                ...fullBooking.toObject(), 
+                guestName, 
+                guestEmail,
+                isAtomic: true,
+                timestamp: new Date()
+            });
+            // Update the specific room unit status (UI level sync)
+            io.emit('unitStatusUpdate', { 
+                roomTypeId: room._id, 
+                roomNumber: availableUnit.number, 
+                status: 'occupied' 
+            });
         }
 
-        // Send emails (non-blocking)
-        sendBookingConfirmation(fullBooking, guestUser, room).catch(console.error);
-        sendNewBookingAlertToAdmin(fullBooking, guestUser, room).catch(console.error);
+        // 7. Non-blocking Email Alerts
+        const guestUser = { name: guestName, email: guestEmail };
+        sendBookingConfirmation(fullBooking, guestUser, room).catch(err => console.error('Email failed:', err));
+        sendNewBookingAlertToAdmin(fullBooking, guestUser, room).catch(err => console.error('Admin alert failed:', err));
 
         res.status(201).json({
             success: true,
             booking: fullBooking,
-            room: {
-                name: room.name,
-                roomNumber: room.roomNumber,
-                floor: room.floor
-            }
+            roomNumber: availableUnit.number
         });
 
     } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
         if (error instanceof z.ZodError) {
             return res.status(400).json({ errors: error.errors });
         }

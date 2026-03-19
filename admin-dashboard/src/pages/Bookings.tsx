@@ -1,17 +1,22 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { GlassCard } from '../components/ui/GlassCard';
-import { Search, CheckCircle, XCircle, Clock, DollarSign, ChevronDown, Eye } from 'lucide-react';
+import { Search, CheckCircle, XCircle, Clock, DollarSign, ChevronDown, Eye, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../utils/cn';
+import { io } from 'socket.io-client';
+import { toast } from 'sonner';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const SOCKET_URL = API_URL.replace('/api', '');
 
 interface Booking {
     _id: string;
     guestName: string;
+    guestEmail?: string;
     room: {
+        _id: string;
         name: string;
         roomType: string;
     };
@@ -21,6 +26,7 @@ interface Booking {
     totalPrice: number;
     status: 'confirmed' | 'pending' | 'completed' | 'cancelled';
     guests: number;
+    isAtomic?: boolean;
 }
 
 const STATUS_STYLES: Record<string, string> = {
@@ -45,6 +51,24 @@ export function Bookings() {
         staleTime: 5000,
     });
 
+    useEffect(() => {
+        const socket = io(SOCKET_URL);
+        
+        socket.on('newBooking', (booking: Booking) => {
+            queryClient.invalidateQueries({ queryKey: ['bookings'] });
+            toast.success(`New ${booking.isAtomic ? 'Atomic' : ''} Booking: ${booking.guestName}`, {
+                description: `${booking.room.roomType} ${booking.roomNumber}`,
+                icon: <Zap className="text-amber-400" size={16} />
+            });
+        });
+
+        socket.on('bookingUpdate', () => {
+            queryClient.invalidateQueries({ queryKey: ['bookings'] });
+        });
+
+        return () => { socket.disconnect(); };
+    }, [queryClient]);
+
     if (isLoading) return (
         <div className="flex h-[60vh] items-center justify-center">
             <div className="animate-pulse text-sage tracking-[0.4em] uppercase text-xs font-bold">Synchronizing Guest Records...</div>
@@ -55,11 +79,9 @@ export function Bookings() {
         mutationFn: async ({ id, status }: { id: string; status: string }) => {
             await axios.put(`${API_URL}/admin/bookings/${id}`, { status }, { withCredentials: true });
         },
-        onMutate: async ({ id, status }) => {
-            queryClient.setQueryData(['bookings'], (prev: Booking[] | undefined) =>
-                prev ? prev.map(b => b._id === id ? { ...b, status: status as any } : b) : []
-            );
-        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['bookings'] });
+        }
     });
 
     const filtered = bookings
@@ -81,7 +103,13 @@ export function Bookings() {
             <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
                 <div>
                     <h2 className="text-3xl font-serif text-cream">Bookings Control</h2>
-                    <p className="text-sage/40 text-[10px] mt-2 uppercase tracking-[0.3em] font-bold">Guest Reservation Management Terminal</p>
+                    <div className="flex items-center gap-4 mt-2">
+                        <p className="text-sage/40 text-[10px] uppercase tracking-[0.3em] font-bold">Guest Reservation Management Terminal</p>
+                        <div className="flex items-center gap-2 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            <span className="text-[8px] uppercase tracking-widest text-emerald-400 font-black">Live Sync</span>
+                        </div>
+                    </div>
                 </div>
             </header>
 
@@ -107,12 +135,12 @@ export function Bookings() {
                 <div className="relative flex-1">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-sage/40" size={14} />
                     <input value={search} onChange={e => setSearch(e.target.value)} type="text" placeholder="Search guest or room..."
-                        className="w-full bg-white/5 border border-sage/10 rounded-2xl py-3 pl-11 pr-4 text-cream outline-none focus:border-sage/40 transition-all text-sm" />
+                        className="w-full bg-white/5 border border-sage/10 rounded-2xl py-4 pl-11 pr-4 text-cream outline-none focus:border-sage/40 transition-all text-sm" />
                 </div>
                 <div className="flex gap-2 flex-wrap">
                     {['all', 'pending', 'confirmed', 'completed', 'cancelled'].map(s => (
                         <button key={s} onClick={() => setFilter(s)}
-                            className={cn("px-4 py-2 rounded-xl text-[10px] uppercase tracking-widest font-bold transition-all border",
+                            className={cn("px-5 py-3 rounded-xl text-[10px] uppercase tracking-widest font-bold transition-all border",
                                 filter === s ? "bg-sage text-moss-dark border-sage" : "bg-white/5 text-sage/60 border-white/5 hover:border-sage/20")}>
                             {s}
                         </button>
