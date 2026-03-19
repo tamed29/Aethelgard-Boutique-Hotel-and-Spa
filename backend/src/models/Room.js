@@ -13,7 +13,15 @@ const roomSchema = new mongoose.Schema({
     amenities: [String],
     images: [String],
     bathroomImages: [String],
-    status: { type: String, enum: ['available', 'occupied', 'cleaning', 'maintenance'], default: 'available' },
+    units: [{
+        number: { type: String, required: true },
+        status: { 
+            type: String, 
+            enum: ['available', 'occupied', 'cleaning', 'maintenance'], 
+            default: 'available' 
+        },
+        notes: { type: String }
+    }],
     floor: { type: Number, default: 1 },
     videoUrl: { type: String }
 }, { timestamps: true });

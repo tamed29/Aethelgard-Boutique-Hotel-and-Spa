@@ -43,6 +43,25 @@ export function Layout() {
 
             <MobileNav />
             <CommandBar />
+
+            {/* System Security HUD */}
+            <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#1A1F16]/80 backdrop-blur-xl border-t border-sage/10 px-8 py-2 flex justify-between items-center h-10 pointer-events-none select-none">
+                <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                        <span className="text-[10px] uppercase font-black tracking-[0.3em] text-emerald-500/80">Encryption: Active</span>
+                    </div>
+                    <div className="h-3 w-px bg-white/10" />
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] uppercase font-black tracking-[0.3em] text-sage/40">Response Velocity:</span>
+                        <span className="text-[10px] font-mono text-sage/60">1.4m Average</span>
+                    </div>
+                </div>
+                <div className="flex items-center gap-6">
+                    <span className="text-[10px] uppercase font-black tracking-[0.3em] text-sage/20">Secure Node: 0x82A1C</span>
+                    <span className="text-[10px] uppercase font-black tracking-[0.3em] text-sage/40">{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })} Zulu</span>
+                </div>
+            </div>
         </div>
     );
 }

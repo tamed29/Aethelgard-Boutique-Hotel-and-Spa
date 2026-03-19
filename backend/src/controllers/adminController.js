@@ -113,6 +113,38 @@ const getAuditLogs = async (req, res) => {
     }
 };
 
+const Settings = require('../models/Settings');
+
+const getSettings = async (req, res) => {
+    try {
+        const settings = await Settings.find({});
+        res.json(settings);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+const updateSetting = async (req, res) => {
+    try {
+        const { key, value } = req.body;
+        const setting = await Settings.findOneAndUpdate(
+            { key },
+            { value },
+            { upsert: true, new: true }
+        );
+
+        // Emit socket event for site-wide settings
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('settingUpdate', { key, value });
+        }
+
+        res.json(setting);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = {
     getAnalytics,
     getMultipliers,
@@ -121,5 +153,7 @@ module.exports = {
     createRecommendation,
     getPricingRules,
     createPricingRule,
-    getAuditLogs
+    getAuditLogs,
+    getSettings,
+    updateSetting
 };

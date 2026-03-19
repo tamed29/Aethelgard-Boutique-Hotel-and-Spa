@@ -8,22 +8,17 @@ import { cn } from '../utils/cn';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-const MOCK_BOOKINGS: Booking[] = [
-    { _id: 'b1', guestName: 'Elowen Thorncastle', roomName: 'Mossy Hollow Suite', checkIn: '2026-03-20', checkOut: '2026-03-25', total: 2250, status: 'confirmed', guests: 2 },
-    { _id: 'b2', guestName: 'Cyrus Vandermark', roomName: 'The Canopy Retreat', checkIn: '2026-03-21', checkOut: '2026-03-23', total: 860, status: 'pending', guests: 2 },
-    { _id: 'b3', guestName: 'Isolde Fairweather', roomName: 'Runestone Loft', checkIn: '2026-03-19', checkOut: '2026-03-22', total: 1320, status: 'confirmed', guests: 3 },
-    { _id: 'b4', guestName: 'Marlowe Ashbourne', roomName: 'Birchwood Chamber', checkIn: '2026-03-18', checkOut: '2026-03-19', total: 480, status: 'completed', guests: 1 },
-    { _id: 'b5', guestName: 'Senara Holt', roomName: 'Ember Suite', checkIn: '2026-03-25', checkOut: '2026-03-28', total: 1620, status: 'pending', guests: 2 },
-    { _id: 'b6', guestName: 'Dorian Westfall', roomName: 'Stone Haven', checkIn: '2026-03-15', checkOut: '2026-03-17', total: 790, status: 'cancelled', guests: 2 },
-];
-
 interface Booking {
     _id: string;
     guestName: string;
-    roomName: string;
+    room: {
+        name: string;
+        roomType: string;
+    };
+    roomNumber: string;
     checkIn: string;
     checkOut: string;
-    total: number;
+    totalPrice: number;
     status: 'confirmed' | 'pending' | 'completed' | 'cancelled';
     guests: number;
 }
@@ -35,28 +30,26 @@ const STATUS_STYLES: Record<string, string> = {
     cancelled: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
 };
 
-async function fetchWithFallback<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
-    return Promise.race([
-        fn(),
-        new Promise<T>((_, reject) => setTimeout(() => reject(new Error('timeout')), 2500))
-    ]).catch(() => fallback);
-}
-
 export function Bookings() {
     const queryClient = useQueryClient();
     const [filter, setFilter] = useState<string>('all');
     const [search, setSearch] = useState('');
     const [selected, setSelected] = useState<Booking | null>(null);
 
-    const { data: bookings = MOCK_BOOKINGS } = useQuery<Booking[]>({
+    const { data: bookings = [], isLoading } = useQuery<Booking[]>({
         queryKey: ['bookings'],
-        queryFn: () => fetchWithFallback(
-            async () => { const r = await axios.get(`${API_URL}/bookings`, { withCredentials: true }); return r.data; },
-            MOCK_BOOKINGS as any
-        ),
-        staleTime: 30000,
-        retry: false,
+        queryFn: async () => {
+            const res = await axios.get(`${API_URL}/bookings`, { withCredentials: true });
+            return res.data;
+        },
+        staleTime: 5000,
     });
+
+    if (isLoading) return (
+        <div className="flex h-[60vh] items-center justify-center">
+            <div className="animate-pulse text-sage tracking-[0.4em] uppercase text-xs font-bold">Synchronizing Guest Records...</div>
+        </div>
+    );
 
     const updateStatus = useMutation({
         mutationFn: async ({ id, status }: { id: string; status: string }) => {
@@ -71,13 +64,16 @@ export function Bookings() {
 
     const filtered = bookings
         .filter(b => filter === 'all' || b.status === filter)
-        .filter(b => b.guestName.toLowerCase().includes(search.toLowerCase()) || b.roomName.toLowerCase().includes(search.toLowerCase()));
+        .filter(b => 
+            b.guestName.toLowerCase().includes(search.toLowerCase()) || 
+            (b.room?.name || '').toLowerCase().includes(search.toLowerCase())
+        );
 
     const stats = {
         total: bookings.length,
         confirmed: bookings.filter(b => b.status === 'confirmed').length,
         pending: bookings.filter(b => b.status === 'pending').length,
-        revenue: bookings.filter(b => b.status !== 'cancelled').reduce((sum, b) => sum + b.total, 0),
+        revenue: bookings.filter(b => b.status !== 'cancelled').reduce((sum, b) => sum + b.totalPrice, 0),
     };
 
     return (
@@ -149,10 +145,15 @@ export function Bookings() {
                                             <p className="text-cream font-medium text-sm">{booking.guestName}</p>
                                             <p className="text-sage/30 text-[10px] mt-0.5">{booking.guests} guest{booking.guests > 1 ? 's' : ''}</p>
                                         </td>
-                                        <td className="py-5 px-6 text-sage/70 text-sm">{booking.roomName}</td>
-                                        <td className="py-5 px-6 text-sage/60 text-xs font-mono">{booking.checkIn}</td>
-                                        <td className="py-5 px-6 text-sage/60 text-xs font-mono">{booking.checkOut}</td>
-                                        <td className="py-5 px-6 text-cream font-serif">${booking.total.toLocaleString()}</td>
+                                        <td className="py-5 px-6 shrink-0">
+                                            <div className="flex flex-col">
+                                                <span className="text-sage/70 text-sm">{booking.room?.name || 'Unknown Room'}</span>
+                                                <span className="text-[10px] text-sage/30 uppercase tracking-widest">{booking.roomNumber}</span>
+                                            </div>
+                                        </td>
+                                        <td className="py-5 px-6 text-sage/60 text-xs font-mono">{new Date(booking.checkIn).toLocaleDateString()}</td>
+                                        <td className="py-5 px-6 text-sage/60 text-xs font-mono">{new Date(booking.checkOut).toLocaleDateString()}</td>
+                                        <td className="py-5 px-6 text-cream font-serif">${booking.totalPrice?.toLocaleString()}</td>
                                         <td className="py-5 px-6">
                                             <span className={cn("text-[8px] uppercase tracking-widest font-bold px-3 py-1.5 rounded-full border", STATUS_STYLES[booking.status])}>
                                                 {booking.status}
@@ -161,10 +162,9 @@ export function Bookings() {
                                         <td className="py-5 px-6">
                                             <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all">
                                                 <button onClick={() => setSelected(booking)} className="p-2 hover:bg-white/10 rounded-lg text-sage/60 hover:text-sage transition-all"><Eye size={14} /></button>
-                                                {booking.status === 'pending' && (<>
-                                                    <button onClick={() => updateStatus.mutate({ id: booking._id, status: 'confirmed' })} className="p-2 hover:bg-emerald-500/10 rounded-lg text-emerald-400/60 hover:text-emerald-400 transition-all"><CheckCircle size={14} /></button>
+                                                {(booking.status === 'pending' || booking.status === 'confirmed') && (
                                                     <button onClick={() => updateStatus.mutate({ id: booking._id, status: 'cancelled' })} className="p-2 hover:bg-rose-500/10 rounded-lg text-rose-400/60 hover:text-rose-400 transition-all"><XCircle size={14} /></button>
-                                                </>)}
+                                                )}
                                             </div>
                                         </td>
                                     </motion.tr>
@@ -188,11 +188,12 @@ export function Bookings() {
                             <p className="text-sage/40 text-xs uppercase tracking-widest mb-6">Reservation Detail</p>
                             <div className="grid grid-cols-2 gap-4">
                                 {[
-                                    { label: 'Room', value: selected.roomName },
+                                    { label: 'Room', value: selected.room?.name || 'Unknown' },
+                                    { label: 'Unit', value: selected.roomNumber || 'Manual' },
                                     { label: 'Guests', value: `${selected.guests} persons` },
-                                    { label: 'Check-In', value: selected.checkIn },
-                                    { label: 'Check-Out', value: selected.checkOut },
-                                    { label: 'Total Charge', value: `$${selected.total.toLocaleString()}` },
+                                    { label: 'Check-In', value: new Date(selected.checkIn).toLocaleDateString() },
+                                    { label: 'Check-Out', value: new Date(selected.checkOut).toLocaleDateString() },
+                                    { label: 'Total Charge', value: `$${selected.totalPrice?.toLocaleString()}` },
                                     { label: 'Status', value: selected.status },
                                 ].map(f => (
                                     <div key={f.label} className="p-4 rounded-xl bg-white/5 border border-white/5">

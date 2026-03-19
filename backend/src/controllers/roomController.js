@@ -81,4 +81,36 @@ const updateRoomStatus = async (req, res) => {
     }
 };
 
-module.exports = { getRooms, getRoomById, createRoom, updateRoomPrice, updateRoomStatus };
+const updateUnitStatus = async (req, res) => {
+    const { roomId, unitNumber, status } = req.body;
+    const room = await Room.findById(roomId);
+
+    if (!room) {
+        return res.status(404).json({ message: 'Room Type not found' });
+    }
+
+    const unit = room.units.find(u => u.number === unitNumber);
+    if (!unit) {
+        return res.status(404).json({ message: 'Unit not found' });
+    }
+
+    unit.status = status;
+    await room.save();
+
+    // Emit socket event for real-time unit status
+    const io = req.app.get('io');
+    if (io) {
+        io.emit('unitStatusUpdate', { roomId, unitNumber, status });
+    }
+
+    res.json({ message: 'Unit status updated', unit });
+};
+
+module.exports = { 
+    getRooms, 
+    getRoomById, 
+    createRoom, 
+    updateRoomPrice, 
+    updateRoomStatus,
+    updateUnitStatus
+};

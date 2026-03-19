@@ -7,17 +7,28 @@ import { cn } from '../utils/cn';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-interface Room {
+interface RoomUnit {
+    _id?: string;
+    number: string;
+    status: 'available' | 'occupied' | 'cleaning' | 'maintenance' | 'out_of_service';
+}
+
+interface RoomType {
     _id: string;
     name: string;
+    roomType: string;
     capacity: number;
     price: number;
-    status: 'available' | 'occupied' | 'maintenance';
+    units: RoomUnit[];
+    floor: number;
 }
 
 export function Inventory() {
     const queryClient = useQueryClient();
-    const { data: rooms = [], isLoading } = useQuery<Room[]>({
+    const [expandedRooms, setExpandedRooms] = useState<string[]>([]);
+    const [search, setSearch] = useState('');
+
+    const { data: rooms = [], isLoading } = useQuery<RoomType[]>({
         queryKey: ['rooms'],
         queryFn: async () => {
             const res = await axios.get(`${API_URL}/rooms`, { withCredentials: true });
@@ -25,14 +36,25 @@ export function Inventory() {
         }
     });
 
-    const deleteRoom = useMutation({
-        mutationFn: async (id: string) => {
-            await axios.delete(`${API_URL}/admin/rooms/${id}`, { withCredentials: true });
+    const updateUnit = useMutation({
+        mutationFn: async ({ roomId, unitNumber, status }: { roomId: string, unitNumber: string, status: string }) => {
+            await axios.put(`${API_URL}/rooms/unit-status`, { roomId, unitNumber, status }, { withCredentials: true });
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['rooms'] });
         }
     });
+
+    const toggleExpand = (id: string) => {
+        setExpandedRooms(prev => 
+            prev.includes(id) ? prev.filter(rid => rid !== id) : [...prev, id]
+        );
+    };
+
+    const filteredRooms = rooms.filter(r => 
+        r.name.toLowerCase().includes(search.toLowerCase()) || 
+        r.roomType.toLowerCase().includes(search.toLowerCase())
+    );
 
     if (isLoading) return (
         <div className="flex h-[60vh] items-center justify-center">
@@ -52,99 +74,95 @@ export function Inventory() {
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-sage/40" size={16} />
                         <input
                             type="text"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
                             placeholder="Filter by Designation..."
                             className="w-full bg-white/5 border border-sage/10 rounded-2xl py-4 pl-12 pr-4 text-cream outline-none focus:border-sage/40 focus:bg-white/[0.08] transition-all text-sm"
                         />
                     </div>
                     <button className="bg-sage hover:bg-sage-light text-moss-dark font-bold px-8 py-4 rounded-2xl transition-all duration-500 flex items-center gap-3 shadow-2xl shadow-sage/10 group active:scale-95 whitespace-nowrap">
                         <Plus size={20} className="group-hover:rotate-90 transition-transform duration-500" />
-                        <span>Add Unit</span>
+                        <span>Add Type</span>
                     </button>
                 </div>
             </header>
 
-            <GlassCard className="p-0 border-sage/10 overflow-hidden bg-moss-light/5">
-                <div className="overflow-x-auto custom-scrollbar">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="bg-white/[0.03] text-[10px] uppercase tracking-[0.25em] text-sage/60 font-bold border-b border-white/5">
-                                <th className="py-6 px-8">Unit Designation</th>
-                                <th className="py-6 px-8">Configurations</th>
-                                <th className="py-6 px-8">Floor Level</th>
-                                <th className="py-6 px-8">Premium Rate</th>
-                                <th className="py-6 px-8">Status Protocol</th>
-                                <th className="py-6 px-8 text-right">Directives</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-white/5">
+            <div className="space-y-4">
+                {filteredRooms.map((room) => (
+                    <motion.div key={room._id} layout h-full>
+                        <GlassCard className="p-0 border-sage/10 overflow-hidden bg-moss-light/5 hover:border-sage/30 transition-all cursor-pointer" 
+                            onClick={() => toggleExpand(room._id)}>
+                            <div className="flex items-center justify-between p-6">
+                                <div className="flex items-center gap-6">
+                                    <div className="p-4 rounded-2xl bg-white/5 border border-sage/20 text-sage group-hover:scale-110 transition-transform">
+                                        <Bed size={24} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl font-serif text-cream tracking-wide">{room.name}</h3>
+                                        <div className="flex gap-4 mt-2">
+                                            <span className="text-[10px] uppercase tracking-[0.2em] text-sage/40 font-bold">{room.roomType}</span>
+                                            <span className="text-[10px] uppercase tracking-[0.2em] text-sage/40 font-bold">Level 0{room.floor}</span>
+                                            <span className="text-[10px] uppercase tracking-[0.2em] text-sage/60 font-black px-2 py-0.5 bg-sage/10 rounded-md">{room.units.length} Units</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-12">
+                                    <div className="text-right">
+                                        <p className="text-[9px] uppercase tracking-widest text-sage/30 font-bold mb-1">Base Rate</p>
+                                        <p className="text-2xl font-serif text-cream">${room.price}</p>
+                                    </div>
+                                    <div className={cn("p-2 rounded-lg transition-transform duration-500", expandedRooms.includes(room._id) ? "rotate-180 bg-sage/10 text-sage" : "text-sage/40")}>
+                                        <ChevronDown size={20} />
+                                    </div>
+                                </div>
+                            </div>
+
                             <AnimatePresence>
-                                {rooms.map((room, i) => (
-                                    <motion.tr
-                                        key={room._id}
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, x: -20 }}
-                                        transition={{ delay: i * 0.03 }}
-                                        className="hover:bg-white/[0.03] transition-colors group relative"
+                                {expandedRooms.includes(room._id) && (
+                                    <motion.div 
+                                        initial={{ height: 0, opacity: 0 }}
+                                        animate={{ height: 'auto', opacity: 1 }}
+                                        exit={{ height: 0, opacity: 0 }}
+                                        className="border-t border-white/5 bg-white/[0.02] overflow-hidden"
+                                        onClick={(e) => e.stopPropagation()}
                                     >
-                                        <td className="py-6 px-8">
-                                            <div className="flex items-center gap-4">
-                                                <div className="p-3 rounded-xl bg-moss-light/50 border border-sage/10 group-hover:border-sage/30 transition-all">
-                                                    <Bed size={18} className="text-sage" />
-                                                </div>
-                                                <div>
-                                                    <p className="text-cream font-serif text-lg tracking-wide">{room.name}</p>
-                                                    <div className="flex gap-3 mt-2">
-                                                        <Video size={10} className="text-sage/20 group-hover:text-sage/40 transition-colors" />
-                                                        <Tag size={10} className="text-sage/20 group-hover:text-sage/40 transition-colors" />
+                                        <div className="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                                            {room.units.map((unit) => (
+                                                <div key={unit.number} className="bg-white/5 border border-white/5 p-4 rounded-2xl space-y-4 hover:border-sage/20 transition-all group">
+                                                    <div className="flex justify-between items-start">
+                                                        <span className="text-[10px] font-black uppercase tracking-widest text-sage/60">{unit.number}</span>
+                                                        <button className="p-1 text-sage/20 hover:text-sage transition-colors"><MoreVertical size={14} /></button>
+                                                    </div>
+                                                    
+                                                    <div className="flex flex-col gap-3">
+                                                        {['available', 'occupied', 'cleaning', 'maintenance'].map((status) => (
+                                                            <button
+                                                                key={status}
+                                                                onClick={() => updateUnit.mutate({ roomId: room._id, unitNumber: unit.number, status })}
+                                                                className={cn(
+                                                                    "text-[8px] uppercase tracking-[0.2em] font-bold py-2 rounded-lg border transition-all",
+                                                                    unit.status === status 
+                                                                        ? status === 'available' ? "bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20" :
+                                                                          status === 'occupied' ? "bg-rose-500 text-white border-rose-500 shadow-lg shadow-rose-500/20" :
+                                                                          status === 'cleaning' ? "bg-blue-500 text-white border-blue-500 shadow-lg shadow-blue-500/20" :
+                                                                          "bg-amber-500 text-white border-amber-500 shadow-lg shadow-amber-500/20"
+                                                                        : "bg-white/5 text-sage/40 border-transparent hover:border-sage/20"
+                                                                )}
+                                                            >
+                                                                {status}
+                                                            </button>
+                                                        ))}
                                                     </div>
                                                 </div>
-                                            </div>
-                                        </td>
-                                        <td className="py-6 px-8 shrink-0">
-                                            <div className="flex items-center gap-2 text-sage/60">
-                                                <Users size={14} className="opacity-40" />
-                                                <span className="text-xs font-medium uppercase tracking-widest">{room.capacity} Cap</span>
-                                            </div>
-                                        </td>
-                                        <td className="py-6 px-8 shrink-0">
-                                            <span className="text-xs text-sage/40 font-bold uppercase tracking-widest">Level 0{(room as any).floor || 1}</span>
-                                        </td>
-                                        <td className="py-6 px-8 shrink-0">
-                                            <div className="flex items-center gap-1 text-cream font-serif text-lg group-hover:text-sage transition-colors">
-                                                <DollarSign size={14} className="text-sage/40" />
-                                                <span>{room.price}</span>
-                                            </div>
-                                        </td>
-                                        <td className="py-6 px-8 shrink-0">
-                                            <span className={cn(
-                                                "text-[9px] uppercase tracking-[0.15em] font-bold px-4 py-1.5 rounded-full border shadow-sm",
-                                                room.status === 'available' ? "bg-emerald-500/10 text-emerald-400 border-emerald-400/20 shadow-emerald-500/5" :
-                                                    room.status === 'occupied' ? "bg-rose-500/10 text-rose-400 border-rose-500/20 shadow-rose-500/5" :
-                                                        "bg-amber-500/10 text-amber-400 border-amber-500/20 shadow-amber-500/5"
-                                            )}>
-                                                {room.status}
-                                            </span>
-                                        </td>
-                                        <td className="py-6 px-8 text-right shrink-0">
-                                            <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300">
-                                                <button className="p-2.5 hover:bg-white/10 rounded-xl text-sage/60 hover:text-sage transition-all"><Edit2 size={16} /></button>
-                                                <button 
-                                                    onClick={() => deleteRoom.mutate(room._id)}
-                                                    className="p-2.5 hover:bg-rose-500/10 rounded-xl text-rose-400/60 hover:text-rose-400 transition-all"
-                                                >
-                                                    <Trash2 size={16} />
-                                                </button>
-                                                <button className="p-2.5 hover:bg-white/10 rounded-xl text-sage/60 hover:text-sage transition-all"><MoreVertical size={16} /></button>
-                                            </div>
-                                        </td>
-                                    </motion.tr>
-                                ))}
+                                            ))}
+                                        </div>
+                                    </motion.div>
+                                )}
                             </AnimatePresence>
-                        </tbody>
-                    </table>
-                </div>
-            </GlassCard>
+                        </GlassCard>
+                    </motion.div>
+                ))}
+            </div>
         </div>
     );
 }

@@ -20,19 +20,36 @@ const bookingSchema = z.object({
 const checkAvailability = async (req, res) => {
     try {
         const { roomType, checkIn, checkOut } = req.query;
-        if (!roomType) return res.status(400).json({ message: 'roomType required' });
+        if (!roomType || !checkIn || !checkOut) {
+            return res.status(400).json({ message: 'roomType, checkIn, and checkOut are required' });
+        }
 
-        const totalRooms = await Room.countDocuments({ roomType });
-        const available = await Room.countDocuments({ roomType, status: 'available' });
+        const room = await Room.findOne({ roomType });
+        if (!room) return res.status(404).json({ message: 'Room type not found' });
+
+        // Find overlapping bookings
+        const overlappingBookings = await Booking.find({
+            room: room._id,
+            status: 'confirmed',
+            $or: [
+                { checkIn: { $lt: new Date(checkOut) }, checkOut: { $gt: new Date(checkIn) } }
+            ]
+        });
+
+        const bookedRoomNumbers = overlappingBookings.map(b => b.roomNumber);
+        
+        // Filter units that are not booked AND not in maintenance
+        const availableUnits = room.units.filter(u => 
+            !bookedRoomNumbers.includes(u.number) && 
+            u.status !== 'maintenance'
+        );
 
         res.json({
             roomType,
-            totalRooms,
-            availableRooms: available,
-            isAvailable: available > 0,
-            message: available > 0
-                ? `${available} room${available > 1 ? 's' : ''} available`
-                : `All ${totalRooms} ${roomType} rooms are currently occupied`
+            totalUnits: room.units.length,
+            availableUnits: availableUnits.length,
+            units: availableUnits.map(u => u.number),
+            isAvailable: availableUnits.length > 0
         });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -46,12 +63,29 @@ const createBooking = async (req, res) => {
         const validated = bookingSchema.parse(req.body);
         const { roomType, checkIn, checkOut, guestName, guestEmail, guests, addons, specialRequests } = validated;
 
-        // Find first available room of this type
-        const room = await Room.findOne({ roomType, status: 'available' });
-        if (!room) {
+        const room = await Room.findOne({ roomType });
+        if (!room) return res.status(404).json({ message: 'Room type not found' });
+
+        // Conflict Guard: Find overlapping bookings
+        const overlappingBookings = await Booking.find({
+            room: room._id,
+            status: 'confirmed',
+            $or: [
+                { checkIn: { $lt: new Date(checkOut) }, checkOut: { $gt: new Date(checkIn) } }
+            ]
+        });
+
+        const bookedRoomNumbers = overlappingBookings.map(b => b.roomNumber);
+        const availableUnit = room.units.find(u => 
+            !bookedRoomNumbers.includes(u.number) && 
+            u.status !== 'maintenance' &&
+            u.status !== 'out_of_service' // status mapping might vary
+        );
+
+        if (!availableUnit) {
             return res.status(409).json({
                 available: false,
-                message: `All ${roomType} rooms are currently occupied. Please choose different dates or a different room type.`
+                message: `All ${roomType} units are currently occupied for the selected dates.`
             });
         }
 
@@ -74,6 +108,7 @@ const createBooking = async (req, res) => {
             guestName,
             guestEmail,
             room: room._id,
+            roomNumber: availableUnit.number,
             checkIn,
             checkOut,
             totalPrice,
@@ -83,11 +118,7 @@ const createBooking = async (req, res) => {
             guests: guests || 2
         });
 
-        // Mark room as occupied
-        room.status = 'occupied';
-        await room.save();
-
-        const fullBooking = await Booking.findById(booking._id).populate('room', 'name roomType roomNumber price');
+        const fullBooking = await Booking.findById(booking._id).populate('room', 'name roomType price');
 
         // Emit real-time events
         const io = req.app.get('io');

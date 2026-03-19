@@ -1,26 +1,44 @@
-import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import axios from 'axios';
 import { GlassCard } from '../components/ui/GlassCard';
 import { Globe, Palette, Mail, Lock, Save, ExternalLink, ToggleLeft, ToggleRight, ChevronRight } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 const MAIN_SITE_URL = 'http://localhost:3000';
 
-export function Settings() {
-    const [siteName, setSiteName] = useState('Aethelgard Boutique Hotel & Spa');
-    const [tagline, setTagline] = useState('Where Heritage Meets Wilderness');
-    const [bookingEmail, setBookingEmail] = useState('bookings@aethelgard.com');
-    const [maintenanceMode, setMaintenanceMode] = useState(false);
-    const [onlineBooking, setOnlineBooking] = useState(true);
-    const [showPrices, setShowPrices] = useState(true);
-    const [emailNotifs, setEmailNotifs] = useState(true);
-    const [saving, setSaving] = useState(false);
+interface Setting {
+    key: string;
+    value: string;
+}
 
-    const handleSave = async () => {
-        setSaving(true);
-        await new Promise(r => setTimeout(r, 800));
-        setSaving(false);
-        toast.success('Settings saved successfully');
+export function Settings() {
+    const queryClient = useQueryClient();
+
+    const { data: settings = [] } = useQuery<Setting[]>({
+        queryKey: ['settings'],
+        queryFn: async () => {
+            const res = await axios.get(`${API_URL}/admin/settings`, { withCredentials: true });
+            return res.data;
+        }
+    });
+
+    const updateSetting = useMutation({
+        mutationFn: async ({ key, value }: { key: string, value: any }) => {
+            await axios.put(`${API_URL}/admin/settings`, { key, value: String(value) }, { withCredentials: true });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['settings'] });
+            toast.success('System parameter updated');
+        }
+    });
+
+    const getSettingValue = (key: string, defaultValue: any) => {
+        const s = settings.find(s => s.key === key);
+        if (!s) return defaultValue;
+        if (s.value === 'true') return true;
+        if (s.value === 'false') return false;
+        return s.value;
     };
 
     const Toggle = ({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) => (
@@ -53,7 +71,8 @@ export function Settings() {
                             <Globe size={16} className="text-sage/40 flex-shrink-0" />
                             <div className="flex-1">
                                 <label className="text-[9px] uppercase tracking-widest text-sage/40 font-bold block mb-1">Hotel Name</label>
-                                <input value={siteName} onChange={e => setSiteName(e.target.value)}
+                                <input value={getSettingValue('hotelName', 'Aethelgard Boutique Hotel & Spa')} 
+                                    onChange={e => updateSetting.mutate({ key: 'hotelName', value: e.target.value })}
                                     className="w-full bg-transparent text-cream text-sm outline-none placeholder-sage/20" />
                             </div>
                         </div>
@@ -61,7 +80,8 @@ export function Settings() {
                             <Palette size={16} className="text-sage/40 flex-shrink-0" />
                             <div className="flex-1">
                                 <label className="text-[9px] uppercase tracking-widest text-sage/40 font-bold block mb-1">Tagline</label>
-                                <input value={tagline} onChange={e => setTagline(e.target.value)}
+                                <input value={getSettingValue('tagline', 'Where Heritage Meets Wilderness')} 
+                                    onChange={e => updateSetting.mutate({ key: 'tagline', value: e.target.value })}
                                     className="w-full bg-transparent text-cream text-sm outline-none placeholder-sage/20" />
                             </div>
                         </div>
@@ -69,7 +89,8 @@ export function Settings() {
                             <Mail size={16} className="text-sage/40 flex-shrink-0" />
                             <div className="flex-1">
                                 <label className="text-[9px] uppercase tracking-widest text-sage/40 font-bold block mb-1">Booking Email</label>
-                                <input value={bookingEmail} onChange={e => setBookingEmail(e.target.value)}
+                                <input value={getSettingValue('bookingEmail', 'bookings@aethelgard.com')} 
+                                    onChange={e => updateSetting.mutate({ key: 'bookingEmail', value: e.target.value })}
                                     className="w-full bg-transparent text-cream text-sm outline-none placeholder-sage/20" />
                             </div>
                         </div>
@@ -80,19 +101,22 @@ export function Settings() {
                 <GlassCard title="Feature Controls" className="border-sage/10">
                     <div className="space-y-2 mt-4">
                         {[
-                            { label: 'Online Booking', desc: 'Allow guests to book directly online', value: onlineBooking, set: setOnlineBooking },
-                            { label: 'Show Room Prices', desc: 'Display prices publicly on main site', value: showPrices, set: setShowPrices },
-                            { label: 'Email Notifications', desc: 'Receive alerts for new bookings', value: emailNotifs, set: setEmailNotifs },
-                            { label: 'Maintenance Mode', desc: 'Take the main website temporarily offline', value: maintenanceMode, set: setMaintenanceMode, danger: true },
-                        ].map(f => (
-                            <div key={f.label} className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${f.value && f.danger ? 'bg-rose-500/5 border-rose-500/20' : 'bg-white/5 border-white/5 hover:border-sage/10'}`}>
-                                <div>
-                                    <p className={`text-sm font-medium ${f.danger && f.value ? 'text-rose-400' : 'text-cream'}`}>{f.label}</p>
-                                    <p className="text-[10px] text-sage/40 mt-0.5">{f.desc}</p>
+                            { label: 'Online Booking', desc: 'Allow guests to book directly online', key: 'onlineBooking', danger: false },
+                            { label: 'Show Room Prices', desc: 'Display prices publicly on main site', key: 'showPrices', danger: false },
+                            { label: 'Email Notifications', desc: 'Receive alerts for new bookings', key: 'emailNotifs', danger: false },
+                            { label: 'Maintenance Mode', desc: 'Take the main website temporarily offline', key: 'maintenanceMode', danger: true },
+                        ].map(f => {
+                            const val = getSettingValue(f.key, f.key === 'onlineBooking' || f.key === 'showPrices');
+                            return (
+                                <div key={f.label} className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${val && f.danger ? 'bg-rose-500/5 border-rose-500/20' : 'bg-white/5 border-white/5 hover:border-sage/10'}`}>
+                                    <div>
+                                        <p className={`text-sm font-medium ${f.danger && val ? 'text-rose-400' : 'text-cream'}`}>{f.label}</p>
+                                        <p className="text-[10px] text-sage/40 mt-0.5">{f.desc}</p>
+                                    </div>
+                                    <Toggle value={val} onChange={(v) => updateSetting.mutate({ key: f.key, value: v })} />
                                 </div>
-                                <Toggle value={f.value} onChange={f.set} />
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </GlassCard>
 
@@ -138,13 +162,10 @@ export function Settings() {
                 </GlassCard>
             </div>
 
-            <motion.button
-                whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                onClick={handleSave} disabled={saving}
-                className="w-full bg-sage hover:bg-sage-light text-moss-dark font-bold py-5 rounded-2xl transition-all duration-500 flex items-center justify-center gap-3 shadow-2xl shadow-sage/10 text-sm uppercase tracking-widest disabled:opacity-60">
-                <Save size={18} />
-                {saving ? 'Saving Configuration...' : 'Save All Settings'}
-            </motion.button>
+            <div className="w-full bg-white/5 border border-sage/10 py-5 rounded-2xl flex items-center justify-center gap-3 text-sage/60 text-[10px] uppercase tracking-[0.3em] font-bold">
+                <Save size={14} />
+                Global Auto-Sync Enabled
+            </div>
         </div>
     );
 }
