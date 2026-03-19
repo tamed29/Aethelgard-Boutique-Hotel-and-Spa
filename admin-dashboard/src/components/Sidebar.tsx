@@ -39,27 +39,58 @@ export function Sidebar() {
             isCollapsed ? "w-24" : "w-72"
         )}>
             {/* Logo Section */}
-            <div className="p-8 flex items-center justify-between overflow-hidden">
+            <div className="p-6 flex items-center justify-between overflow-hidden border-b border-sage/10">
                 {!isCollapsed && (
                     <motion.div
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        className="flex flex-col"
+                        className="flex items-center gap-3"
                     >
-                        <h1 className="text-xl font-serif text-cream tracking-[0.3em] font-medium leading-none">AETHELGARD</h1>
-                        <span className="text-[8px] uppercase tracking-[0.5em] text-sage/40 mt-2 font-bold ml-1">Boutique Estate</span>
+                        {/* Logo SVG icon */}
+                        <div className="w-10 h-10 rounded-xl bg-sage/10 border border-sage/20 flex items-center justify-center flex-shrink-0">
+                            <svg width="24" height="24" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M30 10L15 45H20L30 18L40 45H45L30 10Z" fill="#BAC095"/>
+                                <path d="M22 35H38" stroke="#BAC095" strokeWidth="2" strokeLinecap="round"/>
+                                <path d="M45 45C50 40 50 30 40 25C35 22 25 25 20 30C15 35 15 45 25 45" stroke="#BAC095" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+                                <circle cx="30" cy="10" r="1.5" fill="#BAC095"/>
+                            </svg>
+                        </div>
+                        <div className="flex flex-col">
+                            <h1 className="text-base font-serif text-cream tracking-[0.25em] font-medium leading-none">AETHELGARD</h1>
+                            <span className="text-[7px] uppercase tracking-[0.5em] text-sage/40 mt-1 font-bold">Boutique Estate</span>
+                        </div>
                     </motion.div>
                 )}
                 {isCollapsed && (
-                    <div className="w-8 h-8 rounded-full border border-sage/30 flex items-center justify-center text-sage font-serif text-xs">A</div>
+                    <div className="mx-auto w-12 h-12 rounded-2xl bg-sage/15 border border-sage/30 flex items-center justify-center">
+                        <svg width="32" height="32" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            {/* A Monogram */}
+                            <path d="M30 10L15 45H20L30 18L40 45H45L30 10Z" fill="#BAC095"/>
+                            <path d="M22 35H38" stroke="#BAC095" strokeWidth="2" strokeLinecap="round"/>
+                            {/* Botanical oak leaf */}
+                            <path d="M45 45C50 40 50 30 40 25C35 22 25 25 20 30C15 35 15 45 25 45" stroke="#BAC095" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+                            <path d="M42 32C44 30 44 26 41 24C38 22 34 24 33 27C32 30 34 34 38 35C42 36 45 32 42 32Z" fill="#BAC095" fillOpacity="0.35"/>
+                            <circle cx="30" cy="10" r="1.5" fill="#BAC095"/>
+                        </svg>
+                    </div>
                 )}
+                {!isCollapsed && (
+                    <button
+                        onClick={() => setIsCollapsed(!isCollapsed)}
+                        className="p-2 hover:bg-white/5 rounded-full transition-all duration-300 text-sage/40 hover:text-sage"
+                    >
+                        <ChevronLeft size={16} />
+                    </button>
+                )}
+            </div>
+            {isCollapsed && (
                 <button
                     onClick={() => setIsCollapsed(!isCollapsed)}
-                    className="p-2 hover:bg-white/5 rounded-full transition-all duration-300 text-sage/40 hover:text-sage"
+                    className="p-2 mx-auto mt-2 hover:bg-white/5 rounded-full transition-all duration-300 text-sage/40 hover:text-sage flex"
                 >
-                    {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+                    <ChevronRight size={16} />
                 </button>
-            </div>
+            )}
 
             {/* Navigation Items */}
             <nav className="flex-1 px-4 space-y-1.5 mt-8">

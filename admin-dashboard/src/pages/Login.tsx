@@ -49,9 +49,21 @@ export function Login() {
                 transition={{ duration: 0.8 }}
                 className="w-full max-w-md px-4 z-10"
             >
-                <div className="text-center mb-10">
-                    <h1 className="text-4xl font-serif text-cream tracking-[0.2em] mb-4">AETHELGARD</h1>
-                    <p className="text-sage/60 uppercase tracking-widest text-xs">Admin Access Point</p>
+                <div className="text-center mb-10 flex flex-col items-center gap-4">
+                    {/* Logo Icon */}
+                    <div className="w-16 h-16 rounded-2xl bg-sage/10 border border-sage/20 flex items-center justify-center">
+                        <svg width="40" height="40" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M30 10L15 45H20L30 18L40 45H45L30 10Z" fill="#BAC095"/>
+                            <path d="M22 35H38" stroke="#BAC095" strokeWidth="2" strokeLinecap="round"/>
+                            <path d="M45 45C50 40 50 30 40 25C35 22 25 25 20 30C15 35 15 45 25 45" stroke="#BAC095" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+                            <path d="M42 32C44 30 44 26 41 24C38 22 34 24 33 27C32 30 34 34 38 35C42 36 45 32 42 32Z" fill="#BAC095" fillOpacity="0.3"/>
+                            <circle cx="30" cy="10" r="1.5" fill="#BAC095"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 className="text-3xl font-serif text-cream tracking-[0.2em] mb-1">AETHELGARD</h1>
+                        <p className="text-sage/60 uppercase tracking-widest text-xs">Admin Access Point</p>
+                    </div>
                 </div>
 
                 <GlassCard className="p-8 border-sage/20 bg-black/40">
