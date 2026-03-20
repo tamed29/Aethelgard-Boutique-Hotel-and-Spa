@@ -12,7 +12,7 @@ const getAnalytics = async (req, res) => {
         const bookings = await Booking.find({ status: 'confirmed' });
 
         // Basic revenue calculation
-        const totalRevenue = bookings.reduce((acc, booking) => acc + booking.totalPrice, 0);
+        const totalRevenue = bookings.reduce((acc, booking) => acc + (booking.totalPrice || 0), 0);
 
         // Mock occupancy forecasting for next 30 days
         const occupancyData = Array.from({ length: 30 }, (_, i) => ({

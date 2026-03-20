@@ -41,4 +41,17 @@ const createReview = async (req, res) => {
     res.status(201).json(review);
 };
 
-module.exports = { getReviews, createReview };
+// @desc    Delete a review
+// @route   DELETE /api/reviews/:id
+const deleteReview = async (req, res) => {
+    const review = await Review.findById(req.params.id);
+
+    if (review) {
+        await Review.deleteOne({ _id: req.params.id });
+        res.json({ message: 'Review removed' });
+    } else {
+        res.status(404).json({ message: 'Review not found' });
+    }
+};
+
+module.exports = { getReviews, createReview, deleteReview };
