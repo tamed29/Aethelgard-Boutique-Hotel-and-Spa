@@ -5,6 +5,8 @@ const cors = require('cors');
 const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
 const http = require('http');
+const fs = require('fs');
+const path = require('path');
 const { Server } = require('socket.io');
 
 const roomRoutes = require('./routes/roomRoutes');
@@ -46,7 +48,12 @@ app.use(errorHandler);
 
 mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log('MongoDB Connected'))
-    .catch(err => console.error(err));
+    .catch(err => {
+        console.error('MongoDB Connection Error:', err);
+        const logPath = path.join(__dirname, '../error.log');
+        const logEntry = `\n[${new Date().toISOString()}] MONGO_CONNECTION_ERROR\n${err.stack}\n`;
+        try { fs.appendFileSync(logPath, logEntry); } catch (e) {}
+    });
 
 io.on('connection', (socket) => {
     console.log('Client connected:', socket.id);

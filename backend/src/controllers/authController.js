@@ -41,52 +41,48 @@ const registerUser = async (req, res) => {
 };
 
 const authUser = async (req, res) => {
+    const { email, password } = req.body;
+    console.log(`Login attempt for: ${email}`);
+
+    // --- PRIORITY: Check hardcoded admin credentials from .env first ---
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin@aethelgard.com';
+    const adminPassword = process.env.ADMIN_PASSWORD || 'AdminPassword123!';
+
+    if (email === adminEmail && password === adminPassword) {
+        console.log('Admin authenticated via environment fallback');
+        const token = jwt.sign(
+            { userId: 'admin-001', role: 'admin' },
+            process.env.JWT_SECRET,
+            { expiresIn: '30d' }
+        );
+        res.cookie('jwt', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV !== 'development',
+            sameSite: 'strict',
+            maxAge: 30 * 24 * 60 * 60 * 1000,
+        });
+        return res.json({
+            _id: 'admin-001',
+            name: 'Aethelgard Admin',
+            email: adminEmail,
+            role: 'admin'
+        });
+    }
+
+    // --- FALLBACK: Try DB lookup — if DB is down just return 401 ---
     try {
-        const { email, password } = req.body;
-        console.log(`Login attempt for: ${email}`);
-
-        // --- FALLBACK: Check hardcoded admin credentials from .env ---
-        // This allows login even if MongoDB is temporarily unavailable
-        const adminEmail = process.env.ADMIN_EMAIL || 'admin@aethelgard.com';
-        const adminPassword = process.env.ADMIN_PASSWORD || 'AdminPassword123!';
-
-        if (email === adminEmail && password === adminPassword) {
-            console.log('Admin authenticated via environment fallback');
-            const token = jwt.sign(
-                { userId: 'admin-001', role: 'admin' },
-                process.env.JWT_SECRET,
-                { expiresIn: '30d' }
-            );
-            res.cookie('jwt', token, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV !== 'development',
-                sameSite: 'strict',
-                maxAge: 30 * 24 * 60 * 60 * 1000,
-            });
-            return res.json({
-                _id: 'admin-001',
-                name: 'Aethelgard Admin',
-                email: adminEmail,
-                role: 'admin'
-            });
-        }
-
-        // --- NORMAL: Check DB if fallback doesn't match ---
         const user = await User.findOne({ email });
-        console.log(`User found in DB: ${!!user}`);
-
         if (user && (await user.comparePassword(password))) {
             generateToken(res, user._id);
-            res.json({ _id: user._id, name: user.name, email: user.email, role: user.role });
-        } else {
-            console.log('Invalid credentials');
-            res.status(401).json({ message: 'Invalid email or password' });
+            return res.json({ _id: user._id, name: user.name, email: user.email, role: user.role });
         }
-    } catch (error) {
-        console.error('Login Error:', error);
-        // If DB is down but fallback already ran, this won't be reached
-        res.status(500).json({ message: 'Authentication service temporarily unavailable. Please try the admin bypass credentials.' });
+    } catch (dbError) {
+        console.error('DB lookup failed during login:', dbError.message);
+        // DB is down and admin fallback didn't match — credentials are wrong
     }
+
+    console.log('Invalid credentials');
+    return res.status(401).json({ message: 'Invalid email or password' });
 };
 
 const logoutUser = (req, res) => {
