@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -5,14 +6,11 @@ const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
 const http = require('http');
 const { Server } = require('socket.io');
-const dotenv = require('dotenv');
 
 const roomRoutes = require('./routes/roomRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const apiRoutes = require('./routes/api');
 const { errorHandler } = require('./middleware/errorMiddleware');
-
-dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
