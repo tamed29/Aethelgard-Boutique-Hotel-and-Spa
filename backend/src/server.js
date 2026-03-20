@@ -33,12 +33,15 @@ app.use(cookieParser());
 const bookingRoutes = require('./routes/bookingRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const inquiryRoutes = require('./routes/inquiryRoutes');
+const galleryRoutes = require('./routes/galleryRoutes');
+
 app.use('/api/rooms', roomRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/inquiries', inquiryRoutes);
 app.use('/api/auth', apiRoutes);
+app.use('/api/gallery', galleryRoutes);
 
 // Error Middleware
 app.use(errorHandler);

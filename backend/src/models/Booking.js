@@ -11,7 +11,7 @@ const bookingSchema = new mongoose.Schema({
     checkIn: { type: Date, required: true },
     checkOut: { type: Date, required: true },
     totalPrice: { type: Number, required: true },
-    status: { type: String, enum: ['locked', 'pending', 'confirmed', 'cancelled'], default: 'locked' },
+    status: { type: String, enum: ['locked', 'pending', 'confirmed', 'cancelled', 'checked-in', 'checked-out'], default: 'locked' },
     addons: [{ type: String }],
     specialRequests: { type: String },
     guests: { type: Number, default: 2 },
