@@ -69,20 +69,20 @@ export function Bookings() {
         return () => { socket.disconnect(); };
     }, [queryClient]);
 
-    if (isLoading) return (
-        <div className="flex h-[60vh] items-center justify-center">
-            <div className="animate-pulse text-sage tracking-[0.4em] uppercase text-xs font-bold">Synchronizing Guest Records...</div>
-        </div>
-    );
-
     const updateStatus = useMutation({
         mutationFn: async ({ id, status }: { id: string; status: string }) => {
-            await axios.put(`${API_URL}/admin/bookings/${id}`, { status }, { withCredentials: true });
+            await axios.put(`${API_URL}/bookings/${id}/status`, { status }, { withCredentials: true });
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['bookings'] });
         }
     });
+
+    if (isLoading) return (
+        <div className="flex h-[60vh] items-center justify-center">
+            <div className="animate-pulse text-sage tracking-[0.4em] uppercase text-xs font-bold">Synchronizing Guest Records...</div>
+        </div>
+    );
 
     const filtered = bookings
         .filter(b => filter === 'all' || b.status === filter)

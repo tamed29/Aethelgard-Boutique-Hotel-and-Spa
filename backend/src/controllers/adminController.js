@@ -102,6 +102,43 @@ const createRecommendation = async (req, res) => {
     }
 };
 
+const updateRecommendation = async (req, res) => {
+    try {
+        const { title, description, category, imageUrl, isFeatured } = req.body;
+        const recommendation = await Recommendation.findById(req.params.id);
+
+        if (recommendation) {
+            if (title) recommendation.title = title;
+            if (description) recommendation.description = description;
+            if (category) recommendation.category = category;
+            if (imageUrl !== undefined) recommendation.imageUrl = imageUrl;
+            if (isFeatured !== undefined) recommendation.isFeatured = isFeatured;
+
+            const updatedRecommendation = await recommendation.save();
+            res.json(updatedRecommendation);
+        } else {
+            res.status(404).json({ message: 'Recommendation not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+const deleteRecommendation = async (req, res) => {
+    try {
+        const recommendation = await Recommendation.findById(req.params.id);
+
+        if (recommendation) {
+            await recommendation.deleteOne();
+            res.json({ message: 'Recommendation removed' });
+        } else {
+            res.status(404).json({ message: 'Recommendation not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 const AuditLog = require('../models/AuditLog');
 
 const getAuditLogs = async (req, res) => {
@@ -151,6 +188,8 @@ module.exports = {
     createMultiplier,
     getRecommendations,
     createRecommendation,
+    updateRecommendation,
+    deleteRecommendation,
     getPricingRules,
     createPricingRule,
     getAuditLogs,

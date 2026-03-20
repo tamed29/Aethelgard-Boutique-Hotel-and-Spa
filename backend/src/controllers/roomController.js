@@ -31,11 +31,17 @@ const getRoomById = async (req, res) => {
 };
 
 const createRoom = async (req, res) => {
-    const { name, description, price, capacity, amenities, images } = req.body;
+    const { name, roomType, roomNumber, description, price, capacity, sizeSqM, bedType, view, amenities, images, floor, videoUrl, bathroomImages, units } = req.body;
     const room = new Room({
-        name, description, price, capacity, amenities, images
+        name, roomType, roomNumber, description, price, capacity, sizeSqM, bedType, view, amenities, images, floor, videoUrl, bathroomImages, units
     });
     const createdRoom = await room.save();
+    
+    const io = req.app.get('io');
+    if (io) {
+        io.emit('roomCreate', { roomId: createdRoom._id });
+    }
+
     res.status(201).json(createdRoom);
 };
 
@@ -106,11 +112,71 @@ const updateUnitStatus = async (req, res) => {
     res.json({ message: 'Unit status updated', unit });
 };
 
+const updateRoom = async (req, res) => {
+    try {
+        const { name, roomType, roomNumber, description, price, capacity, sizeSqM, bedType, view, amenities, images, floor, videoUrl, bathroomImages, units } = req.body;
+        const room = await Room.findById(req.params.id);
+
+        if (room) {
+            if (name) room.name = name;
+            if (roomType) room.roomType = roomType;
+            if (roomNumber) room.roomNumber = roomNumber;
+            if (description !== undefined) room.description = description;
+            if (price !== undefined) room.price = price;
+            if (capacity !== undefined) room.capacity = capacity;
+            if (sizeSqM !== undefined) room.sizeSqM = sizeSqM;
+            if (bedType !== undefined) room.bedType = bedType;
+            if (view !== undefined) room.view = view;
+            if (amenities) room.amenities = amenities;
+            if (images) room.images = images;
+            if (bathroomImages) room.bathroomImages = bathroomImages;
+            if (floor !== undefined) room.floor = floor;
+            if (videoUrl !== undefined) room.videoUrl = videoUrl;
+            if (units) room.units = units;
+
+            const updatedRoom = await room.save();
+            
+            const io = req.app.get('io');
+            if (io) {
+                io.emit('roomUpdate', { roomId: updatedRoom._id });
+            }
+
+            res.json(updatedRoom);
+        } else {
+            res.status(404).json({ message: 'Room not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+const deleteRoom = async (req, res) => {
+    try {
+        const room = await Room.findById(req.params.id);
+        if (room) {
+            await room.deleteOne();
+            
+            const io = req.app.get('io');
+            if (io) {
+                io.emit('roomDelete', { roomId: req.params.id });
+            }
+
+            res.json({ message: 'Room removed' });
+        } else {
+            res.status(404).json({ message: 'Room not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = { 
     getRooms, 
     getRoomById, 
     createRoom, 
     updateRoomPrice, 
     updateRoomStatus,
-    updateUnitStatus
+    updateUnitStatus,
+    updateRoom,
+    deleteRoom
 };
