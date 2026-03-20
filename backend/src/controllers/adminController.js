@@ -7,9 +7,11 @@ const Recommendation = require('../models/Recommendation');
 const PricingRule = require('../models/PricingRule');
 
 // Analytics: Revenue and Occupancy
-const getAnalytics = async (req, res) => {
+const getAnalytics = async (req, res, next) => {
     try {
+        console.log('Fetching analytics data...');
         const bookings = await Booking.find({ status: 'confirmed' });
+        console.log(`Found ${bookings.length} confirmed bookings`);
 
         // Basic revenue calculation
         const totalRevenue = bookings.reduce((acc, booking) => acc + (booking.totalPrice || 0), 0);
@@ -35,17 +37,18 @@ const getAnalytics = async (req, res) => {
             }
         });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('Analytics Fetch Error:', error);
+        next(error);
     }
 };
 
 // Pricing Multipliers
-const getMultipliers = async (req, res) => {
+const getMultipliers = async (req, res, next) => {
     try {
         const multipliers = await PricingMultiplier.find({});
         res.json(multipliers);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        next(error);
     }
 };
 
@@ -82,12 +85,12 @@ const createPricingRule = async (req, res) => {
 };
 
 // Recommendations
-const getRecommendations = async (req, res) => {
+const getRecommendations = async (req, res, next) => {
     try {
         const recommendations = await Recommendation.find({});
         res.json(recommendations);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        next(error);
     }
 };
 
@@ -141,23 +144,23 @@ const deleteRecommendation = async (req, res) => {
 
 const AuditLog = require('../models/AuditLog');
 
-const getAuditLogs = async (req, res) => {
+const getAuditLogs = async (req, res, next) => {
     try {
         const logs = await AuditLog.find({}).populate('userId', 'name email').sort({ timestamp: -1 });
         res.json(logs);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        next(error);
     }
 };
 
 const Settings = require('../models/Settings');
 
-const getSettings = async (req, res) => {
+const getSettings = async (req, res, next) => {
     try {
         const settings = await Settings.find({});
         res.json(settings);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        next(error);
     }
 };
 
