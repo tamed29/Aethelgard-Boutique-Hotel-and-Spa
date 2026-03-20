@@ -149,18 +149,25 @@ const createBooking = async (req, res) => {
         await session.commitTransaction();
         session.endSession();
 
-        const fullBooking = await Booking.findById(booking[0]._id).populate('room', 'name roomType price');
+        let fullBooking = null;
+        try {
+            fullBooking = await Booking.findById(booking[0]._id).populate('room', 'name roomType price');
+        } catch (findErr) {
+            console.error('Failed to immediately fetch populated booking:', findErr);
+        }
 
         // 6. Real-time Dashboard Sync
         const io = req.app.get('io');
         if (io) {
-            io.emit('newBooking', { 
-                ...fullBooking.toObject(), 
-                guestName, 
-                guestEmail,
-                isAtomic: true,
-                timestamp: new Date()
-            });
+            if (fullBooking) {
+                io.emit('newBooking', { 
+                    ...fullBooking.toObject(), 
+                    guestName, 
+                    guestEmail,
+                    isAtomic: true,
+                    timestamp: new Date()
+                });
+            }
             // Update the specific room unit status (UI level sync)
             io.emit('unitStatusUpdate', { 
                 roomTypeId: room._id, 
@@ -171,18 +178,29 @@ const createBooking = async (req, res) => {
 
         // 7. Non-blocking Email Alerts
         const guestUser = { name: guestName, email: guestEmail };
-        sendBookingConfirmation(fullBooking, guestUser, room).catch(err => console.error('Email failed:', err));
-        sendNewBookingAlertToAdmin(fullBooking, guestUser, room).catch(err => console.error('Admin alert failed:', err));
+        if (fullBooking) {
+            sendBookingConfirmation(fullBooking, guestUser, room).catch(err => console.error('Email failed:', err));
+            sendNewBookingAlertToAdmin(fullBooking, guestUser, room).catch(err => console.error('Admin alert failed:', err));
+        }
 
         res.status(201).json({
             success: true,
-            booking: fullBooking,
+            booking: fullBooking || booking[0],
             roomNumber: availableUnit.number
         });
 
     } catch (error) {
-        await session.abortTransaction();
-        session.endSession();
+        console.error('Create Booking Error:', error);
+        try {
+            if (session.inTransaction()) {
+                await session.abortTransaction();
+            }
+        } catch (abortError) {
+            console.error('Session Abort Error:', abortError);
+        } finally {
+            if (!session.hasEnded) session.endSession();
+        }
+        
         if (error instanceof z.ZodError) {
             return res.status(400).json({ errors: error.errors });
         }
