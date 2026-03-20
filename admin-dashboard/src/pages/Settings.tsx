@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { GlassCard } from '../components/ui/GlassCard';
-import { Globe, Palette, Mail, Lock, Save, ExternalLink, ToggleLeft, ToggleRight, ChevronRight } from 'lucide-react';
+import { Globe, Palette, Mail, Lock, Save, ExternalLink, ToggleLeft, ToggleRight } from 'lucide-react';
 import { toast } from 'sonner';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -120,25 +120,7 @@ export function Settings() {
                     </div>
                 </GlassCard>
 
-                {/* Quick Site Links */}
-                <GlassCard title="Website Sections" className="border-sage/10">
-                    <div className="space-y-2 mt-4">
-                        {[
-                            { label: 'Homepage', path: '/' },
-                            { label: 'Rooms & Suites', path: '/rooms' },
-                            { label: 'Experiences', path: '/experience' },
-                            { label: 'Dining', path: '/dining' },
-                            { label: 'The Story', path: '/story' },
-                            { label: 'Contact', path: '/contact' },
-                        ].map(p => (
-                            <a key={p.label} href={`${MAIN_SITE_URL}${p.path}`} target="_blank" rel="noopener noreferrer"
-                                className="flex items-center justify-between p-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-sage/20 transition-all group">
-                                <span className="text-sm text-sage/80 group-hover:text-cream transition-colors">{p.label}</span>
-                                <ChevronRight size={14} className="text-sage/20 group-hover:text-sage transition-colors" />
-                            </a>
-                        ))}
-                    </div>
-                </GlassCard>
+
 
                 {/* Security */}
                 <GlassCard title="Security Settings" className="border-sage/10">

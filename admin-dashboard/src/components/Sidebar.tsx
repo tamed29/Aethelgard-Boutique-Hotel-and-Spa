@@ -146,7 +146,7 @@ export function Sidebar() {
                     isCollapsed ? "justify-center" : ""
                 )}>
                     <LogOut size={20} className="shrink-0 transition-transform group-hover:-translate-x-1" />
-                    {!isCollapsed && <span className="font-serif tracking-widest text-xs uppercase font-bold">Sign Out</span>}
+                    {!isCollapsed && <span className="font-serif tracking-widest text-xs uppercase font-bold">Logout</span>}
                 </button>
             </div>
             

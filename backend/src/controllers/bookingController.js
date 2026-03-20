@@ -121,7 +121,7 @@ const createBooking = async (req, res) => {
             return res.status(400).json({ message: 'Invalid dates selected' });
         }
 
-        const peakSetting = await Settings.findOne({ key: 'peakSeasonMultiplier' }).session(session).catch(() => null);
+        const peakSetting = await Settings.findOne({ key: 'peakSeasonMultiplier' }).catch(() => null);
         const multiplier = peakSetting ? parseFloat(peakSetting.value) || 1 : 1;
 
         const addonCosts = { champagne: 120, spa: 350, late_checkout: 75, airport_transfer: 80 };

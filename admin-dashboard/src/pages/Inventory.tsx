@@ -149,8 +149,8 @@ export function Inventory() {
                         <Layers size={32} strokeWidth={1.5} />
                     </div>
                     <div>
-                        <h2 className="text-4xl font-serif text-cream">Operations Terminal</h2>
-                        <p className="text-sage/40 text-[10px] mt-1 uppercase tracking-[0.3em] font-black">Nested Inventory Architecture v4.2</p>
+                        <h2 className="text-4xl font-serif text-cream">Room Inventory</h2>
+                        <p className="text-sage/40 text-[10px] mt-1 uppercase tracking-[0.3em] font-black">Manage and allocate hotel rooms</p>
                     </div>
                 </div>
                 <div className="flex gap-4 w-full md:w-auto">
@@ -166,7 +166,7 @@ export function Inventory() {
                     </div>
                     <button onClick={openAddModal} className="bg-sage hover:bg-white text-moss-dark font-black px-10 py-5 rounded-full transition-all duration-700 flex items-center gap-4 shadow-2xl shadow-sage/20 hover:shadow-white/10 group active:scale-95 leading-none text-[10px] uppercase tracking-[0.4em]">
                         <Plus size={20} className="group-hover:rotate-180 transition-transform duration-700" />
-                        <span>Allocate Unit</span>
+                        <span>Add Room</span>
                     </button>
                     {isFetching && <RefreshCw className="animate-spin text-sage w-5 h-5 self-center" />}
                 </div>

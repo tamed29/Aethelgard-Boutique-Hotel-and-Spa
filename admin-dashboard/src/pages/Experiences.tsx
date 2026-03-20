@@ -102,12 +102,12 @@ export function Experiences() {
         <div className="space-y-8 pb-12">
             <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div>
-                    <h2 className="text-3xl font-serif text-cream">Experience Curator</h2>
-                    <p className="text-sage/40 text-[10px] mt-2 uppercase tracking-[0.3em] font-bold">Managing The 'Bon Vivant' Collection</p>
+                    <h2 className="text-3xl font-serif text-cream">Experiences</h2>
+                    <p className="text-sage/40 text-[10px] mt-2 uppercase tracking-[0.3em] font-bold">Manage hotel guest experiences</p>
                 </div>
                 <button onClick={openAddModal} className="bg-sage hover:bg-sage-light text-moss-dark font-bold px-8 py-4 rounded-2xl transition-all duration-500 flex items-center gap-3 shadow-2xl shadow-sage/10 group active:scale-95">
                     <Plus size={20} className="group-hover:rotate-90 transition-transform duration-500" />
-                    <span>Curate New</span>
+                    <span>Add Experience</span>
                 </button>
             </header>
 
@@ -186,7 +186,7 @@ export function Experiences() {
                         <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }} className="w-full max-w-2xl bg-[#1A1F16] border border-sage/20 rounded-3xl overflow-hidden shadow-2xl">
                             <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
                                 <h3 className="text-2xl font-serif text-cream">
-                                    {editingExp ? 'Edit Experience' : 'Curate New Experience'}
+                                    {editingExp ? 'Edit Experience' : 'Add New Experience'}
                                 </h3>
                                 <button onClick={() => setIsModalOpen(false)} className="p-2 text-sage/40 hover:text-sage transition-colors"><X size={20} /></button>
                             </div>
