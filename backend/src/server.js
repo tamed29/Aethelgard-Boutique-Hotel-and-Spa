@@ -34,6 +34,8 @@ const bookingRoutes = require('./routes/bookingRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const inquiryRoutes = require('./routes/inquiryRoutes');
 const galleryRoutes = require('./routes/galleryRoutes');
+const newsRoutes = require('./routes/newsRoutes');
+const spaRoutes = require('./routes/spaRoutes');
 
 app.use('/api/rooms', roomRoutes);
 app.use('/api/admin', adminRoutes);
@@ -42,6 +44,8 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/inquiries', inquiryRoutes);
 app.use('/api/auth', apiRoutes);
 app.use('/api/gallery', galleryRoutes);
+app.use('/api/news', newsRoutes);
+app.use('/api/spa', spaRoutes);
 
 // Error Middleware
 app.use(errorHandler);

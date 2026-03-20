@@ -17,42 +17,47 @@ const bookingSchema = z.object({
     specialRequests: z.string().optional()
 });
 
-// @desc    Check availability for a room type
-// @route   GET /api/bookings/availability?roomType=forest&checkIn=...&checkOut=...
+// @desc    Check availability for a room type or all room types
+// @route   GET /api/bookings/availability?checkIn=...&checkOut=...
 const checkAvailability = async (req, res) => {
     try {
         const { roomType, checkIn, checkOut } = req.query;
-        if (!roomType || !checkIn || !checkOut) {
-            return res.status(400).json({ message: 'roomType, checkIn, and checkOut are required' });
+        if (!checkIn || !checkOut) {
+            return res.status(400).json({ message: 'checkIn and checkOut are required' });
         }
 
-        const room = await Room.findOne({ roomType });
-        if (!room) return res.status(404).json({ message: 'Room type not found' });
-
-        // Find overlapping bookings
-        const overlappingBookings = await Booking.find({
-            room: room._id,
-            status: 'confirmed',
-            $or: [
-                { checkIn: { $lt: new Date(checkOut) }, checkOut: { $gt: new Date(checkIn) } }
-            ]
-        });
-
-        const bookedRoomNumbers = overlappingBookings.map(b => b.roomNumber);
+        const query = roomType ? { roomType } : {};
+        const rooms = await Room.find(query);
         
-        // Filter units that are not booked AND not in maintenance
-        const availableUnits = room.units.filter(u => 
-            !bookedRoomNumbers.includes(u.number) && 
-            u.status !== 'maintenance'
-        );
+        if (roomType && rooms.length === 0) return res.status(404).json({ message: 'Room type not found' });
 
-        res.json({
-            roomType,
-            totalUnits: room.units.length,
-            availableUnits: availableUnits.length,
-            units: availableUnits.map(u => u.number),
-            isAvailable: availableUnits.length > 0
-        });
+        const results = await Promise.all(rooms.map(async (room) => {
+            const overlappingBookings = await Booking.find({
+                room: room._id,
+                status: 'confirmed',
+                $or: [
+                    { checkIn: { $lt: new Date(checkOut) }, checkOut: { $gt: new Date(checkIn) } }
+                ]
+            });
+
+            const bookedRoomNumbers = overlappingBookings.map(b => b.roomNumber);
+            const availableUnits = room.units.filter(u => 
+                !bookedRoomNumbers.includes(u.number) && 
+                u.status !== 'maintenance' &&
+                u.status !== 'out_of_service'
+            );
+
+            return {
+                roomType: room.roomType,
+                roomId: room._id,
+                totalUnits: room.units.length,
+                availableUnits: availableUnits.length,
+                units: availableUnits.map(u => u.number),
+                isAvailable: availableUnits.length > 0
+            };
+        }));
+
+        res.json(roomType ? results[0] : results);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -253,4 +258,28 @@ const updateBookingStatus = async (req, res) => {
     }
 };
 
-module.exports = { createBooking, getBookings, getMyBookings, updateBookingStatus, checkAvailability };
+// @desc    Update entire booking (Admin)
+// @route   PUT /api/bookings/:id
+const updateBooking = async (req, res) => {
+    try {
+        const booking = await Booking.findById(req.params.id).populate('room');
+        if (booking) {
+            const updatableFields = ['guestName', 'guestEmail', 'guestPhone', 'roomNumber', 'totalPrice', 'status', 'checkIn', 'checkOut'];
+            updatableFields.forEach(field => {
+                if (req.body[field] !== undefined) {
+                    booking[field] = req.body[field];
+                }
+            });
+            const updatedBooking = await booking.save();
+            const io = req.app.get('io');
+            if (io) io.emit('bookingUpdate', updatedBooking);
+            res.json(updatedBooking);
+        } else {
+            res.status(404).json({ message: 'Booking not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+module.exports = { createBooking, getBookings, getMyBookings, updateBookingStatus, checkAvailability, updateBooking };

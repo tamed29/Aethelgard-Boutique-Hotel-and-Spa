@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { protect, admin } = require('../middleware/authMiddleware');
 const idempotency = require('../middleware/idempotency');
-const { createBooking, getBookings, getMyBookings, updateBookingStatus, checkAvailability } = require('../controllers/bookingController');
+const { createBooking, getBookings, getMyBookings, updateBookingStatus, checkAvailability, updateBooking } = require('../controllers/bookingController');
 
 // Public availability check (no auth needed)
 router.get('/availability', checkAvailability);
@@ -14,6 +14,9 @@ router.route('/')
 
 router.route('/mybookings')
     .get(protect, getMyBookings);
+
+router.route('/:id')
+    .put(protect, admin, updateBooking);
 
 router.route('/:id/status')
     .put(protect, admin, updateBookingStatus);
