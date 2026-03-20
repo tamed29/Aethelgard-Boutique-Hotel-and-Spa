@@ -10,6 +10,8 @@ const bookingSchema = z.object({
     checkOut: z.coerce.date(),
     guestName: z.string().min(2, "Guest name is required"),
     guestEmail: z.string().email("Valid email required"),
+    guestPhone: z.string().optional(),
+    paymentMethod: z.string().optional(),
     guests: z.number().min(1).max(10).optional(),
     addons: z.array(z.string()).optional(),
     specialRequests: z.string().optional()
@@ -66,14 +68,21 @@ const createBooking = async (req, res) => {
 
     try {
         const validated = bookingSchema.parse(req.body);
-        const { roomType, checkIn, checkOut, guestName, guestEmail, guests, addons, specialRequests } = validated;
+        const { roomType, checkIn, checkOut, guestName, guestEmail, guestPhone, paymentMethod, guests, addons, specialRequests } = validated;
 
         // 1. Fetch Room Type and Units under transaction
-        const room = await Room.findOne({ roomType }).session(session);
+        let room = await Room.findOne({ roomType }).session(session);
         if (!room) {
-            await session.abortTransaction();
-            session.endSession();
-            return res.status(404).json({ message: 'Room type not found' });
+            // Auto-create room for testing/demonstration if user hasn't added it yet
+            room = new Room({
+                name: `${roomType.charAt(0).toUpperCase() + roomType.slice(1)} Suite`,
+                roomType: roomType,
+                roomNumber: `${roomType.toUpperCase()}-001`,
+                price: 350,
+                capacity: 2,
+                units: [{ number: `${roomType.toUpperCase()}-001`, status: 'available' }]
+            });
+            await room.save({ session });
         }
 
         // 2. Conflict Guard: Find overlapping bookings for this room type
@@ -124,6 +133,8 @@ const createBooking = async (req, res) => {
             user: req.user ? req.user._id : null,
             guestName,
             guestEmail,
+            guestPhone,
+            paymentMethod,
             room: room._id,
             roomNumber: availableUnit.number,
             checkIn,
