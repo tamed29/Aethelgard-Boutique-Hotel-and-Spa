@@ -1,0 +1,63 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Montserrat:wght@100..900&display=swap');
+
+:root {
+  /* Mossy Hollow Palette */
+  --moss-100: #D4DE95;
+  --moss-200: #BAC095;
+  --moss-700: #636B2F;
+  --moss-900: #3D4127;
+  --moss-950: #1A1C11;
+
+  /* Aethelgard Brand Palette */
+  --heritage-parchment: #F5F2ED;
+  --deep-forest-green: #1A1F16;
+
+  --background: var(--deep-forest-green);
+  --foreground: var(--heritage-parchment);
+  --glass-bg: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(255, 255, 255, 0.2);
+
+  --font-playfair: "Playfair Display", serif;
+  --font-montserrat: "Montserrat", sans-serif;
+}
+
+.theme-nature-night {
+  --background: var(--moss-900);
+  --foreground: var(--moss-100);
+  --glass-bg: rgba(61, 65, 39, 0.4);
+  --glass-border: rgba(212, 222, 149, 0.2);
+}
+
+.theme-nature-day {
+  /* Reverts to default root */
+}
+
+@theme inline {
+  --color-moss-100: var(--moss-100);
+  --color-moss-200: var(--moss-200);
+  --color-moss-700: var(--moss-700);
+  --color-moss-900: var(--moss-900);
+  --color-moss-950: var(--moss-950);
+  --color-heritage-parchment: var(--heritage-parchment);
+  --color-deep-forest-green: var(--deep-forest-green);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-playfair), ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  transition: background-color 1.5s ease, color 1.5s ease;
+}
+
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}

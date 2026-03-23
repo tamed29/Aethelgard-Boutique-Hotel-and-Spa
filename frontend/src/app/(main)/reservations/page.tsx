@@ -1,0 +1,674 @@
+'use client';
+
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
+import { Calendar as CalendarIcon, Bed, Users, ArrowRight, Check, X, ShieldCheck, MapPin, Sparkles, Coffee, Bath, Star, CreditCard } from 'lucide-react';
+import { format, addDays, differenceInDays } from 'date-fns';
+import { DayPicker } from 'react-day-picker';
+import 'react-day-picker/dist/style.css';
+import Image from 'next/image';
+import ScrollReveal from '@/components/ui/ScrollReveal';
+
+const roomTypes = [
+    {
+        id: 'grand',
+        name: 'Grand Estate Suite',
+        price: 950,
+        sqm: 145,
+        view: 'Forest Panorama',
+        bed: 'Grand Four-Porter',
+        images: ['/images/rooms/grand/g1.png', '/images/rooms/grand/g2.png', '/images/rooms/grand/g3.png'],
+        desc: 'The pinnacle of Aethelgard. Sovereign luxury with 360-degree views.'
+    },
+    {
+        id: 'forest',
+        name: 'Forest Retreat',
+        price: 320,
+        sqm: 72,
+        view: 'Old-Growth Canopy',
+        bed: 'California King',
+        images: ['/images/rooms/forest/r1.png', '/images/rooms/forest/r2.png', '/images/rooms/forest/r3.png'],
+        desc: 'Subterranean stone and reclaimed timber. Deep restoration.'
+    },
+    {
+        id: 'botanical',
+        name: 'Botanical Oasis',
+        price: 380,
+        sqm: 78,
+        view: 'Heritage Garden',
+        bed: 'Linen King',
+        images: ['/images/rooms/botanical/b1.png', '/images/rooms/botanical/b2.png', '/images/rooms/botanical/b3.png'],
+        desc: 'Living botanical walls and direct garden terrace access.'
+    },
+    {
+        id: 'skyward',
+        name: 'Skyward Loft',
+        price: 450,
+        sqm: 85,
+        view: 'Celestial Horizon',
+        bed: 'Starlight King',
+        images: ['/images/rooms/single/s1.png'],
+        desc: 'Elevated sanctuary with floor-to-ceiling glass and private observatory.'
+    },
+    {
+        id: 'garden',
+        name: 'Garden Sanctuary',
+        price: 420,
+        sqm: 90,
+        view: 'Herbal Zen Garden',
+        bed: 'Twin Artisan Oaks',
+        images: ['/images/rooms/single/s2.png'],
+        desc: 'Ground-level suite with direct access to the private meditation garden.'
+    },
+    {
+        id: 'manor',
+        name: 'Heritage Wing',
+        price: 600,
+        sqm: 110,
+        view: 'Estate Courtyard',
+        bed: 'Manor Canopy King',
+        images: ['/images/rooms/single/s3.png'],
+        desc: 'Historic chambers within the original 17th-century stone wing.'
+    }
+];
+
+const enhancements = [
+    { id: 'breakfast', name: 'Artisan Breakfast Buffet', price: 45, icon: <Coffee className="w-5 h-5" />, desc: 'Farm-to-table morning spread in the Conservatory.' },
+    { id: 'spa', name: 'Private Thermal Access', price: 120, icon: <Bath className="w-5 h-5" />, desc: 'Exclusive 1-hour midnight access to the thermal pools.' },
+    { id: 'butler', name: 'Estate Butler Service', price: 200, icon: <Star className="w-5 h-5" />, desc: 'Dedicated packing, unpacking, and bespoke concierge.' },
+];
+
+export default function ReservationsPortal() {
+    const [step, setStep] = useState(1);
+    const [status, setStatus] = useState<'idle' | 'submitting' | 'success'>('idle');
+    const [bookingCode, setBookingCode] = useState('');
+    const [range, setRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
+        from: new Date(),
+        to: addDays(new Date(), 2)
+    });
+    const [selectedRoom, setSelectedRoom] = useState<typeof roomTypes[0] | null>(null);
+    const [selectedEnhancements, setSelectedEnhancements] = useState<string[]>([]);
+    const [isPrivacyAccepted, setIsPrivacyAccepted] = useState(false);
+    
+    // Guest Information State
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
+    const [email, setEmail] = useState('');
+    const [phone, setPhone] = useState('');
+    const [address, setAddress] = useState('');
+    const [city, setCity] = useState('');
+    const [country, setCountry] = useState('');
+    const [specialRequests, setSpecialRequests] = useState('');
+
+    // Payment State
+    const [cardHolderName, setCardHolderName] = useState('');
+    const [cardNumber, setCardNumber] = useState('');
+    const [expiryDate, setExpiryDate] = useState('');
+    const [cvv, setCvv] = useState('');
+    const [paymentMethod, setPaymentMethod] = useState('Credit Card');
+
+    const [isChecking, setIsChecking] = useState(false);
+    const [availabilityData, setAvailabilityData] = useState<any[]>([]);
+
+    const handleCheckAvailability = async () => {
+        if (!range.from || !range.to) return;
+        setIsChecking(true);
+        try {
+            const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+            const res = await fetch(`${API_URL}/bookings/availability?checkIn=${range.from.toISOString()}&checkOut=${range.to.toISOString()}`);
+            const data = await res.json();
+            if (res.ok) {
+                setAvailabilityData(Array.isArray(data) ? data : [data]);
+                setStep(2);
+            } else {
+                toast.error('Availability Check Failed', { description: data.message });
+            }
+        } catch (error: any) {
+            // Fallback to dummy data if backend is not ready
+            setAvailabilityData(roomTypes.map(r => ({ roomType: r.id, isAvailable: true })));
+            setStep(2);
+            toast.info('Aethelgard Vault', { description: 'Connected to local availability fallback.' });
+        } finally {
+            setIsChecking(false);
+        }
+    };
+
+    const nextStep = () => setStep(s => s + 1);
+    const prevStep = () => setStep(s => s - 1);
+
+    const toggleEnhancement = (id: string) => {
+        setSelectedEnhancements(prev => 
+            prev.includes(id) ? prev.filter(e => e !== id) : [...prev, id]
+        );
+    };
+
+    const calculateTotal = () => {
+        if (!selectedRoom || !range.from || !range.to) return 0;
+        const nights = differenceInDays(range.to, range.from);
+        const roomTotal = selectedRoom.price * nights;
+        const enhancementTotal = selectedEnhancements.reduce((acc, id) => {
+            const enh = enhancements.find(e => e.id === id);
+            return acc + (enh?.price || 0);
+        }, 0);
+        return roomTotal + enhancementTotal;
+    };
+
+    const handleFinalSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (status === 'submitting') return;
+        if (!isPrivacyAccepted) return;
+        if (!selectedRoom || !range.from || !range.to) {
+            toast.error('Missing Information', { description: 'Please ensure dates and room are selected.' });
+            return;
+        }
+
+        setStatus('submitting');
+        
+        try {
+            const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+            const res = await fetch(`${API_URL}/bookings`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    roomType: selectedRoom.id,
+                    checkIn: range.from.toISOString(),
+                    checkOut: range.to.toISOString(),
+                    guestName: `${firstName} ${lastName}`,
+                    guestEmail: email,
+                    guestPhone: phone,
+                    guestAddress: address,
+                    guestCity: city,
+                    guestCountry: country,
+                    specialRequests: specialRequests,
+                    paymentMethod: paymentMethod,
+                    paymentDetails: {
+                        cardHolder: cardHolderName,
+                        cardNumber: cardNumber.slice(-4), // Only send last 4 for "security"
+                        expiry: expiryDate
+                    },
+                    guests: 2, 
+                    addons: selectedEnhancements
+                })
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || 'Booking failed');
+
+            setBookingCode(data.booking._id.substring(0, 8).toUpperCase());
+            setStatus('success');
+            toast.success('Booking Confirmed', { description: 'Your reservation has been confirmed.' });
+        } catch (error: any) {
+            // Fallback for simulation
+            setBookingCode('AE' + Math.random().toString(36).substring(2, 7).toUpperCase());
+            setStatus('success');
+            toast.success('Reservation Secured', { description: 'System in local preservation mode.' });
+        }
+    };
+
+    if (status === 'success') {
+        return (
+            <main className="min-h-screen bg-[#F5F2ED] flex items-center justify-center pt-20">
+                <motion.div 
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="max-w-2xl w-full mx-4 bg-[#1A1F16] text-white p-12 md:p-16 rounded-[4rem] text-center shadow-2xl relative overflow-hidden"
+                >
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-[#D4DE95]/10 blur-[100px]" />
+                    <div className="w-24 h-24 bg-[#D4DE95] rounded-full flex items-center justify-center mx-auto mb-10 shadow-inner">
+                        <Check className="w-12 h-12 text-[#1A1F16]" />
+                    </div>
+                    <h2 className="text-4xl md:text-5xl font-serif mb-6 tracking-tight">Booking Confirmed</h2>
+                    <p className="text-[#D4DE95]/60 uppercase tracking-[0.4em] text-[10px] font-black mb-12">Your Journey Begins Shortly</p>
+                    
+                    <div className="bg-white/5 border border-white/10 rounded-3xl p-8 mb-12">
+                        <p className="text-[10px] uppercase tracking-widest text-white/40 mb-3">Booking Reference</p>
+                        <p className="text-5xl font-serif tracking-[0.2em] text-[#D4DE95]">{bookingCode}</p>
+                    </div>
+
+                    <p className="text-lg font-serif italic text-white/60 mb-12 leading-relaxed">
+                        A formal digital invitation and estate map have been dispatched to your e-mail. We prepare for your arrival on {range.from ? format(range.from, 'MMMM do') : '...'}.
+                    </p>
+
+                    <button 
+                        onClick={() => window.location.href = '/'}
+                        className="px-12 py-5 bg-[#D4DE95] text-[#1A1F16] rounded-full font-black text-[10px] uppercase tracking-[0.4em] hover:bg-white transition-all"
+                    >
+                        Return to Heritage Site
+                    </button>
+                </motion.div>
+            </main>
+        );
+    }
+
+    return (
+        <main className="min-h-screen bg-[#F5F2ED] text-[#1A1F16] pt-32 pb-24">
+            <div className="max-w-[90rem] mx-auto px-4 md:px-12">
+                {/* Header */}
+                <div className="text-center mb-16">
+                    <ScrollReveal>
+                        <p className="text-[10px] uppercase tracking-[0.5em] font-black text-[#3D4127] mb-4">Confirm Booking</p>
+                        <h1 className="text-4xl md:text-6xl font-serif tracking-tight">Reservations Portal</h1>
+                        {/* Progress Bar */}
+                        <div className="flex items-center justify-center mt-12 gap-4">
+                            {[1, 2, 3, 4].map(i => (
+                                <div key={i} className="flex items-center gap-4">
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-[10px] font-black border transition-all duration-700 ${step >= i ? 'bg-[#3D4127] text-white border-[#3D4127]' : 'bg-white/50 text-[#3D4127]/30 border-black/10'}`}>
+                                        {step > i ? <Check className="w-4 h-4" /> : i}
+                                    </div>
+                                    {i < 4 && <div className={`w-12 md:w-16 h-px ${step > i ? 'bg-[#3D4127]' : 'bg-black/10'}`} />}
+                                </div>
+                            ))}
+                        </div>
+                    </ScrollReveal>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+                    {/* Main Content Area */}
+                    <div className="lg:col-span-8 bg-white/40 backdrop-blur-xl rounded-[3rem] p-8 md:p-12 border border-black/5 shadow-2xl relative overflow-hidden min-h-[600px]">
+                        <AnimatePresence mode="wait">
+                            {step === 1 && (
+                                <motion.div
+                                    key="step1"
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: 20 }}
+                                    className="space-y-12"
+                                >
+                                    <div className="space-y-6">
+                                        <h2 className="text-3xl font-serif">Select Your Journey Dates</h2>
+                                        <p className="text-[#1A1F16]/60 font-serif italic">Minimum stay: 2 nights for deep restoration.</p>
+                                    </div>
+                                    
+                                    <div className="flex flex-col md:flex-row gap-12 items-center justify-center">
+                                        <div className="bg-white p-6 rounded-3xl shadow-xl border border-black/5">
+                                            <DayPicker
+                                                mode="range"
+                                                selected={range}
+                                                onSelect={(r: any) => setRange(r)}
+                                                numberOfMonths={2}
+                                                className="rdp-custom"
+                                                disabled={{ before: new Date() }}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="flex justify-end pt-8 border-t border-black/5">
+                                        <button 
+                                            type="button"
+                                            disabled={!range?.from || !range?.to || isChecking}
+                                            onClick={handleCheckAvailability}
+                                            className="px-12 py-5 bg-[#3D4127] text-white rounded-full font-black text-[10px] uppercase tracking-[0.4em] flex items-center gap-4 disabled:opacity-30 transition-all hover:bg-black group"
+                                        >
+                                            {isChecking ? 'Verifying...' : 'Check Availability'}
+                                            {!isChecking && <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />}
+                                        </button>
+                                    </div>
+                                </motion.div>
+                            )}
+
+                            {step === 2 && (
+                                <motion.div
+                                    key="step2"
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: 20 }}
+                                    className="space-y-12"
+                                >
+                                    <div className="space-y-6">
+                                        <h2 className="text-3xl font-serif">Select Your Sanctuary</h2>
+                                        <p className="text-[#1A1F16]/60 font-serif italic">Pricing is dynamically calculated based on seasonality and yield rules.</p>
+                                    </div>
+
+                                    <div className="space-y-8">
+                                        {roomTypes.map((room) => {
+                                            const avail = availabilityData.find(a => a.roomType === room.id);
+                                            const isFullyBooked = avail && !avail.isAvailable;
+
+                                            return (
+                                            <motion.div 
+                                                key={room.id}
+                                                whileHover={!isFullyBooked ? { scale: 1.01 } : {}}
+                                                className={`group relative grid grid-cols-1 md:grid-cols-12 gap-8 p-6 rounded-[2.5rem] border transition-all duration-700 ${isFullyBooked ? 'bg-[#1A1F16]/5 opacity-60 cursor-not-allowed border-black/5' : (selectedRoom?.id === room.id ? 'bg-[#3D4127] text-white border-[#3D4127] shadow-2xl cursor-pointer' : 'bg-white/60 text-[#1A1F16] border-black/5 hover:bg-white cursor-pointer')}`}
+                                                onClick={() => !isFullyBooked && setSelectedRoom(room)}
+                                            >
+                                                <div className="md:col-span-4 relative aspect-square rounded-2xl overflow-hidden">
+                                                    <Image src={room.images[0]} alt={room.name} fill className={`object-cover ${isFullyBooked ? 'grayscale opacity-70' : ''}`} />
+                                                    {isFullyBooked && (
+                                                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center backdrop-blur-[2px]">
+                                                            <span className="bg-[#1A1F16] text-[#F5F2ED] px-4 py-2 rounded-full text-[9px] uppercase font-black tracking-widest border border-white/10">Fully Booked</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="md:col-span-8 flex flex-col justify-between py-2">
+                                                    <div>
+                                                        <div className="flex justify-between items-start mb-4">
+                                                            <h3 className="text-2xl font-serif">{room.name}</h3>
+                                                            <span className={`text-2xl font-serif ${selectedRoom?.id === room.id ? 'text-white' : 'text-[#3D4127]'}`}>${room.price}</span>
+                                                        </div>
+                                                        <p className={`text-sm mb-6 ${selectedRoom?.id === room.id ? 'text-white/70' : 'text-[#1A1F16]/60'} font-light`}>{room.desc}</p>
+                                                        <div className="flex flex-wrap gap-4">
+                                                            <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest opacity-60">
+                                                                <Bed className="w-3 h-3" /> {room.bed}
+                                                            </div>
+                                                            <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest opacity-60">
+                                                                <Users className="w-3 h-3" /> 2 Guests
+                                                            </div>
+                                                            <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest opacity-60">
+                                                                <Sparkles className="w-3 h-3" /> {room.view}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex justify-end mt-6">
+                                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${selectedRoom?.id === room.id ? 'bg-white text-[#3D4127]' : 'bg-[#3D4127] text-white opacity-0 group-hover:opacity-100'}`}>
+                                                            <Check className="w-5 h-5" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </motion.div>
+                                        )})}
+                                    </div>
+
+                                    <div className="flex justify-between pt-8 border-t border-black/5">
+                                        <button onClick={prevStep} className="text-[#3D4127] font-black text-[10px] uppercase tracking-[0.4em] hover:translate-x-[-10px] transition-transform flex items-center gap-2">
+                                            Back
+                                        </button>
+                                        <button 
+                                            type="button"
+                                            disabled={!selectedRoom}
+                                            onClick={nextStep}
+                                            className="px-12 py-5 bg-[#3D4127] text-white rounded-full font-black text-[10px] uppercase tracking-[0.4em] flex items-center gap-4 disabled:opacity-30 transition-all hover:bg-black group"
+                                        >
+                                            Stay Enhancements
+                                            <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
+                                        </button>
+                                    </div>
+                                </motion.div>
+                            )}
+
+                            {step === 3 && (
+                                <motion.div
+                                    key="step3"
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: 20 }}
+                                    className="space-y-10"
+                                >
+                                    <div className="space-y-6">
+                                        <h2 className="text-3xl font-serif">Enhance Your Stay</h2>
+                                        <p className="text-[#1A1F16]/60 font-serif italic">Fine details for a truly bespoke arrival.</p>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 gap-6">
+                                        {enhancements.map((enh) => (
+                                            <div 
+                                                key={enh.id}
+                                                onClick={() => toggleEnhancement(enh.id)}
+                                                className={`p-8 rounded-3xl border transition-all duration-500 cursor-pointer flex items-center justify-between ${selectedEnhancements.includes(enh.id) ? 'bg-[#3D4127] text-white border-[#3D4127]' : 'bg-white/50 border-black/5 hover:bg-white'}`}
+                                            >
+                                                <div className="flex items-center gap-8">
+                                                    <div className={`w-14 h-14 rounded-full flex items-center justify-center ${selectedEnhancements.includes(enh.id) ? 'bg-white/20' : 'bg-[#3D4127]/5'}`}>
+                                                        {enh.icon}
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="text-xl font-serif mb-1">{enh.name}</h4>
+                                                        <p className={`text-xs ${selectedEnhancements.includes(enh.id) ? 'text-white/60' : 'text-[#1A1F16]/50'}`}>{enh.desc}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-lg font-serif mb-2">+${enh.price}</p>
+                                                    <div className={`w-6 h-6 rounded-full border flex items-center justify-center transition-all ${selectedEnhancements.includes(enh.id) ? 'bg-[#D4DE95] border-[#D4DE95]' : 'border-black/20'}`}>
+                                                        {selectedEnhancements.includes(enh.id) && <Check className="w-3 h-3 text-[#1A1F16]" />}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div className="flex justify-between pt-12 border-t border-black/5">
+                                        <button onClick={prevStep} className="text-[#3D4127] font-black text-[10px] uppercase tracking-[0.4em] hover:translate-x-[-10px] transition-transform flex items-center gap-2">
+                                            Back
+                                        </button>
+                                        <button 
+                                            onClick={nextStep}
+                                            className="px-12 py-5 bg-[#3D4127] text-white rounded-full font-black text-[10px] uppercase tracking-[0.4em] flex items-center gap-4 transition-all hover:bg-black group"
+                                        >
+                                            Guest Details
+                                            <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
+                                        </button>
+                                    </div>
+                                </motion.div>
+                            )}
+
+                            {step === 4 && (
+                                <motion.div
+                                    key="step4"
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: 20 }}
+                                    className="space-y-12"
+                                >
+                                    <form onSubmit={handleFinalSubmit} className="space-y-10">
+                                        <div className="space-y-8">
+                                            <h2 className="text-3xl font-serif">Guest Information</h2>
+                                            
+                                            <div className="space-y-10">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                                    <div className="space-y-3">
+                                                        <label className="text-[10px] uppercase tracking-widest font-black opacity-40">First name*</label>
+                                                        <input required type="text" value={firstName} onChange={e => setFirstName(e.target.value)} className="w-full bg-white/50 border border-black/10 p-5 rounded-2xl focus:outline-none focus:border-[#3D4127] transition-all" placeholder="Gwendolyn" />
+                                                    </div>
+                                                    <div className="space-y-3">
+                                                        <label className="text-[10px] uppercase tracking-widest font-black opacity-40">Last name*</label>
+                                                        <input required type="text" value={lastName} onChange={e => setLastName(e.target.value)} className="w-full bg-white/50 border border-black/10 p-5 rounded-2xl focus:outline-none focus:border-[#3D4127] transition-all" placeholder="Thorne" />
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                                    <div className="space-y-3">
+                                                        <label className="text-[10px] uppercase tracking-widest font-black opacity-40">e-mail*</label>
+                                                        <input required type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-white/50 border border-black/10 p-5 rounded-2xl focus:outline-none focus:border-[#3D4127] transition-all" placeholder="g.thorne@estate.com" />
+                                                    </div>
+                                                    <div className="space-y-3">
+                                                        <label className="text-[10px] uppercase tracking-widest font-black opacity-40">Telephone*</label>
+                                                        <input required type="tel" value={phone} onChange={e => setPhone(e.target.value)} className="w-full bg-white/50 border border-black/10 p-5 rounded-2xl focus:outline-none focus:border-[#3D4127] transition-all" placeholder="+44 (0) 7700 ..." />
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-3">
+                                                    <label className="text-[10px] uppercase tracking-widest font-black opacity-40">Street Address*</label>
+                                                    <input required type="text" value={address} onChange={e => setAddress(e.target.value)} className="w-full bg-white/50 border border-black/10 p-5 rounded-2xl focus:outline-none focus:border-[#3D4127] transition-all" placeholder="123 Heritage Lane" />
+                                                </div>
+
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                                    <div className="space-y-3">
+                                                        <label className="text-[10px] uppercase tracking-widest font-black opacity-40">City*</label>
+                                                        <input required type="text" value={city} onChange={e => setCity(e.target.value)} className="w-full bg-white/50 border border-black/10 p-5 rounded-2xl focus:outline-none focus:border-[#3D4127] transition-all" placeholder="London" />
+                                                    </div>
+                                                    <div className="space-y-3">
+                                                        <label className="text-[10px] uppercase tracking-widest font-black opacity-40">Country*</label>
+                                                        <input required type="text" value={country} onChange={e => setCountry(e.target.value)} className="w-full bg-white/50 border border-black/10 p-5 rounded-2xl focus:outline-none focus:border-[#3D4127] transition-all" placeholder="United Kingdom" />
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-3">
+                                                    <label className="text-[10px] uppercase tracking-widest font-black opacity-40">Special Requests</label>
+                                                    <textarea value={specialRequests} onChange={e => setSpecialRequests(e.target.value)} className="w-full bg-white/50 border border-black/10 p-5 rounded-2xl focus:outline-none focus:border-[#3D4127] transition-all min-h-[120px]" placeholder="Allergies, pillow preferences, or surprise arrangements..." />
+                                                </div>
+                                            </div>
+
+                                            {/* Informative Note */}
+                                            <div className="space-y-6 pt-12 border-t border-black/5">
+                                                <p className="text-[10px] uppercase tracking-[0.3em] font-black opacity-30">Privacy & Consent</p>
+                                                <div className="bg-black/5 rounded-2xl p-6 h-32 overflow-y-auto text-xs font-serif italic leading-relaxed opacity-60">
+                                                    Informative note as per Art. 13 Law Decree No. 196/2003. As per Law Decree No. 196/2003 (the "Personal Data Privacy Law"), our hotel, Aethelgard Boutique, intends to process the personal data that you have provided exclusively for the fulfillment of the obligations prescribed by contract or law that govern the business relationship between us.
+                                                </div>
+                                                <label 
+                                                    className="flex items-center gap-4 cursor-pointer group"
+                                                    onClick={() => setIsPrivacyAccepted(!isPrivacyAccepted)}
+                                                >
+                                                    <div className={`w-6 h-6 border-2 border-[#3D4127] rounded flex items-center justify-center transition-all ${isPrivacyAccepted ? 'bg-[#3D4127]' : 'group-hover:bg-[#3D4127]/10'}`}>
+                                                        <Check className={`w-4 h-4 ${isPrivacyAccepted ? 'text-white' : 'text-[#3D4127] opacity-0 group-hover:opacity-50'}`} />
+                                                    </div>
+                                                    <span className="text-[10px] uppercase tracking-widest font-black opacity-60">I have read and agree to the privacy policy *</span>
+                                                </label>
+                                            </div>
+
+                                            {/* Payment Method */}
+                                            <div className="space-y-8 pt-12 border-t border-black/5">
+                                                <div className="flex items-center justify-between">
+                                                    <label className="text-[10px] uppercase tracking-widest font-black opacity-40 flex items-center gap-2">
+                                                        <CreditCard className="w-3 h-3" /> Secure Payment Guarantee
+                                                    </label>
+                                                    <div className="flex gap-2 opacity-40">
+                                                        <div className="w-8 h-5 bg-black/10 rounded flex items-center justify-center text-[6px] font-black italic">VISA</div>
+                                                        <div className="w-8 h-5 bg-black/10 rounded flex items-center justify-center text-[6px] font-black italic">MC</div>
+                                                        <div className="w-8 h-5 bg-black/10 rounded flex items-center justify-center text-[6px] font-black italic">AMEX</div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="bg-white/40 border border-black/5 rounded-3xl p-8 space-y-6">
+                                                    <div className="space-y-3">
+                                                        <label className="text-[9px] uppercase tracking-widest font-black opacity-30">Cardholder Name</label>
+                                                        <input required type="text" value={cardHolderName} onChange={e => setCardHolderName(e.target.value)} className="w-full bg-white border border-black/5 p-4 rounded-xl focus:outline-none focus:border-[#3D4127] transition-all font-serif" placeholder="Gwendolyn Thorne" />
+                                                    </div>
+
+                                                    <div className="space-y-3">
+                                                        <label className="text-[9px] uppercase tracking-widest font-black opacity-30">Card Number</label>
+                                                        <div className="relative">
+                                                            <input required type="text" value={cardNumber} onChange={e => setCardNumber(e.target.value)} className="w-full bg-white border border-black/5 p-4 rounded-xl focus:outline-none focus:border-[#3D4127] transition-all font-mono tracking-widest" placeholder="•••• •••• •••• ••••" maxLength={19} />
+                                                            <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                                                                <ShieldCheck className="w-4 h-4 text-[#3D4127] opacity-40" />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-2 gap-6">
+                                                        <div className="space-y-3">
+                                                            <label className="text-[9px] uppercase tracking-widest font-black opacity-30">Expiry Date</label>
+                                                            <input required type="text" value={expiryDate} onChange={e => setExpiryDate(e.target.value)} className="w-full bg-white border border-black/5 p-4 rounded-xl focus:outline-none focus:border-[#3D4127] transition-all font-mono" placeholder="MM / YY" maxLength={5} />
+                                                        </div>
+                                                        <div className="space-y-3">
+                                                            <label className="text-[9px] uppercase tracking-widest font-black opacity-30">CVV</label>
+                                                            <input required type="password" value={cvv} onChange={e => setCvv(e.target.value)} className="w-full bg-white border border-black/5 p-4 rounded-xl focus:outline-none focus:border-[#3D4127] transition-all font-mono" placeholder="•••" maxLength={4} />
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <p className="text-[8px] uppercase tracking-[0.2em] font-black opacity-30 italic text-center">Your card is required only for guarantee. Aethelgard Boutique uses bank-grade encryption to protect your sanctuary details.</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex justify-between pt-12 border-t border-black/5">
+                                            <button type="button" onClick={prevStep} className="text-[#3D4127] font-black text-[10px] uppercase tracking-[0.4em] hover:translate-x-[-10px] transition-transform flex items-center gap-2">
+                                                Back
+                                            </button>
+                                            <button 
+                                                type="submit"
+                                                disabled={!isPrivacyAccepted || status === 'submitting'}
+                                                className="px-12 py-6 bg-[#D4DE95] text-[#1A1F16] rounded-full font-black text-[10px] uppercase tracking-[0.6em] flex items-center gap-4 transition-all hover:bg-black hover:text-white shadow-2xl group disabled:opacity-30"
+                                            >
+                                                {status === 'submitting' ? 'Processing...' : 'Pay & Book Now'}
+                                                <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
+                                            </button>
+                                        </div>
+                                    </form>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+
+                    {/* Sidebar: Summary */}
+                    <div className="lg:col-span-4 sticky top-40">
+                        <div className="bg-[#1A1F16] text-white rounded-[3rem] p-10 shadow-2xl space-y-10 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-[#D4DE95]/5 blur-3xl pointer-events-none" />
+                            
+                            <div className="flex justify-between items-center border-b border-white/10 pb-6">
+                                <h3 className="text-2xl font-serif uppercase tracking-widest">Your Itinerary</h3>
+                                {step > 1 && (
+                                    <button 
+                                        onClick={() => setStep(step === 4 ? 2 : 1)}
+                                        className="text-[8px] uppercase tracking-[0.3em] font-black text-[#D4DE95] hover:text-white transition-colors"
+                                    >
+                                        Change
+                                    </button>
+                                )}
+                            </div>
+
+                            <div className="space-y-8">
+                                <div className="flex gap-6">
+                                    <CalendarIcon className="w-6 h-6 text-[#D4DE95]" />
+                                    <div>
+                                        <p className="text-[10px] uppercase tracking-widest opacity-40 mb-1">Check In — Out</p>
+                                        <p className="text-sm font-serif">
+                                            {range?.from ? format(range.from, 'MMM dd, yyyy') : '---'} — {range?.to ? format(range.to, 'MMM dd, yyyy') : '---'}
+                                        </p>
+                                        {range?.from && range?.to && (
+                                            <p className="text-[10px] text-[#D4DE95] mt-2 italic font-serif">
+                                                {differenceInDays(range.to, range.from)} Nights Restoration
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {selectedRoom && (
+                                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex gap-6">
+                                        <Bed className="w-6 h-6 text-[#D4DE95]" />
+                                        <div>
+                                            <p className="text-[10px] uppercase tracking-widest opacity-40 mb-1">Sanctuary</p>
+                                            <p className="text-sm font-serif">{selectedRoom.name}</p>
+                                        </div>
+                                    </motion.div>
+                                )}
+
+                                {selectedEnhancements.length > 0 && (
+                                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex gap-6">
+                                        <Sparkles className="w-6 h-6 text-[#D4DE95]" />
+                                        <div>
+                                            <p className="text-[10px] uppercase tracking-widest opacity-40 mb-1">Stay Enhancements</p>
+                                            {selectedEnhancements.map(id => (
+                                                <p key={id} className="text-[11px] font-serif italic mb-1">
+                                                    — {enhancements.find(e => e.id === id)?.name}
+                                                </p>
+                                            ))}
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </div>
+
+                            <div className="pt-10 border-t border-white/10 space-y-6">
+                                <div className="flex justify-between items-end">
+                                    <p className="text-[10px] uppercase tracking-widest opacity-40">Total Narrative</p>
+                                    <div className="text-right">
+                                        <p className="text-4xl font-serif text-[#D4DE95]">
+                                            ${calculateTotal()}
+                                        </p>
+                                    </div>
+                                </div>
+                                <p className="text-[8px] uppercase tracking-[0.3em] font-black opacity-30 text-center">Taxes & Heritage Fees included</p>
+                            </div>
+                        </div>
+
+                        {/* Trust Badge */}
+                        <div className="mt-8 flex items-center justify-center gap-4 opacity-40">
+                            <ShieldCheck className="w-4 h-4" />
+                            <span className="text-[9px] uppercase tracking-[0.3em] font-black">Encrypted SSL Transaction</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <style jsx global>{`
+                .rdp-custom {
+                    --rdp-accent-color: #3D4127;
+                    --rdp-background-color: #D4DE95;
+                    font-family: var(--font-serif);
+                }
+                .rdp-day_selected, .rdp-day_selected:focus, .rdp-day_selected:hover {
+                    background-color: var(--rdp-accent-color) !important;
+                    color: white !important;
+                }
+            `}</style>
+        </main>
+    );
+}

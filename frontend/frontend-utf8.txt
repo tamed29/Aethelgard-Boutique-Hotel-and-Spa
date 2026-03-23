@@ -1,0 +1,106 @@
+﻿node.exe : npm warn 
+deprecated 
+next@15.1.7: This 
+version has a security 
+vulnerability. Please 
+upgrade to a patched 
+version. See https://ne
+xtjs.org/blog/CVE-2025-
+66478 for more details.
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo 
+...
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (npm warn depr   
+ ec...r more detail    
+s.:String) [], Rem    
+oteException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+npm error code 1
+npm error path 
+D:\Aethelgard Boutique 
+Hotel & Spa\frontend\no
+de_modules\unrs-resolve
+r
+npm error command 
+failed
+npm error command C:\Wi
+ndows\system32\cmd.exe 
+/d /s /c 
+napi-postinstall 
+unrs-resolver 1.11.1 
+check
+npm error 'Spa\frontend
+\node_modules\.bin\' 
+is not recognized as 
+an internal or 
+external command,
+npm error operable 
+program or batch file.
+npm error node:internal
+/modules/cjs/loader:142
+2
+npm error   throw err;
+npm error   ^
+npm error
+npm error Error: 
+Cannot find module 'D:\
+napi-postinstall\lib\cl
+i.js'
+npm error     at Module
+._resolveFilename (node
+:internal/modules/cjs/l
+oader:1419:15)
+npm error     at 
+defaultResolveImpl (nod
+e:internal/modules/cjs/
+loader:1057:19)
+npm error     at 
+resolveForCJSWithHooks 
+(node:internal/modules/
+cjs/loader:1062:22)
+npm error     at 
+Module._load (node:inte
+rnal/modules/cjs/loader
+:1225:37)
+npm error     at Tracin
+gChannel.traceSync (nod
+e:diagnostics_channel:3
+28:14)
+npm error     at 
+wrapModuleLoad (node:in
+ternal/modules/cjs/load
+er:244:24)
+npm error     at Module
+.executeUserEntryPoint 
+[as runMain] (node:inte
+rnal/modules/run_main:1
+54:5)
+npm error     at node:i
+nternal/main/run_main_m
+odule:33:47 {
+npm error   code: 
+'MODULE_NOT_FOUND',
+npm error   
+requireStack: []
+npm error }
+npm error
+npm error Node.js 
+v25.0.0
+npm error A complete 
+log of this run can be 
+found in: C:\Users\VICT
+US\AppData\Local\npm-ca
+che\_logs\2026-03-06T19
+_20_35_062Z-debug-0.log
