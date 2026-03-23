@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, Suspense } from 'react';
 import Lenis from 'lenis';
 import { usePathname, useSearchParams } from 'next/navigation';
 
-export default function LenisProvider({ children }: { children: React.ReactNode }) {
+function LenisContent({ children }: { children: React.ReactNode }) {
     const lenisRef = useRef<Lenis | null>(null);
     const pathname = usePathname();
     const searchParams = useSearchParams();
@@ -40,4 +40,12 @@ export default function LenisProvider({ children }: { children: React.ReactNode 
     }, [pathname, searchParams]);
 
     return <>{children}</>;
+}
+
+export default function LenisProvider({ children }: { children: React.ReactNode }) {
+    return (
+        <Suspense fallback={<>{children}</>}>
+            <LenisContent>{children}</LenisContent>
+        </Suspense>
+    );
 }
