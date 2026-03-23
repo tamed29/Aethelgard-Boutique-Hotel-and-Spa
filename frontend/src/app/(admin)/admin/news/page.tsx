@@ -31,11 +31,15 @@ export default function NewsManagementPage() {
     });
 
     const saveItem = useMutation({
-        mutationFn: async (data: Partial<NewsItem>) => {
+        mutationFn: async (formData: FormData) => {
             if (editingItem) {
-                await adminAxios.put(`/news/${editingItem._id}`, data);
+                await adminAxios.put(`/news/${editingItem._id}`, formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
             } else {
-                await adminAxios.post('/news', data);
+                await adminAxios.post('/news', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
             }
         },
         onSuccess: () => {
@@ -55,6 +59,14 @@ export default function NewsManagementPage() {
             toast.error('Dispatch purged.');
         }
     });
+
+    const getImageUrl = (url: string) => {
+        if (!url) return '';
+        if (url.startsWith('http')) return url;
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL?.split('/api')[0] || 'http://localhost:5000';
+        const cleanUrl = url.startsWith('/') ? url : `/${url}`;
+        return `${baseUrl}${cleanUrl}`;
+    };
 
     if (isLoading) return <div className="h-[60vh] flex items-center justify-center"><Loader2 className="animate-spin text-[#D4DE95]" size={32} /></div>;
 
@@ -87,7 +99,7 @@ export default function NewsManagementPage() {
                             className="bg-white/[0.02] border border-white/5 rounded-[2rem] overflow-hidden group hover:border-[#D4DE95]/20 flex flex-col"
                         >
                             <div className="h-48 w-full relative overflow-hidden">
-                                <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                                <img src={getImageUrl(item.imageUrl)} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                                 <div className="absolute top-4 left-4 flex gap-2">
                                     <span className="bg-[#1A1F16]/80 backdrop-blur-md border border-white/10 text-white px-3 py-1.5 rounded-full text-[9px] uppercase tracking-widest font-black flex items-center gap-2">
                                         {item.type === 'event' ? <Calendar size={12} className="text-[#D4DE95]" /> : <Newspaper size={12} className="text-[#D4DE95]" />}
@@ -134,13 +146,7 @@ export default function NewsManagementPage() {
                                 onSubmit={(e) => {
                                     e.preventDefault();
                                     const formData = new FormData(e.target as HTMLFormElement);
-                                    saveItem.mutate({
-                                        title: formData.get('title') as string,
-                                        content: formData.get('content') as string,
-                                        imageUrl: formData.get('imageUrl') as string,
-                                        date: formData.get('date') as string,
-                                        type: formData.get('type') as any
-                                    });
+                                    saveItem.mutate(formData);
                                 }} 
                                 className="p-10 space-y-8"
                             >
@@ -162,8 +168,11 @@ export default function NewsManagementPage() {
                                     </div>
                                 </div>
                                 <div className="space-y-3">
-                                    <label className="text-[10px] uppercase tracking-[0.4em] text-[#D4DE95]/40 font-black ml-1">Image URL</label>
-                                    <input required name="imageUrl" defaultValue={editingItem?.imageUrl} className="w-full bg-white/[0.03] border border-[#D4DE95]/10 rounded-2xl py-5 px-6 text-[#F5F2ED] outline-none focus:border-[#D4DE95]/40 transition-all font-light" placeholder="https://..." />
+                                    <label className="text-[10px] uppercase tracking-[0.4em] text-[#D4DE95]/40 font-black ml-1">Dispatch Banner Image</label>
+                                    <input type="file" name="image" accept="image/*" className="w-full bg-white/[0.03] border border-[#D4DE95]/10 rounded-2xl py-5 px-6 text-[#F5F2ED] outline-none focus:border-[#D4DE95]/40 transition-all font-light" />
+                                    {editingItem?.imageUrl && (
+                                        <p className="text-[8px] uppercase tracking-widest text-[#D4DE95]/30 ml-1">Current assets recorded in transmission cluster</p>
+                                    )}
                                 </div>
                                 <div className="space-y-3">
                                     <label className="text-[10px] uppercase tracking-[0.4em] text-[#D4DE95]/40 font-black ml-1">Content</label>

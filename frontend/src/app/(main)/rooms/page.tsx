@@ -184,34 +184,51 @@ function RoomsContent() {
     const checkInDate = checkinStr ? new Date(checkinStr) : null;
     const checkOutDate = checkoutStr ? new Date(checkoutStr) : null;
 
-    // Simulated Availability Logic
+    // Real Availability Logic
     const isSearchActive = !!(checkInDate && checkOutDate);
-    const diffDays = isSearchActive ? Math.ceil(Math.abs(checkOutDate!.getTime() - checkInDate!.getTime()) / (1000 * 60 * 60 * 24)) : 0;
-    const isAvailable = diffDays % 2 === 0; // Even number of days = Available, Odd = Full (demo)
-    const availableCount = isAvailable ? 4 : 0;
+    const [availability, setAvailability] = useState<any[]>([]);
 
     useEffect(() => {
-        const fetchRooms = async () => {
+        const fetchData = async () => {
+            setLoading(true);
+            const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+            
             try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 2000);
-                const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-                const res = await fetch(`${API_URL}/rooms`, { signal: controller.signal });
-                clearTimeout(timeoutId);
-
-                if (!res.ok) throw new Error('API Error');
-                const data = await res.json();
-
-                if (Array.isArray(data) && data.length > 0 && data[0].images?.length > 0) {
-                    setRooms(data);
+                // 1. Fetch Rooms
+                const roomsRes = await fetch(`${API_URL}/rooms`);
+                if (roomsRes.ok) {
+                    const roomsData = await roomsRes.json();
+                    if (Array.isArray(roomsData) && roomsData.length > 0) {
+                        setRooms(roomsData);
+                    }
                 }
-                // If DB returns rooms without images, keep static rooms
-            } catch {
-                // Keep static rooms on any error
+
+                // 2. Fetch Availability if search is active
+                if (isSearchActive) {
+                    const availRes = await fetch(`${API_URL}/bookings/availability?checkIn=${checkinStr}&checkOut=${checkoutStr}`);
+                    if (availRes.ok) {
+                        const availData = await availRes.json();
+                        setAvailability(availData);
+                    }
+                }
+            } catch (err) {
+                console.error('Fetch Error:', err);
+            } finally {
+                setLoading(false);
             }
         };
-        fetchRooms();
-    }, []);
+        fetchData();
+    }, [checkinStr, checkoutStr, isSearchActive]);
+
+    const filteredRooms = isSearchActive 
+        ? (rooms.length > 0 ? rooms : STATIC_ROOMS).filter(room => {
+            const avail = availability.find(a => a.roomType === room.roomType);
+            return avail ? avail.isAvailable : true;
+          })
+        : (rooms.length > 0 ? rooms : STATIC_ROOMS);
+
+    const availableCount = availability.filter(a => a.isAvailable).length;
+    const isAnyAvailable = availableCount > 0;
 
     if (loading) return (
         <div className="min-h-screen bg-background flex flex-col items-center justify-center space-y-4">
@@ -266,7 +283,7 @@ function RoomsContent() {
                             checkIn={checkInDate}
                             checkOut={checkOutDate}
                             guests={guestsCount}
-                            isAvailable={isAvailable}
+                            isAvailable={isAnyAvailable}
                             availableCount={availableCount}
                             onModify={() => window.location.href = '/'}
                             onViewAvailable={() => {
@@ -307,7 +324,7 @@ function RoomsContent() {
 
             {/* Room Listing */}
             <section id="room-listing" className="flex flex-col">
-                {rooms.map((room, idx) => {
+                {filteredRooms.map((room, idx) => {
                     const roomImages = room.images || [];
                     const primaryImg = roomImages[0] || '/images/rooms/forest/r1.png';
                     const img2 = roomImages[1] || primaryImg;
@@ -381,8 +398,8 @@ function RoomsContent() {
                                         {/* Price + Button — stacked on mobile, side by side on desktop */}
                                         <motion.div variants={fadeUp} className="pt-4 flex flex-col sm:flex-row sm:items-center gap-4 sm:justify-between">
                                             <div>
-                                                <p className="text-[10px] uppercase tracking-widest text-foreground/50 mb-0.5">Availability</p>
-                                                <span className="text-2xl md:text-3xl font-serif text-moss-700 dark:text-moss-200 uppercase tracking-tighter">By Selection</span>
+                                                <p className="text-[10px] uppercase tracking-widest text-foreground/50 mb-0.5">Starting From</p>
+                                                <span className="text-2xl md:text-3xl font-serif text-moss-700 dark:text-moss-200 uppercase tracking-tighter">${room.price} <span className="text-xs">/ night</span></span>
                                             </div>
                                             <MagneticHover intensity={0.3} className="w-full sm:w-auto">
                                                 <Link href={`/rooms/${room._id}`} className="group relative block overflow-hidden bg-zinc-950 text-white px-6 py-3 sm:px-8 sm:py-4 border border-white/20 shadow-xl transition-all duration-700 w-full text-center hover:bg-[#D4DE95] hover:text-[#2B2E1C] hover:border-[#D4DE95]">

@@ -43,8 +43,10 @@ export default function MediaLibraryPage() {
     });
 
     const addItem = useMutation({
-        mutationFn: async (data: Partial<GalleryItem>) => {
-            await adminAxios.post('/gallery', data);
+        mutationFn: async (formData: FormData) => {
+            await adminAxios.post('/gallery', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['gallery'] });
@@ -75,6 +77,15 @@ export default function MediaLibraryPage() {
     });
 
     const filteredItems = items.filter(i => filter === 'all' || i.category === filter);
+
+    const getImageUrl = (url: string) => {
+        if (!url) return '';
+        if (url.startsWith('http')) return url;
+        // Fallback for legacy local uploads if any
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL?.split('/api')[0] || 'http://localhost:5000';
+        const cleanUrl = url.startsWith('/') ? url : `/${url}`;
+        return `${baseUrl}${cleanUrl}`;
+    };
 
     if (isLoading) return <div className="h-[60vh] flex items-center justify-center"><Loader2 className="animate-spin text-[#D4DE95]" size={32} /></div>;
 
@@ -126,7 +137,7 @@ export default function MediaLibraryPage() {
                             className="relative group aspect-square rounded-[2rem] overflow-hidden border border-white/5 bg-white/[0.02]"
                         >
                             <img 
-                                src={item.url} 
+                                src={getImageUrl(item.url)} 
                                 alt={item.alt} 
                                 className="w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-110"
                             />
@@ -173,18 +184,14 @@ export default function MediaLibraryPage() {
                                 onSubmit={(e) => {
                                     e.preventDefault();
                                     const formData = new FormData(e.target as HTMLFormElement);
-                                    addItem.mutate({
-                                        url: formData.get('url') as string,
-                                        alt: formData.get('alt') as string,
-                                        category: formData.get('category') as string,
-                                        size: formData.get('size') as any
-                                    });
+                                    //addItem.mutate(formData); // We'll need to update the mutationFn
+                                    addItem.mutate(formData);
                                 }} 
                                 className="p-10 space-y-8"
                             >
                                 <div className="space-y-3">
-                                    <label className="text-[10px] uppercase tracking-[0.4em] text-[#D4DE95]/40 font-black ml-1">Asset URL</label>
-                                    <input required name="url" className="w-full bg-white/[0.03] border border-[#D4DE95]/10 rounded-2xl py-5 px-6 text-[#F5F2ED] outline-none focus:border-[#D4DE95]/40 transition-all font-light" placeholder="https://source.unsplash.com/..." />
+                                    <label className="text-[10px] uppercase tracking-[0.4em] text-[#D4DE95]/40 font-black ml-1">Asset Image File</label>
+                                    <input required type="file" name="image" accept="image/*" className="w-full bg-white/[0.03] border border-[#D4DE95]/10 rounded-2xl py-5 px-6 text-[#F5F2ED] outline-none focus:border-[#D4DE95]/40 transition-all font-light" />
                                 </div>
                                 <div className="grid grid-cols-2 gap-6">
                                     <div className="space-y-3">

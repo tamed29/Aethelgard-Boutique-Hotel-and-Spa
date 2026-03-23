@@ -11,12 +11,25 @@ const getGalleryItems = async (req, res) => {
 
 const addGalleryItem = async (req, res) => {
     try {
-        const { url, alt, category, size } = req.body;
-        const newItem = new Gallery({ url, alt, category, size });
-        await newItem.save();
-        res.status(201).json(newItem);
+        let url = req.body.url;
+        if (req.file) {
+            url = req.file.path; // Cloudinary URL
+        }
+        
+        if (!url) {
+            return res.status(400).json({ message: 'No image source provided (file or URL required)' });
+        }
+
+        const newItem = new Gallery({ 
+            url, 
+            alt: req.body.alt, 
+            category: req.body.category, 
+            size: req.body.size 
+        });
+        const savedItem = await newItem.save();
+        res.status(201).json(savedItem);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(400).json({ message: error.message });
     }
 };
 

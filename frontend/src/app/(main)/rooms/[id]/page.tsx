@@ -51,7 +51,7 @@ export default async function RoomDetailPage({ params }: { params: Promise<{ id:
     return (
         <>
             <StructuredData data={roomSchema} />
-            <RoomClient params={Promise.resolve({ id })} />
+            <RoomClient initialRoom={room} params={Promise.resolve({ id })} />
         </>
     );
 }

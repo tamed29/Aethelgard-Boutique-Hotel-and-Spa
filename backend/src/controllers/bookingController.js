@@ -40,20 +40,15 @@ const checkAvailability = async (req, res) => {
                 ]
             });
 
-            const bookedRoomNumbers = overlappingBookings.map(b => b.roomNumber);
-            const availableUnits = room.units.filter(u => 
-                !bookedRoomNumbers.includes(u.number) && 
-                u.status !== 'maintenance' &&
-                u.status !== 'out_of_service'
-            );
+            const availableUnitsCount = room.units.length - overlappingBookings.length;
 
             return {
                 roomType: room.roomType,
                 roomId: room._id,
                 totalUnits: room.units.length,
-                availableUnits: availableUnits.length,
-                units: availableUnits.map(u => u.number),
-                isAvailable: availableUnits.length > 0
+                availableUnits: Math.max(0, availableUnitsCount),
+                units: room.units.map(u => u.number),
+                isAvailable: availableUnitsCount > 0
             };
         }));
 
@@ -78,16 +73,9 @@ const createBooking = async (req, res) => {
         // 1. Fetch Room Type and Units under transaction
         let room = await Room.findOne({ roomType }).session(session);
         if (!room) {
-            // Auto-create room for testing/demonstration if user hasn't added it yet
-            room = new Room({
-                name: `${roomType.charAt(0).toUpperCase() + roomType.slice(1)} Suite`,
-                roomType: roomType,
-                roomNumber: `${roomType.toUpperCase()}-001`,
-                price: 350,
-                capacity: 2,
-                units: [{ number: `${roomType.toUpperCase()}-001`, status: 'available' }]
-            });
-            await room.save({ session });
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(404).json({ message: `Room type '${roomType}' not found in inventory cluster.` });
         }
 
         // 2. Conflict Guard: Find overlapping bookings for this room type
@@ -99,16 +87,8 @@ const createBooking = async (req, res) => {
             ]
         }).session(session);
 
-        const bookedRoomNumbers = overlappingBookings.map(b => b.roomNumber);
-        
-        // 3. Select an available unit
-        const availableUnit = room.units.find(u => 
-            !bookedRoomNumbers.includes(u.number) && 
-            u.status !== 'maintenance' &&
-            u.status !== 'out_of_service'
-        );
-
-        if (!availableUnit) {
+        // 3. Select an available unit based on total capacity (Conflict Guard)
+        if (overlappingBookings.length >= room.units.length) {
             await session.abortTransaction();
             session.endSession();
             return res.status(409).json({
@@ -141,7 +121,8 @@ const createBooking = async (req, res) => {
             guestPhone,
             paymentMethod,
             room: room._id,
-            roomNumber: availableUnit.number,
+            roomNumber: 'Pending Assignment',
+            assignedUnit: 'Pending Assignment',
             checkIn,
             checkOut,
             totalPrice,
@@ -173,12 +154,6 @@ const createBooking = async (req, res) => {
                     timestamp: new Date()
                 });
             }
-            // Update the specific room unit status (UI level sync)
-            io.emit('unitStatusUpdate', { 
-                roomTypeId: room._id, 
-                roomNumber: availableUnit.number, 
-                status: 'occupied' 
-            });
         }
 
         // 7. Non-blocking Email Alerts
@@ -191,7 +166,7 @@ const createBooking = async (req, res) => {
         res.status(201).json({
             success: true,
             booking: fullBooking || booking[0],
-            roomNumber: availableUnit.number
+            assignedUnit: 'Pending Assignment'
         });
 
     } catch (error) {
@@ -264,7 +239,7 @@ const updateBooking = async (req, res) => {
     try {
         const booking = await Booking.findById(req.params.id).populate('room');
         if (booking) {
-            const updatableFields = ['guestName', 'guestEmail', 'guestPhone', 'roomNumber', 'totalPrice', 'status', 'checkIn', 'checkOut'];
+            const updatableFields = ['guestName', 'guestEmail', 'guestPhone', 'roomNumber', 'assignedUnit', 'totalPrice', 'status', 'checkIn', 'checkOut'];
             updatableFields.forEach(field => {
                 if (req.body[field] !== undefined) {
                     booking[field] = req.body[field];

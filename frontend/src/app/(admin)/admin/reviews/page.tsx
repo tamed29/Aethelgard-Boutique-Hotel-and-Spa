@@ -1,10 +1,11 @@
 'use client';
 
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminAxios } from '@/lib/adminAxios';
 import { AdminCard } from '@/components/admin/AdminCard';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Star, Trash2, Loader2, Quote, BadgeCheck, User } from 'lucide-react';
+import { Star, Trash2, Loader2, Quote, BadgeCheck, User, Edit2, XCircle, Check } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Review {
@@ -18,12 +19,24 @@ interface Review {
 
 export default function AdminReviewsPage() {
     const queryClient = useQueryClient();
+    const [editingReview, setEditingReview] = useState<Review | null>(null);
 
     const { data: reviews = [], isLoading } = useQuery<Review[]>({
         queryKey: ['admin-reviews'],
         queryFn: async () => {
             const res = await adminAxios.get('/reviews');
             return res.data;
+        }
+    });
+
+    const updateReview = useMutation({
+        mutationFn: async ({ id, rating, comment }: { id: string, rating: number, comment: string }) => {
+            await adminAxios.put(`/reviews/${id}`, { rating, comment });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['admin-reviews'] });
+            setEditingReview(null);
+            toast.success('Narrative updated in the archives.');
         }
     });
 
@@ -74,26 +87,78 @@ export default function AdminReviewsPage() {
                                         <p className="text-lg font-serif italic text-white/80 leading-relaxed font-light">"{v.comment}"</p>
                                         <div className="flex items-center gap-4 pt-4 border-t border-white/5">
                                             <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-[#D4DE95] font-serif">
-                                                {v.user?.name[0] || 'A'}
+                                                {v.user?.name?.[0] || 'G'}
                                             </div>
                                             <div>
-                                                <p className="text-[11px] text-[#F5F2ED] font-serif tracking-widest">{v.user?.name || 'Anonymous'}</p>
+                                                <p className="text-[11px] text-[#F5F2ED] font-serif tracking-widest">{v.user?.name || 'Guest Resident'}</p>
                                                 <p className="text-[8px] uppercase tracking-[0.3em] text-[#D4DE95]/30 font-black">{new Date(v.createdAt).toLocaleDateString()}</p>
                                             </div>
                                         </div>
                                     </div>
-                                    <button 
-                                        onClick={() => { if(confirm('Purge this narrative from the public records?')) deleteReview.mutate(v._id); }}
-                                        className="p-4 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white rounded-2xl transition-all duration-500 border border-rose-500/20"
-                                    >
-                                        <Trash2 size={20} />
-                                    </button>
+                                    <div className="flex md:flex-col gap-2">
+                                        <button 
+                                            onClick={() => setEditingReview(v)}
+                                            className="p-4 bg-blue-500/10 hover:bg-blue-500 text-blue-500 hover:text-white rounded-2xl transition-all duration-500 border border-blue-500/20"
+                                        >
+                                            <Edit2 size={20} />
+                                        </button>
+                                        <button 
+                                            onClick={() => { if(confirm('Purge this narrative from the public records?')) deleteReview.mutate(v._id); }}
+                                            className="p-4 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white rounded-2xl transition-all duration-500 border border-rose-500/20"
+                                        >
+                                            <Trash2 size={20} />
+                                        </button>
+                                    </div>
                                 </div>
                             </AdminCard>
                         </motion.div>
                     ))}
                 </AnimatePresence>
             </div>
+
+            {/* Edit Modal */}
+            <AnimatePresence>
+                {editingReview && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/90 backdrop-blur-xl">
+                        <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }} className="w-full max-w-xl bg-[#3D4127] border border-[#D4DE95]/20 rounded-[3rem] overflow-hidden shadow-2xl">
+                            <div className="p-8 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
+                                <h3 className="text-2xl font-serif text-[#F5F2ED]">Edit Guest Voice</h3>
+                                <button onClick={() => setEditingReview(null)} className="p-2 text-[#D4DE95]/40 hover:text-[#D4DE95] transition-colors"><XCircle size={24} /></button>
+                            </div>
+                            <form 
+                                onSubmit={(e) => {
+                                    e.preventDefault();
+                                    const formData = new FormData(e.target as HTMLFormElement);
+                                    updateReview.mutate({
+                                        id: editingReview._id,
+                                        rating: Number(formData.get('rating')),
+                                        comment: formData.get('comment') as string
+                                    });
+                                }} 
+                                className="p-10 space-y-8"
+                            >
+                                <div className="space-y-3">
+                                    <label className="text-[10px] uppercase tracking-[0.4em] text-[#D4DE95]/40 font-black ml-1">Rating</label>
+                                    <select name="rating" defaultValue={editingReview.rating} className="w-full bg-[#1A1F16] border border-[#D4DE95]/10 rounded-2xl py-5 px-6 text-[#F5F2ED] outline-none [&>option]:bg-[#1A1F16]">
+                                        {[5,4,3,2,1].map(n => <option key={n} value={n}>{n} Stars</option>)}
+                                    </select>
+                                </div>
+                                <div className="space-y-3">
+                                    <label className="text-[10px] uppercase tracking-[0.4em] text-[#D4DE95]/40 font-black ml-1">Narrative Content</label>
+                                    <textarea required name="comment" rows={4} defaultValue={editingReview.comment} className="w-full bg-white/[0.03] border border-[#D4DE95]/10 rounded-2xl py-5 px-6 text-[#F5F2ED] outline-none font-light italic leading-relaxed" />
+                                </div>
+                                <div className="pt-6 flex justify-end gap-4 border-t border-white/5">
+                                    <button type="button" onClick={() => setEditingReview(null)} className="px-8 py-4 rounded-xl border border-white/5 text-[#D4DE95]/40 hover:bg-white/5 transition-all text-[10px] uppercase tracking-[0.4em] font-black">Abort</button>
+                                    <button type="submit" disabled={updateReview.isPending} className="px-10 py-5 rounded-xl bg-[#D4DE95] text-[#1A1F16] hover:bg-[#F5F2ED] transition-all text-[11px] uppercase tracking-[0.4em] font-black shadow-xl shadow-[#D4DE95]/10 flex items-center gap-3">
+                                        {updateReview.isPending ? <Loader2 className="animate-spin" size={16} /> : <Check size={16} />}
+                                        <span>Deploy Update</span>
+                                    </button>
+                                </div>
+                            </form>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

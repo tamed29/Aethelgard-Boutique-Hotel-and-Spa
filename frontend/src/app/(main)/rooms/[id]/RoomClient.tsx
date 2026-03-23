@@ -213,14 +213,25 @@ const NUMERIC_TO_SLUG: Record<string, string> = {
     '7': 'botanical',
 };
 
-export default function RoomClient({ params }: { params: Promise<{ id: string }> }) {
+export default function RoomClient({ params, initialRoom }: { params: Promise<{ id: string }>, initialRoom?: any }) {
     const { id } = use(params);
     const slug = ROOM_DATA[id] ? id : (NUMERIC_TO_SLUG[id] || 'double');
-    const room = ROOM_DATA[slug];
+    const staticRoom = ROOM_DATA[slug];
+
+    // Merge static structure with dynamic data
+    const room = {
+        ...staticRoom,
+        ...(initialRoom || {}),
+        price: initialRoom?.price ?? staticRoom.price,
+        name: initialRoom?.name ?? staticRoom.name,
+        amenities: initialRoom?.amenities ?? staticRoom.amenities,
+        description: initialRoom?.description ?? staticRoom.description,
+        roomImages: (initialRoom?.images?.length > 0) ? initialRoom.images : staticRoom.roomImages,
+        bathroomImages: (initialRoom?.bathroomImages?.length > 0) ? initialRoom.bathroomImages : staticRoom.bathroomImages,
+    };
 
     const { roomImages, bathroomImages, features } = room;
     // Always show: hero + 3 room images + 2 bathroom images in gallery
-    // If botanical has 3 bathroom images, use all 3
     const allBathrooms = bathroomImages;
     const galleryRoom = roomImages.slice(1, 5); // indices 1-4
 

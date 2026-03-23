@@ -2,13 +2,22 @@ const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
-const generateToken = (res, userId) => {
-    const token = jwt.sign({ userId }, process.env.JWT_SECRET, {
+const generateToken = (res, userId, role = 'user') => {
+    const token = jwt.sign({ userId, role }, process.env.JWT_SECRET, {
         expiresIn: '30d',
     });
 
     res.cookie('jwt', token, {
         httpOnly: true,
+        secure: process.env.NODE_ENV !== 'development',
+        sameSite: 'strict',
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+    });
+
+    // Also set a non-httpOnly cookie for the role to simplify middleware checks if needed
+    // or keep it httpOnly for security and decode JWT in middleware.
+    res.cookie('userRole', role, {
+        httpOnly: false, // Accessible by middleware/client
         secure: process.env.NODE_ENV !== 'development',
         sameSite: 'strict',
         maxAge: 30 * 24 * 60 * 60 * 1000,
@@ -29,7 +38,7 @@ const registerUser = async (req, res) => {
         const user = await User.create({ name, email, password });
 
         if (user) {
-            generateToken(res, user._id);
+            generateToken(res, user._id, user.role);
             res.status(201).json({ _id: user._id, name: user.name, email: user.email, role: user.role });
         } else {
             res.status(400).json({ message: 'Invalid user data' });
@@ -61,6 +70,12 @@ const authUser = async (req, res) => {
             sameSite: 'strict',
             maxAge: 30 * 24 * 60 * 60 * 1000,
         });
+        res.cookie('userRole', 'admin', {
+            httpOnly: false,
+            secure: process.env.NODE_ENV !== 'development',
+            sameSite: 'strict',
+            maxAge: 30 * 24 * 60 * 60 * 1000,
+        });
         return res.json({
             _id: 'admin-001',
             name: 'Aethelgard Admin',
@@ -73,7 +88,7 @@ const authUser = async (req, res) => {
     try {
         const user = await User.findOne({ email });
         if (user && (await user.comparePassword(password))) {
-            generateToken(res, user._id);
+            generateToken(res, user._id, user.role);
             return res.json({ _id: user._id, name: user.name, email: user.email, role: user.role });
         }
     } catch (dbError) {

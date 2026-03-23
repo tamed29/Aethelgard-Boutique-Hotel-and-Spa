@@ -17,7 +17,9 @@ export function middleware(request: NextRequest) {
     // 3. Admin Route Protection
     if (request.nextUrl.pathname.startsWith('/admin')) {
         const token = request.cookies.get('jwt');
-        if (!token) {
+        const role = request.cookies.get('userRole')?.value;
+
+        if (!token || role !== 'admin') {
             const loginUrl = new URL('/login', request.url);
             loginUrl.searchParams.set('from', request.nextUrl.pathname);
             return NextResponse.redirect(loginUrl);

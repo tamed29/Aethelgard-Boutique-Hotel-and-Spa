@@ -57,8 +57,9 @@ const roomTypes = [
 ];
 
 const generateUnits = (type) => {
-    return Array.from({ length: 10 }, (_, i) => ({
-        number: `${type.toUpperCase()}-${(i + 1).toString().padStart(2, '0')}`,
+    const prefix = type.charAt(0).toUpperCase() + type.slice(1);
+    return Array.from({ length: 7 }, (_, i) => ({
+        number: `${prefix} ${(i + 1).toString().padStart(2, '0')}`,
         status: 'available',
         notes: ''
     }));
@@ -79,7 +80,7 @@ const seed = async () => {
         }));
 
         await Room.insertMany(roomsToInsert);
-        console.log('Successfully seeded 6 room types with 10 units each.');
+        console.log('Successfully seeded 6 room types with 7 units each.');
 
         process.exit(0);
     } catch (err) {

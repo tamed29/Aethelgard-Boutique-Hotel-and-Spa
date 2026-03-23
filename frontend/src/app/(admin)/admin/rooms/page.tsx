@@ -34,6 +34,8 @@ interface RoomType {
     units: RoomUnit[];
     floor: number;
     price: number;
+    images: string[];
+    bathroomImages: string[];
 }
 
 export default function RoomControlPage() {
@@ -56,22 +58,57 @@ export default function RoomControlPage() {
         mutationFn: async ({ roomId, unitNumber, status }: { roomId: string, unitNumber: string, status: string }) => {
             await adminAxios.put('/rooms/unit-status', { roomId, unitNumber, status });
         },
-        onSuccess: () => {
+        onMutate: async ({ roomId, unitNumber, status }) => {
+            await queryClient.cancelQueries({ queryKey: ['rooms'] });
+            const previousRooms = queryClient.getQueryData<RoomType[]>(['rooms']);
+            
+            queryClient.setQueryData<RoomType[]>(['rooms'], old => {
+                if (!old) return [];
+                return old.map(room => {
+                    if (room._id !== roomId) return room;
+                    return { ...room, units: room.units.map(u => u.number === unitNumber ? { ...u, status: status as any } : u) };
+                });
+            });
+            return { previousRooms };
+        },
+        onError: (err, variables, context) => {
+            if (context?.previousRooms) queryClient.setQueryData(['rooms'], context.previousRooms);
+            toast.error('Failed to update status');
+        },
+        onSettled: () => {
             queryClient.invalidateQueries({ queryKey: ['rooms'] });
         }
     });
 
     const updateRoomDetails = useMutation({
-        mutationFn: async (data: any) => {
-            await adminAxios.put(`/rooms/${data.id}`, data);
+        mutationFn: async (formData: FormData) => {
+            const id = formData.get('id');
+            await adminAxios.put(`/rooms/${id}`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+        },
+        onMutate: async (formData) => {
+            const id = formData.get('id');
+            await queryClient.cancelQueries({ queryKey: ['rooms'] });
+            const previousRooms = queryClient.getQueryData<RoomType[]>(['rooms']);
+            
+            // Note: Optimistic update is harder with FormData, but we can skip it or do a partial one
+            return { previousRooms };
+        },
+        onError: (err, newData, context) => {
+            if (context?.previousRooms) queryClient.setQueryData(['rooms'], context.previousRooms);
+            toast.error('Failed to update room details');
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: ['rooms'] });
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['rooms'] });
             setIsModalOpen(false);
             setEditingRoom(null);
-            toast.success('Room Configuration Updated');
+            toast.success('Room Updated (Sync Active)');
         }
     });
+    
 
     // Quick Clean Logic (30 min timer)
     const handleQuickClean = (roomId: string, unitNumber: string) => {
@@ -269,10 +306,13 @@ export default function RoomControlPage() {
                             <form 
                                 onSubmit={(e) => {
                                     e.preventDefault();
-                                    const formData = new FormData(e.target as HTMLFormElement);
+                                    const form = e.target as HTMLFormElement;
+                                    const formData = new FormData(form);
                                     
-                                    // Parse units list
-                                    const rawUnits = formData.get('units') as string;
+                                    formData.append('id', editingRoom?._id || '');
+                                    
+                                    // Parse units list (name is 'units_string' to avoid conflict)
+                                    const rawUnits = formData.get('units_string') as string;
                                     const unitNames = rawUnits.split(',').map(s => s.trim()).filter(Boolean);
                                     
                                     // Re-map units trying to preserve old statuses
@@ -280,14 +320,13 @@ export default function RoomControlPage() {
                                         const existing = editingRoom?.units?.find(u => u.number === num);
                                         return existing || { number: num, status: 'available' };
                                     });
+                                    
+                                    formData.set('units', JSON.stringify(newUnitsArray));
+                                    // Pass current images as JSON so backend knows what to keep
+                                    formData.set('current_images', JSON.stringify(editingRoom?.images || []));
+                                    formData.set('current_bathroomImages', JSON.stringify(editingRoom?.bathroomImages || []));
 
-                                    updateRoomDetails.mutate({
-                                        id: editingRoom?._id,
-                                        name: formData.get('name'),
-                                        price: Number(formData.get('price')),
-                                        floor: Number(formData.get('floor')),
-                                        units: newUnitsArray
-                                    });
+                                    updateRoomDetails.mutate(formData);
                                 }} 
                                 className="p-10 space-y-8"
                             >
@@ -308,15 +347,69 @@ export default function RoomControlPage() {
                                 <div className="space-y-3">
                                     <label className="text-[10px] uppercase tracking-[0.4em] text-[#D4DE95]/40 font-black ml-1 flex justify-between">
                                         <span>Inventory Units (Comma Separated)</span>
-                                        <span className="text-[#D4DE95]/20">Removing a unit deletes it from inventory</span>
                                     </label>
                                     <textarea 
                                         required 
-                                        name="units" 
-                                        rows={3}
+                                        name="units_string" 
+                                        rows={2}
                                         defaultValue={editingRoom?.units?.map(u => u.number).join(', ')} 
                                         className="w-full bg-white/[0.03] border border-[#D4DE95]/10 rounded-2xl py-5 px-6 text-[#F5F2ED] outline-none font-mono text-sm leading-relaxed resize-none" 
                                     />
+                                </div>
+                                <div className="space-y-6 pt-4 border-t border-white/5">
+                                    <h4 className="text-[10px] uppercase tracking-[0.4em] text-[#D4DE95]/40 font-black ml-1">Visual Assets (Cloudinary Synergy)</h4>
+                                    
+                                    {/* Main Images */}
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] uppercase tracking-widest text-white/40 ml-1">Bedroom Gallery (Files)</label>
+                                        <div className="flex flex-wrap gap-3 mb-4">
+                                            {editingRoom?.images?.map((img: string, i: number) => (
+                                                <div key={i} className="relative w-20 h-20 rounded-xl overflow-hidden border border-white/10 group">
+                                                    <img src={img} className="w-full h-full object-cover" />
+                                                    <button 
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const newImages = editingRoom.images.filter((_: any, idx: number) => idx !== i);
+                                                            setEditingRoom({ ...editingRoom, images: newImages });
+                                                        }}
+                                                        className="absolute inset-0 bg-rose-500/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    >
+                                                        <Trash2 size={16} className="text-white" />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                            <label className="w-20 h-20 flex flex-col items-center justify-center border-2 border-dashed border-white/10 rounded-xl hover:border-[#D4DE95]/40 cursor-pointer transition-all bg-white/[0.02]">
+                                                <Plus size={16} className="text-[#D4DE95]/40" />
+                                                <input type="file" name="images" multiple accept="image/*" className="hidden" />
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    {/* Bathroom Images */}
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] uppercase tracking-widest text-white/40 ml-1">Bathroom Ritual Gallery (Files)</label>
+                                        <div className="flex flex-wrap gap-3">
+                                            {editingRoom?.bathroomImages?.map((img: string, i: number) => (
+                                                <div key={i} className="relative w-20 h-20 rounded-xl overflow-hidden border border-white/10 group">
+                                                    <img src={img} className="w-full h-full object-cover" />
+                                                    <button 
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const newImages = editingRoom.bathroomImages.filter((_: any, idx: number) => idx !== i);
+                                                            setEditingRoom({ ...editingRoom, bathroomImages: newImages });
+                                                        }}
+                                                        className="absolute inset-0 bg-rose-500/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    >
+                                                        <Trash2 size={16} className="text-white" />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                            <label className="w-20 h-20 flex flex-col items-center justify-center border-2 border-dashed border-white/10 rounded-xl hover:border-[#D4DE95]/40 cursor-pointer transition-all bg-white/[0.02]">
+                                                <Plus size={16} className="text-[#D4DE95]/40" />
+                                                <input type="file" name="bathroomImages" multiple accept="image/*" className="hidden" />
+                                            </label>
+                                        </div>
+                                    </div>
                                 </div>
                                 
                                 <div className="pt-6 flex justify-end gap-4 border-t border-white/5">

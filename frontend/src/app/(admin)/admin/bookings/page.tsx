@@ -37,6 +37,7 @@ interface Booking {
     guestEmail: string;
     guestPhone: string;
     roomNumber: string;
+    assignedUnit?: string;
     checkIn: string;
     checkOut: string;
     totalPrice: number;
@@ -93,7 +94,13 @@ export default function ReservationHubPage() {
     const filteredBookings = bookings.filter(b => {
         const matchesSearch = b.guestName.toLowerCase().includes(search.toLowerCase()) || 
                              b.roomNumber.toLowerCase().includes(search.toLowerCase());
-        const matchesStatus = statusFilter === 'all' || b.status === statusFilter;
+        
+        const matchesStatus = statusFilter === 'all' 
+            ? true 
+            : statusFilter === 'pending-assignment'
+                ? b.assignedUnit === 'Pending Assignment' || !b.assignedUnit
+                : b.status === statusFilter;
+
         return matchesSearch && matchesStatus;
     });
 
@@ -141,6 +148,7 @@ export default function ReservationHubPage() {
                     className="bg-[#1A1F16] border border-[#D4DE95]/10 rounded-2xl py-5 px-6 text-[#F5F2ED] outline-none focus:border-[#D4DE95]/40 transition-all font-black uppercase tracking-widest text-[10px] [&>option]:bg-[#1A1F16]"
                 >
                     <option value="all">Every Status</option>
+                    <option value="pending-assignment text-moss-200">Pending Assignment</option>
                     <option value="confirmed">Confirmed</option>
                     <option value="checked-in">Checked In</option>
                     <option value="checked-out">Checked Out</option>
@@ -188,7 +196,7 @@ export default function ReservationHubPage() {
                                     </td>
                                     <td className="px-8 py-8">
                                         <span className="px-3 py-1 bg-white/5 rounded-lg border border-white/10 text-[10px] font-black tracking-widest text-[#D4DE95]/60 uppercase">
-                                            {b.roomNumber}
+                                            {b.roomNumber} | {b.assignedUnit || 'Pending'}
                                         </span>
                                     </td>
                                     <td className="px-8 py-8">
@@ -288,6 +296,7 @@ export default function ReservationHubPage() {
                                         guestName: formData.get('guestName'),
                                         guestEmail: formData.get('guestEmail'),
                                         roomNumber: formData.get('roomNumber'),
+                                        assignedUnit: formData.get('assignedUnit'),
                                         totalPrice: Number(formData.get('totalPrice')),
                                         status: formData.get('status'),
                                         checkIn: formData.get('checkIn'),
@@ -306,8 +315,24 @@ export default function ReservationHubPage() {
                                         <input required name="guestEmail" type="email" defaultValue={editingBooking?.guestEmail} className="w-full bg-white/[0.03] border border-[#D4DE95]/10 rounded-2xl py-5 px-6 text-[#F5F2ED] outline-none" />
                                     </div>
                                     <div className="space-y-3">
-                                        <label className="text-[10px] uppercase tracking-[0.4em] text-[#D4DE95]/40 font-black ml-1">Room Assignment</label>
+                                        <label className="text-[10px] uppercase tracking-[0.4em] text-[#D4DE95]/40 font-black ml-1">Room Type</label>
                                         <input required name="roomNumber" defaultValue={editingBooking?.roomNumber} className="w-full bg-white/[0.03] border border-[#D4DE95]/10 rounded-2xl py-5 px-6 text-[#F5F2ED] outline-none" />
+                                    </div>
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] uppercase tracking-[0.4em] text-[#D4DE95]/40 font-black ml-1">Assigned Unit</label>
+                                        <select 
+                                            required 
+                                            name="assignedUnit" 
+                                            defaultValue={editingBooking?.assignedUnit || 'Pending Assignment'} 
+                                            className="w-full bg-[#1A1F16] border border-[#D4DE95]/10 rounded-2xl py-5 px-6 text-[#F5F2ED] outline-none cursor-pointer"
+                                        >
+                                            <option value="Pending Assignment">Pending Assignment</option>
+                                            {Array.from({ length: 7 }, (_, i) => {
+                                                const prefix = editingBooking?.roomNumber || 'Room';
+                                                const unitName = `${prefix} ${(i + 1).toString().padStart(2, '0')}`;
+                                                return <option key={unitName} value={unitName}>{unitName}</option>;
+                                            })}
+                                        </select>
                                     </div>
                                     <div className="space-y-3">
                                         <label className="text-[10px] uppercase tracking-[0.4em] text-[#D4DE95]/40 font-black ml-1">Total Price ($)</label>

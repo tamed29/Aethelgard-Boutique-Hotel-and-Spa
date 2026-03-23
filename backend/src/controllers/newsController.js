@@ -11,7 +11,11 @@ const getItems = async (req, res) => {
 
 const addItem = async (req, res) => {
     try {
-        const newItem = new NewsEvent(req.body);
+        const itemData = { ...req.body };
+        if (req.file) {
+            itemData.imageUrl = req.file.path; // Cloudinary URL
+        }
+        const newItem = new NewsEvent(itemData);
         const savedItem = await newItem.save();
         res.status(201).json(savedItem);
     } catch (error) {
@@ -23,11 +27,10 @@ const updateItem = async (req, res) => {
     try {
         const item = await NewsEvent.findById(req.params.id);
         if (item) {
-            item.title = req.body.title || item.title;
-            item.content = req.body.content || item.content;
-            item.date = req.body.date || item.date;
-            item.imageUrl = req.body.imageUrl || item.imageUrl;
-            item.type = req.body.type || item.type;
+            Object.assign(item, req.body);
+            if (req.file) {
+                item.imageUrl = req.file.path; // Cloudinary URL
+            }
             const updatedItem = await item.save();
             res.json(updatedItem);
         } else {

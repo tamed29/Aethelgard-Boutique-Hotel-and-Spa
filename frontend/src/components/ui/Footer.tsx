@@ -24,7 +24,6 @@ const Footer = () => {
                 { name: "About Us", href: "/heritage" },
                 { name: "Reservations", href: "/reservations" },
                 { name: "Contact", href: "/contact" },
-                { name: "Admin", href: "/login" },
             ],
         },
     ];
@@ -32,7 +31,7 @@ const Footer = () => {
     return (
         <footer className="bg-zinc-950 text-white pt-32 pb-16 relative overflow-hidden">
             {/* Narrative Background Grain */}
-            <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
+            <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]" />
 
             <div className="max-w-[120rem] mx-auto px-6 md:px-16 xl:px-32 relative z-10">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-20 mb-32">
@@ -113,7 +112,10 @@ const Footer = () => {
 
                 {/* Bottom Bar */}
                 <div className="pt-16 border-t border-white/5 flex flex-col md:flex-row gap-8 justify-between items-center text-[10px] uppercase tracking-[0.4em] text-white/20 font-black">
-                    <p>© {currentYear} Aethelgard Boutique Hotel &amp; Spa. All Rights Reserved.</p>
+                    <div className="flex flex-col md:flex-row items-center gap-8">
+                        <p>© {currentYear} Aethelgard Boutique Hotel &amp; Spa. All Rights Reserved.</p>
+                        <Link href="/login" className="hover:text-white/40 transition-colors duration-500 opacity-20 hover:opacity-100">Staff Portal</Link>
+                    </div>
                     <div className="flex gap-12">
                         <Link href="/contact" className="hover:text-white transition-colors duration-500">Privacy Policy</Link>
                         <Link href="/contact" className="hover:text-white transition-colors duration-500">Terms of Service</Link>

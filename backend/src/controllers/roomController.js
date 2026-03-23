@@ -114,7 +114,7 @@ const updateUnitStatus = async (req, res) => {
 
 const updateRoom = async (req, res) => {
     try {
-        const { name, roomType, roomNumber, description, price, capacity, sizeSqM, bedType, view, amenities, images, floor, videoUrl, bathroomImages, units } = req.body;
+        const { name, roomType, roomNumber, description, price, capacity, sizeSqM, bedType, view, amenities, floor, videoUrl, units } = req.body;
         const room = await Room.findById(req.params.id);
 
         if (room) {
@@ -127,12 +127,41 @@ const updateRoom = async (req, res) => {
             if (sizeSqM !== undefined) room.sizeSqM = sizeSqM;
             if (bedType !== undefined) room.bedType = bedType;
             if (view !== undefined) room.view = view;
-            if (amenities) room.amenities = amenities;
-            if (images) room.images = images;
-            if (bathroomImages) room.bathroomImages = bathroomImages;
+            if (amenities) {
+                room.amenities = typeof amenities === 'string' ? JSON.parse(amenities) : amenities;
+            }
             if (floor !== undefined) room.floor = floor;
             if (videoUrl !== undefined) room.videoUrl = videoUrl;
-            if (units) room.units = units;
+            if (units) {
+                room.units = typeof units === 'string' ? JSON.parse(units) : units;
+            }
+
+            // Handle Image Arrays (Merge existing + new uploads)
+            if (req.body.current_images) {
+                try {
+                    room.images = JSON.parse(req.body.current_images);
+                } catch(e) {
+                    console.error("Error parsing current_images:", e);
+                }
+            }
+            if (req.body.current_bathroomImages) {
+                try {
+                    room.bathroomImages = JSON.parse(req.body.current_bathroomImages);
+                } catch(e) {
+                    console.error("Error parsing current_bathroomImages:", e);
+                }
+            }
+
+            if (req.files) {
+                if (req.files['images']) {
+                    const newImages = req.files['images'].map(f => f.path);
+                    room.images = [...(room.images || []), ...newImages];
+                }
+                if (req.files['bathroomImages']) {
+                    const newBathImages = req.files['bathroomImages'].map(f => f.path);
+                    room.bathroomImages = [...(room.bathroomImages || []), ...newBathImages];
+                }
+            }
 
             const updatedRoom = await room.save();
             

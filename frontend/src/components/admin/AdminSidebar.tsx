@@ -16,7 +16,8 @@ import {
     Users,
     Quote,
     Newspaper,
-    Bath
+    Bath,
+    Mail
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { io } from 'socket.io-client';
@@ -30,6 +31,7 @@ const NAV_ITEMS = [
     { label: 'Room Control', href: '/admin/rooms', icon: Bed },
     { label: 'Media Library', href: '/admin/gallery', icon: ImageIcon },
     { label: 'Reservation Hub', href: '/admin/bookings', icon: BookOpen },
+    { label: 'Communication Hub', href: '/admin/inquiries', icon: Mail },
     { label: 'Spa Reservations', href: '/admin/spa', icon: Bath },
     { label: 'Guest Voices', href: '/admin/reviews', icon: Quote },
     { label: 'News & Events', href: '/admin/news', icon: Newspaper },
@@ -53,12 +55,21 @@ export function AdminSidebar() {
             });
         });
 
+        socket.on('newInquiry', (data) => {
+            setNotifications(prev => prev + 1);
+            toast.info('New Guest Inquiry', {
+                description: `Received a message from: ${data.firstName} ${data.lastName}`,
+                icon: <Bell className="text-[#D4DE95]" size={16} />
+            });
+        });
+
         return () => { socket.disconnect(); };
     }, []);
 
     const handleLogout = async () => {
         // Clear JWT cookie and redirect
         document.cookie = 'jwt=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+        document.cookie = 'userRole=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
         window.location.href = '/login';
     };
 
@@ -90,6 +101,9 @@ export function AdminSidebar() {
             <nav className="flex-1 px-4 py-8 space-y-2 overflow-y-auto relative">
                 {NAV_ITEMS.map((item) => {
                     const isActive = pathname === item.href;
+                    // Check if this link should show notifications
+                    const showNotifications = (item.href === '/admin/bookings' || item.href === '/admin/reviews' || item.href === '/admin/inquiries') && notifications > 0;
+
                     return (
                         <Link 
                             key={item.href} 
@@ -106,9 +120,9 @@ export function AdminSidebar() {
                                 <span className="text-[10px] uppercase tracking-[0.3em] font-black">{item.label}</span>
                             )}
                             
-                            {/* Notification Badge for Bookings */}
-                            {item.href === '/admin/bookings' && notifications > 0 && (
-                                <span className="absolute right-4 bg-rose-500 text-white text-[8px] font-black px-2 py-0.5 rounded-full animate-bounce">
+                            {/* Notification Badge with Pulse Animation */}
+                            {showNotifications && (
+                                <span className="absolute right-4 bg-rose-500 text-white text-[8px] font-black px-2 py-0.5 rounded-full animate-pulse shadow-[0_0_10px_rgba(244,63,94,0.5)]">
                                     {notifications}
                                 </span>
                             )}
