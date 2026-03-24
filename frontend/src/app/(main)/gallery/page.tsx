@@ -14,25 +14,33 @@ const categories = [
     { id: 'outdoors', label: 'Outdoors', bg: '/images/spa/spa2.png' },
 ];
 
-const galleryItems = [
-    { id: 1, category: 'pool', src: '/images/swim/swim1.png', size: 'tall' },
-    { id: 2, category: 'pool', src: '/images/swim/swim2.png', size: 'square' },
-    { id: 3, category: 'pool', src: '/images/swim/swim.png', size: 'wide' },
-    { id: 4, category: 'rooms', src: '/images/rooms/forest/r1.png', size: 'wide' },
-    { id: 5, category: 'rooms', src: '/images/rooms/grand/g1.png', size: 'tall' },
-    { id: 6, category: 'rooms', src: '/images/rooms/double/d1.png', size: 'square' },
-    { id: 7, category: 'spa', src: '/images/spa/spa1.png', size: 'wide' },
-    { id: 8, category: 'spa', src: '/images/spa/spa2.png', size: 'tall' },
-    { id: 9, category: 'spa', src: '/images/spa/spa3.png', size: 'square' },
-    { id: 10, category: 'dining', src: '/images/dining/d1.png', size: 'square' },
-    { id: 11, category: 'dining', src: '/images/dining/d2.png', size: 'wide' },
-    { id: 12, category: 'heritage', src: '/images/hotel/h2.png', size: 'tall' },
-    { id: 13, category: 'forest', src: '/images/spa/spa2.png', size: 'wide' },
-];
+
 
 export default function GalleryPage() {
     const [activeCategory, setActiveCategory] = useState('pool');
-    const [selectedImage, setSelectedImage] = useState<null | typeof galleryItems[0]>(null);
+    const [selectedImage, setSelectedImage] = useState<any>(null);
+    const [galleryItems, setGalleryItems] = useState<any[]>([]);
+
+    useEffect(() => {
+        const fetchGallery = async () => {
+            try {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/gallery`);
+                const data = await res.json();
+                setGalleryItems(data);
+            } catch (err) {
+                console.error('Failed to fetch gallery', err);
+            }
+        };
+        fetchGallery();
+    }, []);
+
+    const getImageUrl = (url: string) => {
+        if (!url) return '';
+        if (url.startsWith('http')) return url;
+        const baseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api').split('/api')[0];
+        const cleanUrl = url.startsWith('/') ? url : `/${url}`;
+        return `${baseUrl}${cleanUrl}`;
+    };
 
     const filteredItems = galleryItems.filter(item => item.category === activeCategory);
 
@@ -95,7 +103,7 @@ export default function GalleryPage() {
                     <AnimatePresence mode="popLayout">
                         {filteredItems.map((item, idx) => (
                             <motion.div
-                                key={item.id}
+                                key={item._id || idx}
                                 layout
                                 initial={{ opacity: 0, scale: 0.9, y: 20 }}
                                 animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -108,8 +116,8 @@ export default function GalleryPage() {
                                 onClick={() => setSelectedImage(item)}
                             >
                                 <Image
-                                    src={item.src}
-                                    alt="Gallery Item"
+                                    src={getImageUrl(item.url || item.src)}
+                                    alt={item.alt || "Gallery Item"}
                                     fill
                                     className="object-cover transition-transform duration-[2s] group-hover:scale-110"
                                 />
@@ -149,7 +157,7 @@ export default function GalleryPage() {
                                 className="relative w-full h-full overflow-hidden rounded-[3rem] shadow-[0_50px_100px_rgba(0,0,0,0.5)]"
                             >
                                 <Image
-                                    src={selectedImage.src}
+                                    src={getImageUrl(selectedImage.url || selectedImage.src)}
                                     alt="Selected Gallery Image"
                                     fill
                                     className="object-contain md:object-cover"

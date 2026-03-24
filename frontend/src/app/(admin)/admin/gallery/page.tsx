@@ -33,6 +33,12 @@ export default function MediaLibraryPage() {
     const [isUploadOpen, setIsUploadOpen] = useState(false);
     const [editingItem, setEditingItem] = useState<GalleryItem | null>(null);
     const [filter, setFilter] = useState('all');
+    
+    // New states for multi-upload
+    const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+    const [bulkCategory, setBulkCategory] = useState('rooms');
+    const [applyToAll, setApplyToAll] = useState(true);
+    const [individualCategories, setIndividualCategories] = useState<Record<number, string>>({});
 
     const { data: items = [], isLoading } = useQuery<GalleryItem[]>({
         queryKey: ['gallery'],
@@ -51,7 +57,9 @@ export default function MediaLibraryPage() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['gallery'] });
             setIsUploadOpen(false);
-            toast.success('Asset ingested successfully.');
+            setSelectedFiles([]);
+            setIndividualCategories({});
+            toast.success('Assets ingested successfully.');
         }
     });
 
@@ -183,46 +191,112 @@ export default function MediaLibraryPage() {
                             <form 
                                 onSubmit={(e) => {
                                     e.preventDefault();
-                                    const formData = new FormData(e.target as HTMLFormElement);
-                                    //addItem.mutate(formData); // We'll need to update the mutationFn
+                                    const formData = new FormData();
+                                    
+                                    selectedFiles.forEach((file, index) => {
+                                        formData.append('images', file);
+                                        const cat = applyToAll ? bulkCategory : (individualCategories[index] || bulkCategory);
+                                        formData.append('category', cat);
+                                        formData.append('alt', file.name.split('.')[0]); // Default alt to filename
+                                        formData.append('size', 'square'); // Default size
+                                    });
+
                                     addItem.mutate(formData);
                                 }} 
                                 className="p-10 space-y-8"
                             >
                                 <div className="space-y-3">
-                                    <label className="text-[10px] uppercase tracking-[0.4em] text-[#D4DE95]/40 font-black ml-1">Asset Image File</label>
-                                    <input required type="file" name="image" accept="image/*" className="w-full bg-white/[0.03] border border-[#D4DE95]/10 rounded-2xl py-5 px-6 text-[#F5F2ED] outline-none focus:border-[#D4DE95]/40 transition-all font-light" />
-                                </div>
-                                <div className="grid grid-cols-2 gap-6">
-                                    <div className="space-y-3">
-                                        <label className="text-[10px] uppercase tracking-[0.4em] text-[#D4DE95]/40 font-black ml-1">Category</label>
-                                        <select name="category" className="w-full bg-[#1A1F16] border border-[#D4DE95]/10 rounded-2xl py-5 px-6 text-[#F5F2ED] outline-none focus:border-[#D4DE95]/40 transition-all font-light [&>option]:bg-[#1A1F16]">
-                                            <option value="rooms">Rooms</option>
-                                            <option value="spa">Spa</option>
-                                            <option value="dining">Dining</option>
-                                            <option value="pool">Pool</option>
-                                            <option value="outdoors">Outdoors</option>
-                                            <option value="heritage">Heritage</option>
-                                        </select>
+                                    <label className="text-[10px] uppercase tracking-[0.4em] text-[#D4DE95]/40 font-black ml-1">Asset Image Files</label>
+                                    <div 
+                                        onClick={() => document.getElementById('file-upload')?.click()}
+                                        className="w-full aspect-video bg-white/[0.03] border-2 border-dashed border-[#D4DE95]/10 rounded-[2rem] flex flex-col items-center justify-center gap-4 cursor-pointer hover:bg-white/[0.05] hover:border-[#D4DE95]/30 transition-all group"
+                                    >
+                                        <div className="w-16 h-16 rounded-full bg-[#1A1F16] flex items-center justify-center text-[#D4DE95] border border-white/5 group-hover:scale-110 transition-transform">
+                                            <Plus size={32} />
+                                        </div>
+                                        <p className="text-[10px] uppercase tracking-[0.4em] text-[#D4DE95]/40 font-black">Select Multiple Files</p>
+                                        <input 
+                                            id="file-upload"
+                                            hidden
+                                            required={selectedFiles.length === 0} 
+                                            type="file" 
+                                            multiple
+                                            accept="image/*" 
+                                            onChange={(e) => {
+                                                if (e.target.files) {
+                                                    setSelectedFiles(Array.from(e.target.files));
+                                                }
+                                            }}
+                                        />
                                     </div>
-                                    <div className="space-y-3">
-                                        <label className="text-[10px] uppercase tracking-[0.4em] text-[#D4DE95]/40 font-black ml-1">Layout Size</label>
-                                        <select name="size" className="w-full bg-[#1A1F16] border border-[#D4DE95]/10 rounded-2xl py-5 px-6 text-[#F5F2ED] outline-none focus:border-[#D4DE95]/40 transition-all font-light [&>option]:bg-[#1A1F16]">
-                                            <option value="square">Square</option>
-                                            <option value="wide">Wide Horizon</option>
-                                            <option value="tall">Tall Portrait</option>
-                                        </select>
+                                </div>
+
+                                {selectedFiles.length > 0 && (
+                                    <div className="space-y-6">
+                                        <div className="flex items-center justify-between px-2 bg-white/5 p-4 rounded-2xl">
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-10 h-6 rounded-full transition-colors cursor-pointer relative ${applyToAll ? 'bg-[#D4DE95]' : 'bg-white/10'}`} onClick={() => setApplyToAll(!applyToAll)}>
+                                                    <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${applyToAll ? 'left-5' : 'left-1'}`} />
+                                                </div>
+                                                <span className="text-[9px] uppercase tracking-widest font-black text-white/60">Apply category to all</span>
+                                            </div>
+                                            {applyToAll && (
+                                                <select 
+                                                    value={bulkCategory}
+                                                    onChange={(e) => setBulkCategory(e.target.value)}
+                                                    className="bg-[#1A1F16] border border-[#D4DE95]/10 rounded-xl py-2 px-4 text-[10px] text-[#F5F2ED] outline-none"
+                                                >
+                                                    <option value="rooms">Rooms</option>
+                                                    <option value="spa">Spa</option>
+                                                    <option value="dining">Dining</option>
+                                                    <option value="pool">Pool</option>
+                                                    <option value="outdoors">Outdoors</option>
+                                                    <option value="heritage">Heritage</option>
+                                                </select>
+                                            )}
+                                        </div>
+
+                                        <div className="max-h-60 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
+                                            {selectedFiles.map((file, i) => (
+                                                <div key={i} className="flex items-center gap-4 bg-white/[0.02] border border-white/5 p-3 rounded-2xl">
+                                                    <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0">
+                                                        <img src={URL.createObjectURL(file)} className="w-full h-full object-cover" />
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-[10px] text-white/40 truncate">{file.name}</p>
+                                                    </div>
+                                                    {!applyToAll && (
+                                                        <select 
+                                                            value={individualCategories[i] || bulkCategory}
+                                                            onChange={(e) => setIndividualCategories(prev => ({ ...prev, [i]: e.target.value }))}
+                                                            className="bg-white/5 border border-white/10 rounded-lg py-1.5 px-3 text-[9px] text-[#F5F2ED] outline-none"
+                                                        >
+                                                            <option value="rooms">Rooms</option>
+                                                            <option value="spa">Spa</option>
+                                                            <option value="dining">Dining</option>
+                                                            <option value="pool">Pool</option>
+                                                            <option value="outdoors">Outdoors</option>
+                                                            <option value="heritage">Heritage</option>
+                                                        </select>
+                                                    )}
+                                                    <button 
+                                                        type="button"
+                                                        onClick={() => setSelectedFiles(prev => prev.filter((_, idx) => idx !== i))}
+                                                        className="p-2 text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors"
+                                                    >
+                                                        <X size={14} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="space-y-3">
-                                    <label className="text-[10px] uppercase tracking-[0.4em] text-[#D4DE95]/40 font-black ml-1">Description (Alt)</label>
-                                    <input name="alt" className="w-full bg-white/[0.03] border border-[#D4DE95]/10 rounded-2xl py-5 px-6 text-[#F5F2ED] outline-none focus:border-[#D4DE95]/40 transition-all font-light" placeholder="e.g. Cinematic view of the lobby" />
-                                </div>
+                                )}
+
                                 <div className="pt-6 flex justify-end gap-4 border-t border-white/5">
-                                    <button type="button" onClick={() => setIsUploadOpen(false)} className="px-8 py-4 rounded-xl border border-white/5 text-[#D4DE95]/40 hover:bg-white/5 transition-all text-[10px] uppercase tracking-[0.4em] font-black">Abort</button>
-                                    <button type="submit" disabled={addItem.isPending} className="px-10 py-5 rounded-xl bg-[#D4DE95] text-[#1A1F16] hover:bg-[#F5F2ED] transition-all text-[11px] uppercase tracking-[0.4em] font-black shadow-xl shadow-[#D4DE95]/10 flex items-center gap-3">
+                                    <button type="button" onClick={() => { setIsUploadOpen(false); setSelectedFiles([]); }} className="px-8 py-4 rounded-xl border border-white/5 text-[#D4DE95]/40 hover:bg-white/5 transition-all text-[10px] uppercase tracking-[0.4em] font-black">Abort</button>
+                                    <button type="submit" disabled={addItem.isPending || selectedFiles.length === 0} className="px-10 py-5 rounded-xl bg-[#D4DE95] text-[#1A1F16] hover:bg-[#F5F2ED] transition-all text-[11px] uppercase tracking-[0.4em] font-black shadow-xl shadow-[#D4DE95]/10 flex items-center gap-3">
                                         {addItem.isPending ? <Loader2 className="animate-spin" size={16} /> : <Check size={16} />}
-                                        <span>Commit to Library</span>
+                                        <span>Commit {selectedFiles.length} Assets</span>
                                     </button>
                                 </div>
                             </form>

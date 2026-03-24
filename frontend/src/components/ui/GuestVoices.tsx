@@ -44,15 +44,19 @@ export default function GuestVoices() {
         fetchReviews();
     }, []);
 
-    // Fallback if no real DB data
-    const allReviews = reviews.length > 0 ? reviews : [
-        { _id: '1', user: { name: "Eleanor Vance" }, rating: 5, comment: "Aethelgard isn't just a stay; it's an immersion. The way the light hits the moss in the morning is something I've never captured before. Pure magic.", isVerifiedStay: true, image: '/images/rooms/forest/r2.png' },
-        { _id: '2', user: { name: "Julian Thorne" }, rating: 5, comment: "The restoration is impeccable. They haven't just saved the building; they've preserved the soul of the estate. Every stone tells a story.", isVerifiedStay: true, image: '/images/rooms/grand/g1.png' },
-        { _id: '3', user: { name: "Sienna Blake" }, rating: 5, comment: "Finally, a place that understands silent luxury. No noise, just the crackle of the hearth and the rustle of the ancient oaks.", isVerifiedStay: false, image: '/images/spa/spa1.png' },
-        { _id: '4', user: { name: "Marcus Reid" }, rating: 5, comment: "An absolutely stunning experience. The dining room alone is worth the trip, but the service elevates it to another level entirely.", isVerifiedStay: true, image: '/images/dining/d1.png' },
-        { _id: '5', user: { name: "Diana Prince" }, rating: 5, comment: "It feels like stepping back in time, yet with all the modern comforts you could possibly desire. A true hidden gem.", isVerifiedStay: true, image: '/images/hotel/h2.png' },
-        { _id: '6', user: { name: "Oliver Grant" }, rating: 5, comment: "The spa rituals are transformative. I left feeling completely renewed and deeply connected to nature.", isVerifiedStay: true, image: '/images/spa/spa2.png' }
+    const fallbackReviews = [
+        { _id: 'f1', user: { name: "Eleanor Vance" }, rating: 5, comment: "Aethelgard isn't just a stay; it's an immersion. The way the light hits the moss in the morning is something I've never captured before. Pure magic.", isVerifiedStay: true, image: '/images/rooms/forest/r2.png' },
+        { _id: 'f2', user: { name: "Julian Thorne" }, rating: 5, comment: "The restoration is impeccable. They haven't just saved the building; they've preserved the soul of the estate. Every stone tells a story.", isVerifiedStay: true, image: '/images/rooms/grand/g1.png' },
+        { _id: 'f3', user: { name: "Sienna Blake" }, rating: 5, comment: "Finally, a place that understands silent luxury. No noise, just the crackle of the hearth and the rustle of the ancient oaks.", isVerifiedStay: false, image: '/images/spa/spa1.png' },
+        { _id: 'f4', user: { name: "Marcus Reid" }, rating: 5, comment: "An absolutely stunning experience. The dining room alone is worth the trip, but the service elevates it to another level entirely.", isVerifiedStay: true, image: '/images/dining/d1.png' },
+        { _id: 'f5', user: { name: "Diana Prince" }, rating: 5, comment: "It feels like stepping back in time, yet with all the modern comforts you could possibly desire. A true hidden gem.", isVerifiedStay: true, image: '/images/hotel/h2.png' },
+        { _id: 'f6', user: { name: "Oliver Grant" }, rating: 5, comment: "The spa rituals are transformative. I left feeling completely renewed and deeply connected to nature.", isVerifiedStay: true, image: '/images/spa/spa2.png' }
     ];
+
+    const allReviews = [...reviews];
+    if (allReviews.length < 6) {
+        allReviews.push(...fallbackReviews.slice(0, 6 - allReviews.length));
+    }
 
     useEffect(() => {
         if (allReviews.length <= 3) return;

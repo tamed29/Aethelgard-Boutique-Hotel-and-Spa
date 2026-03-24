@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { Calendar as CalendarIcon, Bed, Users, ArrowRight, Check, X, ShieldCheck, MapPin, Sparkles, Coffee, Bath, Star, CreditCard } from 'lucide-react';
@@ -10,68 +10,7 @@ import 'react-day-picker/dist/style.css';
 import Image from 'next/image';
 import ScrollReveal from '@/components/ui/ScrollReveal';
 
-const roomTypes = [
-    {
-        id: 'grand',
-        name: 'Grand Estate Suite',
-        price: 950,
-        sqm: 145,
-        view: 'Forest Panorama',
-        bed: 'Grand Four-Porter',
-        images: ['/images/rooms/grand/g1.png', '/images/rooms/grand/g2.png', '/images/rooms/grand/g3.png'],
-        desc: 'The pinnacle of Aethelgard. Sovereign luxury with 360-degree views.'
-    },
-    {
-        id: 'forest',
-        name: 'Forest Retreat',
-        price: 320,
-        sqm: 72,
-        view: 'Old-Growth Canopy',
-        bed: 'California King',
-        images: ['/images/rooms/forest/r1.png', '/images/rooms/forest/r2.png', '/images/rooms/forest/r3.png'],
-        desc: 'Subterranean stone and reclaimed timber. Deep restoration.'
-    },
-    {
-        id: 'botanical',
-        name: 'Botanical Oasis',
-        price: 380,
-        sqm: 78,
-        view: 'Heritage Garden',
-        bed: 'Linen King',
-        images: ['/images/rooms/botanical/b1.png', '/images/rooms/botanical/b2.png', '/images/rooms/botanical/b3.png'],
-        desc: 'Living botanical walls and direct garden terrace access.'
-    },
-    {
-        id: 'skyward',
-        name: 'Skyward Loft',
-        price: 450,
-        sqm: 85,
-        view: 'Celestial Horizon',
-        bed: 'Starlight King',
-        images: ['/images/rooms/single/s1.png'],
-        desc: 'Elevated sanctuary with floor-to-ceiling glass and private observatory.'
-    },
-    {
-        id: 'garden',
-        name: 'Garden Sanctuary',
-        price: 420,
-        sqm: 90,
-        view: 'Herbal Zen Garden',
-        bed: 'Twin Artisan Oaks',
-        images: ['/images/rooms/single/s2.png'],
-        desc: 'Ground-level suite with direct access to the private meditation garden.'
-    },
-    {
-        id: 'manor',
-        name: 'Heritage Wing',
-        price: 600,
-        sqm: 110,
-        view: 'Estate Courtyard',
-        bed: 'Manor Canopy King',
-        images: ['/images/rooms/single/s3.png'],
-        desc: 'Historic chambers within the original 17th-century stone wing.'
-    }
-];
+
 
 const enhancements = [
     { id: 'breakfast', name: 'Artisan Breakfast Buffet', price: 45, icon: <Coffee className="w-5 h-5" />, desc: 'Farm-to-table morning spread in the Conservatory.' },
@@ -87,8 +26,35 @@ export default function ReservationsPortal() {
         from: new Date(),
         to: addDays(new Date(), 2)
     });
-    const [selectedRoom, setSelectedRoom] = useState<typeof roomTypes[0] | null>(null);
+    const [roomTypes, setRoomTypes] = useState<any[]>([]);
+    const [selectedRoom, setSelectedRoom] = useState<any | null>(null);
     const [selectedEnhancements, setSelectedEnhancements] = useState<string[]>([]);
+
+
+    useEffect(() => {
+        const fetchRooms = async () => {
+            try {
+                const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+                const res = await fetch(`${API_URL}/rooms`);
+                const data = await res.json();
+                
+                const mappedRooms = data.map((r: any) => ({
+                    id: r._id,
+                    name: r.name,
+                    price: r.price,
+                    sqm: r.sizeSqM || 100,
+                    view: r.view || 'Scenic View',
+                    bed: r.bedType || 'King Bed',
+                    images: r.images && r.images.length > 0 ? r.images : ['/images/rooms/single/s1.png'],
+                    desc: r.description || `Experience the luxury of our ${r.name}.`
+                }));
+                setRoomTypes(mappedRooms);
+            } catch (err) {
+                console.error('Failed to fetch rooms', err);
+            }
+        };
+        fetchRooms();
+    }, []);
     const [isPrivacyAccepted, setIsPrivacyAccepted] = useState(false);
     
     // Guest Information State

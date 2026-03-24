@@ -18,11 +18,49 @@ import { useState, useEffect } from "react";
 
 export default function Home() {
   const [isDay, setIsDay] = useState(true);
+  const [newsEvents, setNewsEvents] = useState<any[]>([]);
 
   useEffect(() => {
     const hour = new Date().getHours();
     setIsDay(hour >= 6 && hour < 18);
+
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/news`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setNewsEvents(data);
+        }
+      })
+      .catch(err => console.error('Failed to fetch news:', err));
   }, []);
+
+  const displayEvents = newsEvents.length > 0 
+    ? newsEvents.slice(0, 3).map(n => ({
+        category: n.type === 'event' ? 'Resort Events' : 'Resort Updates',
+        title: n.title,
+        desc: n.content,
+        image: n.imageUrl || '/images/spa/spa2.png'
+      })) 
+    : [
+        {
+          category: "Resort Updates",
+          title: "The New Botanical Spa Annex Opens This Fall",
+          desc: "Explore our latest wellness sanctuary carved into the living hillside, featuring thermal pools and ancestral ritual chambers.",
+          image: "/images/spa/spa2.png"
+        },
+        {
+          category: "Culinary Events",
+          title: "Harvest Moon Dinner: An Estate Celebration",
+          desc: "Join us for a multi-course dialogue between the forest and the shore, curated by Head Chef Elena Vance under the autumn moon.",
+          image: "/images/dining/d1.png"
+        },
+        {
+          category: "Wellness Retreats",
+          title: "Forest Bathing & Ancestral Silence Rituals",
+          desc: "A three-day immersive journey into the deepest sections of the Wychwood, led by our Master Botanist and Spa Director.",
+          image: "/images/spa/spa1.png"
+        }
+      ];
 
   const hotelSchema = {
     "@context": "https://schema.org",
@@ -279,26 +317,7 @@ export default function Home() {
           </ScrollReveal>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
-            {[
-              {
-                category: "Resort Updates",
-                title: "The New Botanical Spa Annex Opens This Fall",
-                desc: "Explore our latest wellness sanctuary carved into the living hillside, featuring thermal pools and ancestral ritual chambers.",
-                image: "/images/spa/spa2.png"
-              },
-              {
-                category: "Culinary Events",
-                title: "Harvest Moon Dinner: An Estate Celebration",
-                desc: "Join us for a multi-course dialogue between the forest and the shore, curated by Head Chef Elena Vance under the autumn moon.",
-                image: "/images/dining/d1.png"
-              },
-              {
-                category: "Wellness Retreats",
-                title: "Forest Bathing & Ancestral Silence Rituals",
-                desc: "A three-day immersive journey into the deepest sections of the Wychwood, led by our Master Botanist and Spa Director.",
-                image: "/images/spa/spa1.png"
-              }
-            ].map((event, i) => (
+            {displayEvents.map((event, i) => (
               <ScrollReveal key={i} delay={i * 0.2}>
                 <div className="group space-y-8">
                   <div className="relative aspect-[4/5] rounded-[2.5rem] overflow-hidden shadow-2xl">

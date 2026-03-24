@@ -209,27 +209,48 @@ const getMyBookings = async (req, res) => {
 // @desc    Update booking status (Admin)
 // @route   PUT /api/bookings/:id/status
 const updateBookingStatus = async (req, res) => {
-    const { status } = req.body;
-    const booking = await Booking.findById(req.params.id).populate('room');
+    try {
+        const { status } = req.body;
+        const booking = await Booking.findById(req.params.id);
 
-    if (booking) {
-        booking.status = status;
-        await booking.save();
+        if (booking) {
+            const oldStatus = booking.status;
+            booking.status = status;
+            await booking.save();
 
-        // When cancelled, free up the room
-        if (status === 'cancelled' && booking.room) {
-            await Room.findByIdAndUpdate(booking.room._id, { status: 'available' });
+            // Unit Inventory Sync
+            if (booking.room && booking.assignedUnit && booking.assignedUnit !== 'Pending Assignment') {
+                const room = await Room.findById(booking.room);
+                if (room) {
+                    const unit = room.units.find(u => u.number === booking.assignedUnit);
+                    if (unit) {
+                        if (status === 'checked-in') unit.status = 'occupied';
+                        if (status === 'checked-out') unit.status = 'cleaning';
+                        if (status === 'cancelled') unit.status = 'available';
+                        await room.save();
+                        
+                        // Emit socket event for inventory sync
+                        const io = req.app.get('io');
+                        if (io) {
+                            io.emit('unitStatusUpdate', { 
+                                roomId: room._id, 
+                                unitNumber: unit.number, 
+                                status: unit.status 
+                            });
+                        }
+                    }
+                }
+            }
+
             const io = req.app.get('io');
-            if (io) io.emit('roomStatusUpdate', { roomId: booking.room._id, status: 'available' });
+            if (io) io.emit('bookingUpdate', booking);
+
+            res.json(booking);
+        } else {
+            res.status(404).json({ message: 'Booking not found' });
         }
-
-        const io = req.app.get('io');
-        if (io) io.emit('bookingUpdate', booking);
-
-        res.json(booking);
-    } else {
-        res.status(404);
-        throw new Error('Booking not found');
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
 };
 
@@ -237,14 +258,56 @@ const updateBookingStatus = async (req, res) => {
 // @route   PUT /api/bookings/:id
 const updateBooking = async (req, res) => {
     try {
-        const booking = await Booking.findById(req.params.id).populate('room');
+        const booking = await Booking.findById(req.params.id);
         if (booking) {
+            const oldUnit = booking.assignedUnit;
+            const oldRoomId = booking.room;
+            const oldStatus = booking.status;
+
             const updatableFields = ['guestName', 'guestEmail', 'guestPhone', 'roomNumber', 'assignedUnit', 'totalPrice', 'status', 'checkIn', 'checkOut'];
             updatableFields.forEach(field => {
                 if (req.body[field] !== undefined) {
                     booking[field] = req.body[field];
                 }
             });
+
+            // Process Unit Swaps / Status Sync
+            if (booking.room && (booking.assignedUnit !== oldUnit || booking.status !== oldStatus)) {
+                // 1. Free up old unit
+                if (oldUnit && oldUnit !== 'Pending Assignment') {
+                    const rOld = await Room.findById(oldRoomId);
+                    if (rOld) {
+                        const uOld = rOld.units.find(u => u.number === oldUnit);
+                        if (uOld) uOld.status = 'available';
+                        await rOld.save();
+                    }
+                }
+
+                // 2. Lock new unit
+                if (booking.assignedUnit && booking.assignedUnit !== 'Pending Assignment') {
+                    const rNew = await Room.findById(booking.room);
+                    if (rNew) {
+                        const uNew = rNew.units.find(u => u.number === booking.assignedUnit);
+                        if (uNew) {
+                            if (booking.status === 'checked-in') uNew.status = 'occupied';
+                            else if (booking.status === 'checked-out') uNew.status = 'cleaning';
+                            else uNew.status = 'reserved';
+                        }
+                        await rNew.save();
+                        
+                        // Emit socket event for inventory sync
+                        const io = req.app.get('io');
+                        if (io) {
+                            io.emit('unitStatusUpdate', { 
+                                roomId: rNew._id, 
+                                unitNumber: booking.assignedUnit, 
+                                status: uNew.status 
+                            });
+                        }
+                    }
+                }
+            }
+
             const updatedBooking = await booking.save();
             const io = req.app.get('io');
             if (io) io.emit('bookingUpdate', updatedBooking);

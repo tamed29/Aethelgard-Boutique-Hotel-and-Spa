@@ -11,23 +11,42 @@ const getGalleryItems = async (req, res) => {
 
 const addGalleryItem = async (req, res) => {
     try {
-        let url = req.body.url;
-        if (req.file) {
-            url = req.file.path; // Cloudinary URL
-        }
-        
-        if (!url) {
-            return res.status(400).json({ message: 'No image source provided (file or URL required)' });
+        const { alt, category, size } = req.body;
+        const savedItems = [];
+
+        if (req.files && req.files.length > 0) {
+            // Handle multiple file uploads
+            for (let i = 0; i < req.files.length; i++) {
+                const file = req.files[i];
+                // Determine category for this file (specific or bulk)
+                const itemCategory = Array.isArray(category) ? category[i] : category;
+                const itemAlt = Array.isArray(alt) ? alt[i] : alt;
+                const itemSize = Array.isArray(size) ? size[i] : size;
+
+                const newItem = new Gallery({
+                    url: file.path,
+                    alt: itemAlt || '',
+                    category: itemCategory || 'other',
+                    size: itemSize || 'square'
+                });
+                const savedItem = await newItem.save();
+                savedItems.push(savedItem);
+            }
+        } else if (req.body.url) {
+            // Fallback for direct URL submission if still used
+            const newItem = new Gallery({ 
+                url: req.body.url, 
+                alt, 
+                category, 
+                size: size || 'square'
+            });
+            const savedItem = await newItem.save();
+            savedItems.push(savedItem);
+        } else {
+            return res.status(400).json({ message: 'No image source provided (files or URL required)' });
         }
 
-        const newItem = new Gallery({ 
-            url, 
-            alt: req.body.alt, 
-            category: req.body.category, 
-            size: req.body.size 
-        });
-        const savedItem = await newItem.save();
-        res.status(201).json(savedItem);
+        res.status(201).json(savedItems.length === 1 ? savedItems[0] : savedItems);
     } catch (error) {
         res.status(400).json({ message: error.message });
     }

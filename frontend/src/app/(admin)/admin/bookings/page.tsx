@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminAxios } from '@/lib/adminAxios';
 import { 
@@ -37,6 +37,7 @@ interface Booking {
     guestEmail: string;
     guestPhone: string;
     roomNumber: string;
+    room?: any;
     assignedUnit?: string;
     checkIn: string;
     checkOut: string;
@@ -53,13 +54,23 @@ export default function ReservationHubPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
 
-    const { data: bookings = [], isLoading } = useQuery<Booking[]>({
+    const { data: bookings = [], isLoading: isBookingsLoading } = useQuery<Booking[]>({
         queryKey: ['bookings'],
         queryFn: async () => {
             const res = await adminAxios.get('/bookings');
             return res.data;
         }
     });
+
+    const { data: roomsInventory = [] } = useQuery<any[]>({
+        queryKey: ['rooms'],
+        queryFn: async () => {
+            const res = await adminAxios.get('/rooms');
+            return res.data;
+        }
+    });
+
+    const isLoading = isBookingsLoading;
 
     const updateStatus = useMutation({
         mutationFn: async ({ id, status }: { id: string, status: string }) => {
@@ -91,18 +102,21 @@ export default function ReservationHubPage() {
         return () => { socket.disconnect(); };
     }, [queryClient]);
 
-    const filteredBookings = bookings.filter(b => {
-        const matchesSearch = b.guestName.toLowerCase().includes(search.toLowerCase()) || 
-                             b.roomNumber.toLowerCase().includes(search.toLowerCase());
-        
-        const matchesStatus = statusFilter === 'all' 
-            ? true 
-            : statusFilter === 'pending-assignment'
-                ? b.assignedUnit === 'Pending Assignment' || !b.assignedUnit
-                : b.status === statusFilter;
+    const filteredBookings = useMemo(() => {
+        return bookings.filter(b => {
+            const roomName = b.room?.name || b.roomNumber || '';
+            const matchesSearch = b.guestName.toLowerCase().includes(search.toLowerCase()) || 
+                                 roomName.toLowerCase().includes(search.toLowerCase());
+            
+            const matchesStatus = statusFilter === 'all' 
+                ? true 
+                : statusFilter === 'pending-assignment'
+                    ? b.assignedUnit === 'Pending Assignment' || !b.assignedUnit
+                    : b.status === statusFilter;
 
-        return matchesSearch && matchesStatus;
-    });
+            return matchesSearch && matchesStatus;
+        });
+    }, [bookings, search, statusFilter]);
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -196,7 +210,7 @@ export default function ReservationHubPage() {
                                     </td>
                                     <td className="px-8 py-8">
                                         <span className="px-3 py-1 bg-white/5 rounded-lg border border-white/10 text-[10px] font-black tracking-widest text-[#D4DE95]/60 uppercase">
-                                            {b.roomNumber} | {b.assignedUnit || 'Pending'}
+                                            {b.room?.name || b.roomNumber} | {b.assignedUnit || 'Pending'}
                                         </span>
                                     </td>
                                     <td className="px-8 py-8">
@@ -316,7 +330,7 @@ export default function ReservationHubPage() {
                                     </div>
                                     <div className="space-y-3">
                                         <label className="text-[10px] uppercase tracking-[0.4em] text-[#D4DE95]/40 font-black ml-1">Room Type</label>
-                                        <input required name="roomNumber" defaultValue={editingBooking?.roomNumber} className="w-full bg-white/[0.03] border border-[#D4DE95]/10 rounded-2xl py-5 px-6 text-[#F5F2ED] outline-none" />
+                                        <input required name="roomNumber" defaultValue={editingBooking?.room?.name || editingBooking?.roomNumber} className="w-full bg-white/[0.03] border border-[#D4DE95]/10 rounded-2xl py-5 px-6 text-[#F5F2ED] outline-none" readOnly />
                                     </div>
                                     <div className="space-y-3">
                                         <label className="text-[10px] uppercase tracking-[0.4em] text-[#D4DE95]/40 font-black ml-1">Assigned Unit</label>
@@ -327,11 +341,34 @@ export default function ReservationHubPage() {
                                             className="w-full bg-[#1A1F16] border border-[#D4DE95]/10 rounded-2xl py-5 px-6 text-[#F5F2ED] outline-none cursor-pointer"
                                         >
                                             <option value="Pending Assignment">Pending Assignment</option>
-                                            {Array.from({ length: 7 }, (_, i) => {
-                                                const prefix = editingBooking?.roomNumber || 'Room';
-                                                const unitName = `${prefix} ${(i + 1).toString().padStart(2, '0')}`;
-                                                return <option key={unitName} value={unitName}>{unitName}</option>;
-                                            })}
+                                            {roomsInventory
+                                                .filter(r => {
+                                                    if (editingBooking?.room?.roomType) return r.roomType === editingBooking.room.roomType;
+                                                    if (editingBooking?.roomNumber) {
+                                                        const rb = editingBooking.roomNumber.toLowerCase();
+                                                        return r.roomType.toLowerCase() === rb || 
+                                                               r.name.toLowerCase() === rb || 
+                                                               r.units.some((u: any) => u.number.toLowerCase() === rb);
+                                                    }
+                                                    return true; // fallback to all if no info
+                                                })
+                                                .flatMap(r => r.units)
+                                                .map(unit => {
+                                                    const isCurrentlyAssigned = editingBooking?.assignedUnit === unit.number;
+                                                    const isAvailable = unit.status === 'available' || isCurrentlyAssigned;
+                                                    
+                                                    return (
+                                                        <option 
+                                                            key={unit.number} 
+                                                            value={unit.number}
+                                                            disabled={!isAvailable}
+                                                            className={!isAvailable ? 'opacity-50 text-white/20' : ''}
+                                                        >
+                                                            {unit.number} ({unit.status === 'available' ? 'Available' : isCurrentlyAssigned ? 'Active Assignment' : unit.status})
+                                                        </option>
+                                                    );
+                                                })
+                                            }
                                         </select>
                                     </div>
                                     <div className="space-y-3">

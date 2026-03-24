@@ -16,7 +16,8 @@ import {
     Search,
     Layers,
     Edit2,
-    XCircle
+    XCircle,
+    Plus
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -24,7 +25,7 @@ import { toast } from 'sonner';
 
 interface RoomUnit {
     number: string;
-    status: 'available' | 'occupied' | 'cleaning' | 'maintenance';
+    status: 'available' | 'occupied' | 'cleaning' | 'maintenance' | 'reserved';
 }
 
 interface RoomType {
@@ -240,7 +241,9 @@ export default function RoomControlPage() {
                                                             "w-2 h-2 rounded-full",
                                                             unit.status === 'available' ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' :
                                                             unit.status === 'occupied' ? 'bg-rose-500 shadow-[0_0_8px_#f43f5e]' :
-                                                            unit.status === 'cleaning' ? 'bg-sky-400 shadow-[0_0_8px_#38bdf8]' : 'bg-amber-500 shadow-[0_0_8px_#f59e0b]'
+                                                            unit.status === 'cleaning' ? 'bg-sky-400 shadow-[0_0_8px_#38bdf8]' : 
+                                                            unit.status === 'reserved' ? 'bg-indigo-500 shadow-[0_0_8px_#6366f1]' :
+                                                            'bg-amber-500 shadow-[0_0_8px_#f59e0b]'
                                                         )} />
                                                     </div>
 
@@ -248,6 +251,7 @@ export default function RoomControlPage() {
                                                         {[
                                                             { id: 'available', label: 'Ready', icon: Check },
                                                             { id: 'occupied', label: 'Occupied', icon: Users },
+                                                            { id: 'reserved', label: 'Reserved', icon: Clock },
                                                             { id: 'cleaning', label: 'Cleaning', icon: Sparkles },
                                                             { id: 'maintenance', label: 'Repair', icon: ShieldCheck }
                                                         ].map((s) => (

@@ -8,7 +8,7 @@ const upload = require('../middleware/uploadMiddleware');
 router.get('/', getGalleryItems);
 
 // Protected admin routes
-router.post('/', protect, admin, upload.single('image'), addGalleryItem);
+router.post('/', protect, admin, upload.array('images'), addGalleryItem);
 router.put('/:id', protect, admin, updateGalleryItem);
 router.delete('/:id', protect, admin, deleteGalleryItem);
 
