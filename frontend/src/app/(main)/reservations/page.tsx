@@ -41,6 +41,7 @@ export default function ReservationsPortal() {
                 const mappedRooms = data.map((r: any) => ({
                     id: r._id,
                     name: r.name,
+                    roomType: r.roomType,
                     price: r.price,
                     sqm: r.sizeSqM || 100,
                     view: r.view || 'Scenic View',
@@ -125,7 +126,17 @@ export default function ReservationsPortal() {
         if (status === 'submitting') return;
         if (!isPrivacyAccepted) return;
         if (!selectedRoom || !range.from || !range.to) {
-            toast.error('Missing Information', { description: 'Please ensure dates and room are selected.' });
+            toast.error('Selection Incomplete', { description: 'Please ensure dates and a sanctuary are selected.' });
+            return;
+        }
+
+        if (!firstName || !lastName || !email || !phone || !address || !city || !country) {
+            toast.error('Information Required', { description: 'Please complete all mandatory guest details.' });
+            return;
+        }
+
+        if (!email.includes('@')) {
+            toast.error('Invalid Email', { description: 'Please provide a valid digital invitation address.' });
             return;
         }
 
@@ -137,7 +148,7 @@ export default function ReservationsPortal() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    roomType: selectedRoom.id,
+                    roomType: selectedRoom.roomType,
                     checkIn: range.from.toISOString(),
                     checkOut: range.to.toISOString(),
                     guestName: `${firstName} ${lastName}`,
@@ -165,10 +176,11 @@ export default function ReservationsPortal() {
             setStatus('success');
             toast.success('Booking Confirmed', { description: 'Your reservation has been confirmed.' });
         } catch (error: any) {
-            // Fallback for simulation
-            setBookingCode('AE' + Math.random().toString(36).substring(2, 7).toUpperCase());
-            setStatus('success');
-            toast.success('Reservation Secured', { description: 'System in local preservation mode.' });
+            console.error('Final Submission Error:', error);
+            setStatus('idle');
+            toast.error('Transmission Failure', { 
+                description: error.message || 'The estate vault is currently unreachable. Please try again shortly.' 
+            });
         }
     };
 
@@ -187,20 +199,31 @@ export default function ReservationsPortal() {
                     <h2 className="text-4xl md:text-5xl font-serif mb-6 tracking-tight">Booking Confirmed</h2>
                     <p className="text-[#D4DE95]/60 uppercase tracking-[0.4em] text-[10px] font-black mb-12">Your Journey Begins Shortly</p>
                     
-                    <div className="bg-white/5 border border-white/10 rounded-3xl p-8 mb-12">
-                        <p className="text-[10px] uppercase tracking-widest text-white/40 mb-3">Booking Reference</p>
-                        <p className="text-5xl font-serif tracking-[0.2em] text-[#D4DE95]">{bookingCode}</p>
+                    <div className="bg-white/5 border border-white/10 rounded-3xl p-8 mb-12 space-y-8">
+                        <div className="flex flex-col gap-2">
+                            <span className="text-[10px] uppercase tracking-[0.4em] font-black opacity-40">Reference Node</span>
+                            <span className="text-4xl font-mono tracking-tighter text-[#D4DE95]">{bookingCode}</span>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-8 border-t border-white/10 pt-8">
+                            <div className="text-left space-y-1">
+                                <span className="text-[10px] uppercase tracking-widest font-black opacity-30">Sanctuary</span>
+                                <p className="font-serif text-white">{selectedRoom?.name || 'Sanctuary'}</p>
+                            </div>
+                            <div className="text-right space-y-1">
+                                <span className="text-[10px] uppercase tracking-widest font-black opacity-30">Arrival</span>
+                                <p className="font-serif text-white">{range.from ? format(range.from, 'dd MMM yyyy') : '---'}</p>
+                            </div>
+                        </div>
                     </div>
 
-                    <p className="text-lg font-serif italic text-white/60 mb-12 leading-relaxed">
-                        A formal digital invitation and estate map have been dispatched to your e-mail. We prepare for your arrival on {range.from ? format(range.from, 'MMMM do') : '...'}.
-                    </p>
-
+                    <p className="text-[10px] uppercase tracking-[0.6em] font-black opacity-30 mb-8">Capturing this manifest is recommended</p>
+                    
                     <button 
                         onClick={() => window.location.href = '/'}
-                        className="px-12 py-5 bg-[#D4DE95] text-[#1A1F16] rounded-full font-black text-[10px] uppercase tracking-[0.4em] hover:bg-white transition-all"
+                        className="px-16 py-6 bg-[#D4DE95] text-[#1A1F16] rounded-2xl hover:bg-white transition-all text-[11px] uppercase tracking-[0.4em] font-black shadow-2xl"
                     >
-                        Return to Heritage Site
+                        Return to Sanctuary
                     </button>
                 </motion.div>
             </main>
@@ -433,7 +456,7 @@ export default function ReservationsPortal() {
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                                     <div className="space-y-3">
                                                         <label className="text-[10px] uppercase tracking-widest font-black opacity-40">e-mail*</label>
-                                                        <input required type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-white/50 border border-black/10 p-5 rounded-2xl focus:outline-none focus:border-[#3D4127] transition-all" placeholder="g.thorne@estate.com" />
+                                                        <input required type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-white/50 border border-black/10 p-5 rounded-2xl focus:outline-none focus:border-[#3D4127] transition-all" placeholder="yourname@domain.com" autoComplete="email" />
                                                     </div>
                                                     <div className="space-y-3">
                                                         <label className="text-[10px] uppercase tracking-widest font-black opacity-40">Telephone*</label>

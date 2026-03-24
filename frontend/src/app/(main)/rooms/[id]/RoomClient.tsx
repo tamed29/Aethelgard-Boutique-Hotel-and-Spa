@@ -2,7 +2,7 @@
 
 import { use } from 'react';
 import Image from 'next/image';
-import { Ruler, Eye, Wind, BedDouble, Sparkles } from 'lucide-react';
+import { Ruler, Eye, Wind, BedDouble, Sparkles, type LucideIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { Variants } from 'framer-motion';
 import Link from 'next/link';
@@ -16,16 +16,28 @@ const fadeUp: Variants = {
     show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" } }
 };
 
-// ─── COMPLETE ROOM DATA — All images used, none left out ─────────────────────
-const ROOM_DATA: Record<string, {
-    name: string; vibe: string; quote: string; description: string;
-    sizeSqM: number; view: string; bedType: string; price: number;
-    amenities: string[]; features: { title: string; desc: string }[];
-    // Room images (bedroom, living spaces, details)
+interface RoomFeature {
+    title: string;
+    desc: string;
+}
+
+interface RoomData {
+    name: string;
+    vibe: string;
+    quote: string;
+    description: string;
+    sizeSqM: number;
+    view: string;
+    bedType: string;
+    price: number;
+    amenities: string[];
+    features: RoomFeature[];
     roomImages: string[];
-    // Dedicated bathroom images
     bathroomImages: string[];
-}> = {
+}
+
+// ─── COMPLETE ROOM DATA — All images used, none left out ─────────────────────
+const ROOM_DATA: Record<string, RoomData> = {
     forest: {
         name: 'Forest Retreat',
         vibe: 'Earthy & Subterranean',
@@ -213,21 +225,25 @@ const NUMERIC_TO_SLUG: Record<string, string> = {
     '7': 'botanical',
 };
 
-export default function RoomClient({ params, initialRoom }: { params: Promise<{ id: string }>, initialRoom?: any }) {
+interface RoomClientProps {
+    params: Promise<{ id: string }>;
+    initialRoom?: Partial<RoomData> & { images?: string[] };
+}
+
+export default function RoomClient({ params, initialRoom }: RoomClientProps) {
     const { id } = use(params);
     const slug = ROOM_DATA[id] ? id : (NUMERIC_TO_SLUG[id] || 'double');
     const staticRoom = ROOM_DATA[slug];
 
     // Merge static structure with dynamic data
-    const room = {
+    const room: RoomData = {
         ...staticRoom,
-        ...(initialRoom || {}),
-        price: initialRoom?.price ?? staticRoom.price,
         name: initialRoom?.name ?? staticRoom.name,
+        price: initialRoom?.price ?? staticRoom.price,
         amenities: initialRoom?.amenities ?? staticRoom.amenities,
         description: initialRoom?.description ?? staticRoom.description,
-        roomImages: (initialRoom?.images?.length > 0) ? initialRoom.images : staticRoom.roomImages,
-        bathroomImages: (initialRoom?.bathroomImages?.length > 0) ? initialRoom.bathroomImages : staticRoom.bathroomImages,
+        roomImages: (initialRoom?.images && initialRoom.images.length > 0) ? initialRoom.images : staticRoom.roomImages,
+        bathroomImages: (initialRoom?.bathroomImages && initialRoom.bathroomImages.length > 0) ? initialRoom.bathroomImages : staticRoom.bathroomImages,
     };
 
     const { roomImages, bathroomImages, features } = room;
@@ -264,7 +280,7 @@ export default function RoomClient({ params, initialRoom }: { params: Promise<{ 
                         { Icon: Eye, label: 'Orientation', value: room.view },
                         { Icon: BedDouble, label: 'Sleep System', value: room.bedType },
                         { Icon: Wind, label: 'Condition', value: 'Nature Mode' },
-                    ].map(({ Icon, label, value }) => (
+                    ].map(({ Icon, label, value }: { Icon: LucideIcon, label: string, value: string }) => (
                         <div key={label} className="space-y-4">
                             <Icon className="w-8 h-8 mx-auto text-moss-300" />
                             <p className="text-[10px] uppercase tracking-[0.4em] font-black opacity-40">{label}</p>
@@ -292,7 +308,7 @@ export default function RoomClient({ params, initialRoom }: { params: Promise<{ 
 
                 {/* Row 2: Room images */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 h-[320px]">
-                    {galleryRoom.map((img, i) => (
+                    {galleryRoom.map((img: string, i: number) => (
                         <ScrollReveal key={img} delay={i * 0.1} className="relative rounded-[1.5rem] overflow-hidden shadow-xl h-[320px]">
                             <Image src={img} alt={`${room.name} — Detail ${i + 1}`} fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover hover:scale-105 transition-transform duration-[3000ms]" placeholder="blur" blurDataURL={blurData} />
                         </ScrollReveal>
@@ -307,7 +323,7 @@ export default function RoomClient({ params, initialRoom }: { params: Promise<{ 
                         <div className="h-px flex-1 bg-foreground/10" />
                     </div>
                     <div className={`grid gap-4 h-[340px] ${allBathrooms.length === 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
-                        {allBathrooms.map((img, i) => (
+                        {allBathrooms.map((img: string, i: number) => (
                             <ScrollReveal key={img} delay={i * 0.15} className="relative rounded-[1.5rem] overflow-hidden shadow-xl h-[340px]">
                                 <Image src={img} alt={`${room.name} — Bathroom ${i + 1}`} fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover hover:scale-105 transition-transform duration-[3000ms]" placeholder="blur" blurDataURL={blurData} />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
@@ -322,7 +338,7 @@ export default function RoomClient({ params, initialRoom }: { params: Promise<{ 
                 {/* Row 4: Remaining room images (if any beyond index 4) */}
                 {roomImages.length > 5 && (
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4 h-[280px]">
-                        {roomImages.slice(5).map((img, i) => (
+                        {roomImages.slice(5).map((img: string, i: number) => (
                             <ScrollReveal key={img} delay={i * 0.1} className="relative rounded-[1.5rem] overflow-hidden shadow-xl h-[280px]">
                                 <Image src={img} alt={`${room.name} — View ${i + 5}`} fill sizes="(max-width: 1024px) 50vw, 25vw" className="object-cover hover:scale-105 transition-transform duration-[3000ms]" placeholder="blur" blurDataURL={blurData} />
                             </ScrollReveal>
@@ -353,7 +369,7 @@ export default function RoomClient({ params, initialRoom }: { params: Promise<{ 
                             <ScrollReveal className="space-y-8">
                                 <h4 className="text-[10px] uppercase tracking-[0.5em] font-black text-moss-200/40">What&apos;s Included</h4>
                                 <ul className="space-y-5">
-                                    {room.amenities.map((a) => (
+                                    {room.amenities.map((a: string) => (
                                         <li key={a} className="flex items-center gap-5 text-lg text-moss-100 font-serif italic opacity-80">
                                             <div className="w-1.5 h-1.5 rounded-full bg-moss-200/30 flex-shrink-0" /> {a}
                                         </li>
@@ -365,7 +381,7 @@ export default function RoomClient({ params, initialRoom }: { params: Promise<{ 
                             <ScrollReveal delay={0.2} className="space-y-8">
                                 <h4 className="text-[10px] uppercase tracking-[0.5em] font-black text-moss-700">Signature Details</h4>
                                 <div className="space-y-6">
-                                    {features.map((f) => (
+                                    {features.map((f: RoomFeature) => (
                                         <div key={f.title} className="group border-b border-foreground/5 pb-6">
                                             <p className="font-serif text-xl mb-2 transition-colors group-hover:text-moss-300 text-moss-100">{f.title}</p>
                                             <p className="text-sm text-foreground/40 font-light leading-relaxed">{f.desc}</p>
@@ -414,7 +430,7 @@ export default function RoomClient({ params, initialRoom }: { params: Promise<{ 
                             { name: 'Goose Down', desc: 'Plush and malleable for absolute cloud-like comfort' },
                             { name: 'Buckwheat Hull', desc: 'Firm, breathable, perfectly aligning the cervical spine' },
                             { name: 'Lavender Infused', desc: 'A soothing herbal blend for the deepest rest' }
-                        ].map((pillow, i) => (
+                        ].map((pillow: { name: string; desc: string }, i: number) => (
                             <ScrollReveal key={pillow.name} delay={i * 0.2} className="glass p-12 rounded-[2.5rem] border-white/5 hover:bg-white/5 transition-all duration-700">
                                 <h4 className="text-2xl font-serif mb-4">{pillow.name}</h4>
                                 <p className="text-white/40 font-light leading-relaxed tracking-wide text-sm">{pillow.desc}</p>

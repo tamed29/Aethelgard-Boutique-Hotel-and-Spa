@@ -12,7 +12,8 @@ const {
     createPricingRule,
     getAuditLogs,
     getSettings,
-    updateSetting
+    updateSetting,
+    changePassword
 } = require('../controllers/adminController');
 const { protect, admin } = require('../middleware/authMiddleware');
 const auditLogger = require('../middleware/auditMiddleware');
@@ -24,6 +25,7 @@ router.use(protect);
 router.use(admin);
 router.use(auditLogger);
 
+router.post('/change-password', changePassword);
 router.get('/analytics', getAnalytics);
 router.get('/multipliers', getMultipliers);
 router.post('/multipliers', createMultiplier);

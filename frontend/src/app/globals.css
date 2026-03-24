@@ -9,6 +9,14 @@
   --moss-900: #3D4127;
   --moss-950: #1A1C11;
 
+  /* Admin Theme Variables - Dark (Default) */
+  --admin-bg: #3D4127;
+  --admin-card: rgba(255, 255, 255, 0.02);
+  --admin-text: #F5F2ED;
+  --admin-accent: #D4DE95;
+  --admin-border: rgba(212, 222, 149, 0.1);
+  --admin-border2: rgba(212, 222, 149, 0.2);
+
   /* Aethelgard Brand Palette */
   --heritage-parchment: #F5F2ED;
   --deep-forest-green: #1A1F16;
@@ -22,6 +30,17 @@
   --font-montserrat: "Montserrat", sans-serif;
 }
 
+.light-theme {
+  --admin-bg: #F5F2ED;
+  --admin-card: #FFFFFF;
+  --admin-text: #3D4127;
+  --admin-accent: #636B2F;
+  --admin-border: rgba(61, 65, 39, 0.1);
+  --admin-border2: rgba(61, 65, 39, 0.2);
+  --background: #F5F2ED;
+  --foreground: #3D4127;
+}
+
 .theme-nature-night {
   --background: var(--moss-900);
   --foreground: var(--moss-100);
@@ -29,8 +48,31 @@
   --glass-border: rgba(212, 222, 149, 0.2);
 }
 
-.theme-nature-day {
-  /* Reverts to default root */
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media print {
+  aside, .no-print, button, .atmospheric-overlay, .AtmosphericOverlays {
+    display: none !important;
+  }
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    background: white !important;
+    color: black !important;
+  }
+  .AdminCard, .StatCard {
+    break-inside: avoid;
+    border: 1px solid #eee !important;
+    background: white !important;
+    color: black !important;
+  }
+  h1, h2, h3, p, span {
+    color: black !important;
+  }
 }
 
 @theme inline {
@@ -51,7 +93,7 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
-  transition: background-color 1.5s ease, color 1.5s ease;
+  transition: background-color 0.5s ease, color 0.5s ease;
 }
 
 .glass {

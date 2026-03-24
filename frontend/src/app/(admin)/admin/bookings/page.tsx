@@ -96,9 +96,15 @@ export default function ReservationHubPage() {
 
     useEffect(() => {
         const socket = io(SOCKET_URL);
-        socket.on('newBooking', () => {
+        console.log('Connecting to Protocol Socket at:', SOCKET_URL);
+        
+        socket.on('connect', () => console.log('Admin Socket Synchronized'));
+        socket.on('newBooking', (data) => {
+            console.log('Incoming Reservation Detected:', data);
             queryClient.invalidateQueries({ queryKey: ['bookings'] });
+            toast.info('New Reservation Detected', { description: data?.guestName || 'Data Stream Active' });
         });
+        
         return () => { socket.disconnect(); };
     }, [queryClient]);
 
@@ -106,7 +112,8 @@ export default function ReservationHubPage() {
         return bookings.filter(b => {
             const roomName = b.room?.name || b.roomNumber || '';
             const matchesSearch = b.guestName.toLowerCase().includes(search.toLowerCase()) || 
-                                 roomName.toLowerCase().includes(search.toLowerCase());
+                                 roomName.toLowerCase().includes(search.toLowerCase()) ||
+                                 b._id.toLowerCase().includes(search.toLowerCase());
             
             const matchesStatus = statusFilter === 'all' 
                 ? true 
@@ -120,11 +127,11 @@ export default function ReservationHubPage() {
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'confirmed': return 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
-            case 'checked-in': return 'text-sky-400 bg-sky-500/10 border-sky-500/20';
-            case 'checked-out': return 'text-amber-400 bg-amber-500/10 border-amber-500/20';
-            case 'cancelled': return 'text-rose-400 bg-rose-500/10 border-rose-500/20';
-            default: return 'text-[#D4DE95]/40 bg-white/5 border-white/10';
+            case 'confirmed': return 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20';
+            case 'checked-in': return 'text-sky-500 bg-sky-500/10 border-sky-500/20';
+            case 'checked-out': return 'text-amber-500 bg-amber-500/10 border-amber-500/20';
+            case 'cancelled': return 'text-rose-500 bg-rose-500/10 border-rose-500/20';
+            default: return 'text-[var(--admin-accent)] opacity-40 bg-[var(--admin-accent)]/5 border-[var(--admin-border)]';
         }
     };
 
@@ -134,11 +141,11 @@ export default function ReservationHubPage() {
         <div className="space-y-12">
             <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
                 <div>
-                    <h1 className="text-5xl font-serif text-[#F5F2ED] tracking-tight mb-2">Reservation Hub</h1>
-                    <p className="text-[10px] uppercase tracking-[0.4em] text-[#D4DE95]/40 font-black">Unified Stays & Spa Manifest</p>
+                    <h1 className="text-5xl font-serif text-[var(--admin-text)] tracking-tight mb-2">Reservation Hub</h1>
+                    <p className="text-[10px] uppercase tracking-[0.4em] text-[var(--admin-accent)] opacity-40 font-black">Unified Stays & Spa Manifest</p>
                 </div>
                 <div className="flex gap-4">
-                    <button className="p-5 bg-white/[0.03] border border-white/5 text-[#D4DE95]/40 hover:text-[#D4DE95] rounded-2xl transition-all">
+                    <button className="p-5 bg-[var(--admin-accent)]/5 border border-[var(--admin-border)] text-[var(--admin-accent)] opacity-40 hover:opacity-100 rounded-2xl transition-all">
                         <Download size={20} />
                     </button>
                 </div>
@@ -147,22 +154,22 @@ export default function ReservationHubPage() {
             {/* Controls */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="relative md:col-span-2">
-                    <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-[#D4DE95]/20" size={18} />
+                    <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-[var(--admin-accent)] opacity-20" size={18} />
                     <input 
                         type="text" 
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         placeholder="Search Guest Name or Destination..."
-                        className="w-full bg-white/[0.03] border border-[#D4DE95]/10 rounded-2xl py-5 pl-16 pr-6 text-[#F5F2ED] outline-none focus:border-[#D4DE95]/40 transition-all font-light"
+                        className="w-full bg-[var(--admin-accent)]/5 border border-[var(--admin-border)] rounded-2xl py-5 pl-16 pr-6 text-[var(--admin-text)] outline-none focus:border-[var(--admin-accent)]/40 transition-all font-light"
                     />
                 </div>
                 <select 
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="bg-[#1A1F16] border border-[#D4DE95]/10 rounded-2xl py-5 px-6 text-[#F5F2ED] outline-none focus:border-[#D4DE95]/40 transition-all font-black uppercase tracking-widest text-[10px] [&>option]:bg-[#1A1F16]"
+                    className="bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-2xl py-5 px-6 text-[var(--admin-text)] outline-none focus:border-[var(--admin-accent)]/40 transition-all font-black uppercase tracking-widest text-[10px] [&>option]:bg-[var(--admin-bg)]"
                 >
                     <option value="all">Every Status</option>
-                    <option value="pending-assignment text-moss-200">Pending Assignment</option>
+                    <option value="pending-assignment">Pending Assignment</option>
                     <option value="confirmed">Confirmed</option>
                     <option value="checked-in">Checked In</option>
                     <option value="checked-out">Checked Out</option>
@@ -171,10 +178,10 @@ export default function ReservationHubPage() {
             </div>
 
             {/* High-Performance Table */}
-            <div className="bg-white/[0.02] border border-white/5 rounded-[2.5rem] overflow-hidden backdrop-blur-3xl shadow-2xl">
+            <div className="bg-[var(--admin-card)] border border-[var(--admin-border)] rounded-[2.5rem] overflow-hidden backdrop-blur-3xl shadow-2xl">
                 <div className="overflow-x-auto scrollbar-hide">
                     <table className="w-full border-collapse text-left">
-                        <thead className="sticky top-0 bg-[#3D4127] z-20">
+                        <thead className="sticky top-0 bg-[var(--admin-bg)] z-20">
                             <tr>
                                 {[
                                     { label: 'Guest Identity', icon: User },
@@ -184,10 +191,10 @@ export default function ReservationHubPage() {
                                     { label: 'Current State', icon: Activity },
                                     { label: 'Protocol', icon: ShieldCheck }
                                 ].map((h, i) => (
-                                    <th key={i} className="px-8 py-6 border-b border-white/5">
+                                    <th key={i} className="px-8 py-6 border-b border-[var(--admin-border)]">
                                         <div className="flex items-center gap-3">
-                                            <h.icon size={14} className="text-[#D4DE95]/20" />
-                                            <span className="text-[10px] uppercase tracking-[0.4em] text-[#D4DE95]/60 font-black">{h.label}</span>
+                                            <h.icon size={14} className="text-[var(--admin-accent)] opacity-20" />
+                                            <span className="text-[10px] uppercase tracking-[0.4em] text-[var(--admin-text)] opacity-60 font-black">{h.label}</span>
                                         </div>
                                     </th>
                                 ))}
@@ -204,23 +211,23 @@ export default function ReservationHubPage() {
                                 >
                                     <td className="px-8 py-8">
                                         <div className="flex flex-col gap-1">
-                                            <span className="text-[#F5F2ED] font-serif tracking-wide">{b.guestName}</span>
-                                            <span className="text-[9px] text-[#D4DE95]/20 font-black uppercase tracking-widest">{b.guestEmail}</span>
+                                            <span className="text-[var(--admin-text)] font-serif tracking-wide">{b.guestName}</span>
+                                            <span className="text-[9px] text-[var(--admin-accent)] opacity-20 font-black uppercase tracking-widest">{b.guestEmail}</span>
                                         </div>
                                     </td>
                                     <td className="px-8 py-8">
-                                        <span className="px-3 py-1 bg-white/5 rounded-lg border border-white/10 text-[10px] font-black tracking-widest text-[#D4DE95]/60 uppercase">
+                                        <span className="px-3 py-1 bg-[var(--admin-accent)]/5 rounded-lg border border-[var(--admin-border)] text-[10px] font-black tracking-widest text-[var(--admin-accent)] opacity-60 uppercase">
                                             {b.room?.name || b.roomNumber} | {b.assignedUnit || 'Pending'}
                                         </span>
                                     </td>
                                     <td className="px-8 py-8">
                                         <div className="flex flex-col gap-1">
-                                            <span className="text-[10px] text-[#F5F2ED]/60 font-mono tracking-tighter">IN: {new Date(b.checkIn).toLocaleDateString()}</span>
-                                            <span className="text-[10px] text-[#F5F2ED]/40 font-mono tracking-tighter">OUT: {new Date(b.checkOut).toLocaleDateString()}</span>
+                                            <span className="text-[10px] text-[var(--admin-text)] opacity-60 font-mono tracking-tighter">IN: {new Date(b.checkIn).toLocaleDateString()}</span>
+                                            <span className="text-[10px] text-[var(--admin-text)] opacity-40 font-mono tracking-tighter">OUT: {new Date(b.checkOut).toLocaleDateString()}</span>
                                         </div>
                                     </td>
                                     <td className="px-8 py-8">
-                                        <span className="text-[#F5F2ED] font-serif">${b.totalPrice.toLocaleString()}</span>
+                                        <span className="text-[var(--admin-text)] font-serif">${b.totalPrice.toLocaleString()}</span>
                                     </td>
                                     <td className="px-8 py-8">
                                         <span className={cn(
@@ -234,7 +241,7 @@ export default function ReservationHubPage() {
                                         <div className="flex items-center gap-2">
                                             <button 
                                                 onClick={() => { setEditingBooking(b); setIsModalOpen(true); }}
-                                                className="p-3 bg-white/5 hover:bg-white/20 text-[#D4DE95]/40 hover:text-white rounded-xl transition-all border border-white/5"
+                                                className="p-3 bg-[var(--admin-accent)]/5 hover:bg-[var(--admin-accent)]/20 text-[var(--admin-accent)] opacity-40 hover:opacity-100 rounded-xl transition-all border border-[var(--admin-border)]"
                                                 title="Edit Booking"
                                             >
                                                 <Edit2 size={14} />
@@ -242,7 +249,7 @@ export default function ReservationHubPage() {
                                             {b.status === 'confirmed' && (
                                                 <button 
                                                     onClick={() => updateStatus.mutate({ id: b._id, status: 'checked-in' })}
-                                                    className="p-3 bg-white/5 hover:bg-sky-500/20 text-[#D4DE95]/40 hover:text-sky-400 rounded-xl transition-all border border-white/5"
+                                                    className="p-3 bg-[var(--admin-accent)]/5 hover:bg-sky-500/20 text-[var(--admin-accent)] opacity-40 hover:text-sky-400 rounded-xl transition-all border border-[var(--admin-border)]"
                                                     title="Check In"
                                                 >
                                                     <CheckCircle2 size={14} />
@@ -251,7 +258,7 @@ export default function ReservationHubPage() {
                                             {b.status === 'checked-in' && (
                                                 <button 
                                                     onClick={() => updateStatus.mutate({ id: b._id, status: 'checked-out' })}
-                                                    className="p-3 bg-white/5 hover:bg-amber-500/20 text-[#D4DE95]/40 hover:text-amber-400 rounded-xl transition-all border border-white/5"
+                                                    className="p-3 bg-[var(--admin-accent)]/5 hover:bg-amber-500/20 text-[var(--admin-accent)] opacity-40 hover:text-amber-400 rounded-xl transition-all border border-[var(--admin-border)]"
                                                     title="Check Out"
                                                 >
                                                     <Loader2 size={14} />
@@ -260,13 +267,13 @@ export default function ReservationHubPage() {
                                             {b.status !== 'cancelled' && b.status !== 'checked-out' && (
                                                 <button 
                                                     onClick={() => { if(confirm('Terminate and refund this reservation?')) updateStatus.mutate({ id: b._id, status: 'cancelled' }); }}
-                                                    className="p-3 bg-white/5 hover:bg-rose-500/20 text-[#D4DE95]/40 hover:text-rose-400 rounded-xl transition-all border border-white/5"
+                                                    className="p-3 bg-[var(--admin-accent)]/5 hover:bg-rose-500/20 text-[var(--admin-accent)] opacity-40 hover:text-rose-400 rounded-xl transition-all border border-[var(--admin-border)]"
                                                     title="Cancel & Refund"
                                                 >
                                                     <XCircle size={14} />
                                                 </button>
                                             )}
-                                            <button className="p-3 bg-white/5 hover:bg-white/10 text-[#D4DE95]/20 hover:text-[#D4DE95] rounded-xl transition-all border border-white/5">
+                                            <button className="p-3 bg-[var(--admin-accent)]/5 hover:bg-[var(--admin-accent)]/10 text-[var(--admin-accent)] opacity-20 hover:opacity-100 rounded-xl transition-all border border-[var(--admin-border)]">
                                                 <Mail size={14} />
                                             </button>
                                         </div>
@@ -278,15 +285,15 @@ export default function ReservationHubPage() {
                 </div>
 
                 {/* Footer / Pagination Placeholder */}
-                <div className="p-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
-                    <p className="text-[9px] uppercase tracking-[0.4em] text-[#D4DE95]/20 font-black">
+                <div className="p-8 border-t border-[var(--admin-border)] flex flex-col md:flex-row justify-between items-center gap-6">
+                    <p className="text-[9px] uppercase tracking-[0.4em] text-[var(--admin-accent)] opacity-20 font-black">
                         Displaying {filteredBookings.length} Active Node Records
                     </p>
                     <div className="flex gap-2">
                         {[1, 2, 3].map(p => (
                             <button key={p} className={cn(
                                 "w-10 h-10 rounded-xl flex items-center justify-center text-[10px] font-black transition-all",
-                                p === 1 ? "bg-[#D4DE95] text-[#1A1F16]" : "bg-white/5 text-[#D4DE95]/40 hover:bg-white/10"
+                                p === 1 ? "bg-[var(--admin-accent)] text-[var(--admin-bg)]" : "bg-[var(--admin-accent)]/5 text-[var(--admin-accent)] opacity-40 hover:opacity-100"
                             )}>{p}</button>
                         ))}
                     </div>
@@ -296,10 +303,10 @@ export default function ReservationHubPage() {
             <AnimatePresence>
                 {isModalOpen && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/90 backdrop-blur-xl">
-                        <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }} className="w-full max-w-2xl bg-[#3D4127] border border-[#D4DE95]/20 rounded-[3rem] overflow-hidden shadow-2xl overflow-y-auto max-h-[90vh]">
-                            <div className="p-8 border-b border-white/5 flex justify-between items-center bg-white/[0.02] sticky top-0 z-10 backdrop-blur-xl">
-                                <h3 className="text-2xl font-serif text-[#F5F2ED]">Edit Manifest Entry</h3>
-                                <button onClick={() => setIsModalOpen(false)} className="p-2 text-[#D4DE95]/40 hover:text-[#D4DE95] transition-colors"><XCircle size={24} /></button>
+                        <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }} className="w-full max-w-2xl bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[3rem] shadow-2xl overflow-y-auto max-h-[90vh]">
+                            <div className="p-8 border-b border-[var(--admin-border)] flex justify-between items-center bg-[var(--admin-accent)]/5 sticky top-0 z-10 backdrop-blur-xl">
+                                <h3 className="text-2xl font-serif text-[var(--admin-text)]">Edit Manifest Entry</h3>
+                                <button onClick={() => setIsModalOpen(false)} className="p-2 text-[var(--admin-accent)] opacity-40 hover:opacity-100 transition-colors"><XCircle size={24} /></button>
                             </div>
                             <form 
                                 onSubmit={(e) => {
@@ -321,24 +328,24 @@ export default function ReservationHubPage() {
                             >
                                 <div className="grid grid-cols-2 gap-6">
                                     <div className="space-y-3">
-                                        <label className="text-[10px] uppercase tracking-[0.4em] text-[#D4DE95]/40 font-black ml-1">Guest Name</label>
-                                        <input required name="guestName" defaultValue={editingBooking?.guestName} className="w-full bg-white/[0.03] border border-[#D4DE95]/10 rounded-2xl py-5 px-6 text-[#F5F2ED] outline-none" />
+                                        <label className="text-[10px] uppercase tracking-[0.4em] text-[var(--admin-accent)] opacity-40 font-black ml-1">Guest Name</label>
+                                        <input required name="guestName" defaultValue={editingBooking?.guestName} className="w-full bg-[var(--admin-accent)]/5 border border-[var(--admin-border)] rounded-2xl py-5 px-6 text-[var(--admin-text)] outline-none" />
                                     </div>
                                     <div className="space-y-3">
-                                        <label className="text-[10px] uppercase tracking-[0.4em] text-[#D4DE95]/40 font-black ml-1">Email</label>
-                                        <input required name="guestEmail" type="email" defaultValue={editingBooking?.guestEmail} className="w-full bg-white/[0.03] border border-[#D4DE95]/10 rounded-2xl py-5 px-6 text-[#F5F2ED] outline-none" />
+                                        <label className="text-[10px] uppercase tracking-[0.4em] text-[var(--admin-accent)] opacity-40 font-black ml-1">Email</label>
+                                        <input required name="guestEmail" type="email" defaultValue={editingBooking?.guestEmail} className="w-full bg-[var(--admin-accent)]/5 border border-[var(--admin-border)] rounded-2xl py-5 px-6 text-[var(--admin-text)] outline-none" />
                                     </div>
                                     <div className="space-y-3">
-                                        <label className="text-[10px] uppercase tracking-[0.4em] text-[#D4DE95]/40 font-black ml-1">Room Type</label>
-                                        <input required name="roomNumber" defaultValue={editingBooking?.room?.name || editingBooking?.roomNumber} className="w-full bg-white/[0.03] border border-[#D4DE95]/10 rounded-2xl py-5 px-6 text-[#F5F2ED] outline-none" readOnly />
+                                        <label className="text-[10px] uppercase tracking-[0.4em] text-[var(--admin-accent)] opacity-40 font-black ml-1">Room Type</label>
+                                        <input required name="roomNumber" defaultValue={editingBooking?.room?.name || editingBooking?.roomNumber} className="w-full bg-[var(--admin-accent)]/5 border border-[var(--admin-border)] rounded-2xl py-5 px-6 text-[var(--admin-text)] outline-none" readOnly />
                                     </div>
                                     <div className="space-y-3">
-                                        <label className="text-[10px] uppercase tracking-[0.4em] text-[#D4DE95]/40 font-black ml-1">Assigned Unit</label>
+                                        <label className="text-[10px] uppercase tracking-[0.4em] text-[var(--admin-accent)] opacity-40 font-black ml-1">Assigned Unit</label>
                                         <select 
                                             required 
                                             name="assignedUnit" 
                                             defaultValue={editingBooking?.assignedUnit || 'Pending Assignment'} 
-                                            className="w-full bg-[#1A1F16] border border-[#D4DE95]/10 rounded-2xl py-5 px-6 text-[#F5F2ED] outline-none cursor-pointer"
+                                            className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-2xl py-5 px-6 text-[var(--admin-text)] outline-none cursor-pointer"
                                         >
                                             <option value="Pending Assignment">Pending Assignment</option>
                                             {roomsInventory
@@ -372,20 +379,20 @@ export default function ReservationHubPage() {
                                         </select>
                                     </div>
                                     <div className="space-y-3">
-                                        <label className="text-[10px] uppercase tracking-[0.4em] text-[#D4DE95]/40 font-black ml-1">Total Price ($)</label>
-                                        <input required name="totalPrice" type="number" defaultValue={editingBooking?.totalPrice} className="w-full bg-white/[0.03] border border-[#D4DE95]/10 rounded-2xl py-5 px-6 text-[#F5F2ED] outline-none" />
+                                        <label className="text-[10px] uppercase tracking-[0.4em] text-[var(--admin-accent)] opacity-40 font-black ml-1">Total Price ($)</label>
+                                        <input required name="totalPrice" type="number" defaultValue={editingBooking?.totalPrice} className="w-full bg-[var(--admin-accent)]/5 border border-[var(--admin-border)] rounded-2xl py-5 px-6 text-[var(--admin-text)] outline-none" />
                                     </div>
                                     <div className="space-y-3">
-                                        <label className="text-[10px] uppercase tracking-[0.4em] text-[#D4DE95]/40 font-black ml-1">Check In</label>
-                                        <input required name="checkIn" type="date" defaultValue={editingBooking?.checkIn ? new Date(editingBooking.checkIn).toISOString().split('T')[0] : ''} className="w-full bg-white/[0.03] border border-[#D4DE95]/10 rounded-2xl py-5 px-6 text-[#F5F2ED] outline-none [color-scheme:dark]" />
+                                        <label className="text-[10px] uppercase tracking-[0.4em] text-[var(--admin-accent)] opacity-40 font-black ml-1">Check In</label>
+                                        <input required name="checkIn" type="date" defaultValue={editingBooking?.checkIn ? new Date(editingBooking.checkIn).toISOString().split('T')[0] : ''} className="w-full bg-[var(--admin-accent)]/5 border border-[var(--admin-border)] rounded-2xl py-5 px-6 text-[var(--admin-text)] outline-none [color-scheme:dark]" />
                                     </div>
                                     <div className="space-y-3">
-                                        <label className="text-[10px] uppercase tracking-[0.4em] text-[#D4DE95]/40 font-black ml-1">Check Out</label>
-                                        <input required name="checkOut" type="date" defaultValue={editingBooking?.checkOut ? new Date(editingBooking.checkOut).toISOString().split('T')[0] : ''} className="w-full bg-white/[0.03] border border-[#D4DE95]/10 rounded-2xl py-5 px-6 text-[#F5F2ED] outline-none [color-scheme:dark]" />
+                                        <label className="text-[10px] uppercase tracking-[0.4em] text-[var(--admin-accent)] opacity-40 font-black ml-1">Check Out</label>
+                                        <input required name="checkOut" type="date" defaultValue={editingBooking?.checkOut ? new Date(editingBooking.checkOut).toISOString().split('T')[0] : ''} className="w-full bg-[var(--admin-accent)]/5 border border-[var(--admin-border)] rounded-2xl py-5 px-6 text-[var(--admin-text)] outline-none [color-scheme:dark]" />
                                     </div>
                                     <div className="space-y-3 col-span-2">
-                                        <label className="text-[10px] uppercase tracking-[0.4em] text-[#D4DE95]/40 font-black ml-1">Status</label>
-                                        <select name="status" defaultValue={editingBooking?.status} className="w-full bg-[#1A1F16] border border-[#D4DE95]/10 rounded-2xl py-5 px-6 text-[#F5F2ED] outline-none cursor-pointer">
+                                        <label className="text-[10px] uppercase tracking-[0.4em] text-[var(--admin-accent)] opacity-40 font-black ml-1">Status</label>
+                                        <select name="status" defaultValue={editingBooking?.status} className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-2xl py-5 px-6 text-[var(--admin-text)] outline-none cursor-pointer">
                                             <option value="pending">Pending</option>
                                             <option value="confirmed">Confirmed</option>
                                             <option value="checked-in">Checked In</option>
@@ -395,9 +402,9 @@ export default function ReservationHubPage() {
                                     </div>
                                 </div>
                                 
-                                <div className="pt-6 flex justify-end gap-4 border-t border-white/5">
-                                    <button type="button" onClick={() => setIsModalOpen(false)} className="px-8 py-4 rounded-xl border border-white/5 text-[#D4DE95]/40 hover:bg-white/5 transition-all text-[10px] uppercase tracking-[0.4em] font-black">Abort</button>
-                                    <button type="submit" disabled={updateBookingData.isPending} className="px-10 py-5 rounded-xl bg-[#D4DE95] text-[#1A1F16] hover:bg-[#F5F2ED] transition-all text-[11px] uppercase tracking-[0.4em] font-black shadow-xl shadow-[#D4DE95]/10 flex items-center gap-3">
+                                <div className="pt-6 flex justify-end gap-4 border-t border-[var(--admin-border)]">
+                                    <button type="button" onClick={() => setIsModalOpen(false)} className="px-8 py-4 rounded-xl border border-[var(--admin-border)] text-[var(--admin-accent)] opacity-40 hover:bg-[var(--admin-accent)]/5 transition-all text-[10px] uppercase tracking-[0.4em] font-black">Abort</button>
+                                    <button type="submit" disabled={updateBookingData.isPending} className="px-10 py-5 rounded-xl bg-[var(--admin-accent)] text-[var(--admin-bg)] hover:opacity-90 transition-all text-[11px] uppercase tracking-[0.4em] font-black shadow-xl shadow-[var(--admin-accent)]/10 flex items-center gap-3">
                                         {updateBookingData.isPending ? <Loader2 className="animate-spin" size={16} /> : <Check size={16} />}
                                         <span>Transmit</span>
                                     </button>

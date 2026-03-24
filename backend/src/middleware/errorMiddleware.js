@@ -4,7 +4,8 @@ const path = require('path');
 const errorHandler = (err, req, res, next) => {
     // Log to file for agent debugging
     const logPath = path.join(__dirname, '../../error.log');
-    const logEntry = `\n[${new Date().toISOString()}] ${req.method} ${req.url}\n${err.stack}\n`;
+    const logEntry = `\n[${new Date().toISOString()}] ${req.method} ${req.url}\n${err.stack || JSON.stringify(err, null, 2) || err.message || err}\n`;
+    console.error(`ERROR on ${req.method} ${req.url}:`, err.message || err);
     try {
         fs.appendFileSync(logPath, logEntry);
     } catch (e) {

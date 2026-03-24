@@ -44,8 +44,8 @@ export default function CommunicationHubPage() {
         <div className="space-y-12">
             <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
                 <div>
-                    <h1 className="text-5xl font-serif text-[#F5F2ED] tracking-tight mb-2">Communication Hub</h1>
-                    <p className="text-[10px] uppercase tracking-[0.4em] text-[#D4DE95]/40 font-black">Guest Inquiries & Transmission Log</p>
+                    <h1 className="text-5xl font-serif text-[var(--admin-text)] tracking-tight mb-2">Communication Hub</h1>
+                    <p className="text-[10px] uppercase tracking-[0.4em] text-[var(--admin-accent)] opacity-40 font-black">Guest Inquiries & Transmission Log</p>
                 </div>
             </header>
 
@@ -65,36 +65,36 @@ export default function CommunicationHubPage() {
                                         <div className="flex-1 space-y-6">
                                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                                 <div className="flex items-center gap-4">
-                                                    <div className="w-12 h-12 rounded-2xl bg-[#D4DE95]/10 flex items-center justify-center text-[#D4DE95] border border-[#D4DE95]/20">
+                                                    <div className="w-12 h-12 rounded-2xl bg-[var(--admin-accent)]/10 flex items-center justify-center text-[var(--admin-accent)] border border-[var(--admin-border)]">
                                                         <User size={20} />
                                                     </div>
                                                     <div>
-                                                        <h3 className="text-xl font-serif text-[#F5F2ED]">{inq.firstName} {inq.lastName}</h3>
+                                                        <h3 className="text-xl font-serif text-[var(--admin-text)]">{inq.firstName} {inq.lastName}</h3>
                                                         <div className="flex items-center gap-4 mt-1">
-                                                            <span className="flex items-center gap-1.5 text-[9px] uppercase tracking-widest text-[#D4DE95]/40 font-black">
+                                                            <span className="flex items-center gap-1.5 text-[9px] uppercase tracking-widest text-[var(--admin-accent)] opacity-40 font-black">
                                                                 <AtSign size={10} /> {inq.email}
                                                             </span>
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center gap-2 text-[8px] uppercase tracking-[0.3em] text-[#D4DE95]/20 font-black bg-white/5 px-4 py-2 rounded-full border border-white/5">
+                                                <div className="flex items-center gap-2 text-[8px] uppercase tracking-[0.3em] text-[var(--admin-accent)] opacity-20 font-black bg-[var(--admin-accent)]/5 px-4 py-2 rounded-full border border-[var(--admin-border)]">
                                                     <Clock size={10} /> {new Date(inq.createdAt).toLocaleString()}
                                                 </div>
                                             </div>
 
                                             <div className="space-y-4">
-                                                <div className="inline-block px-4 py-1.5 bg-[#D4DE95]/5 border border-[#D4DE95]/10 rounded-lg">
-                                                    <span className="text-[10px] uppercase tracking-[0.2em] text-[#D4DE95] font-black">Subject: {inq.subject}</span>
+                                                <div className="inline-block px-4 py-1.5 bg-[var(--admin-accent)]/5 border border-[var(--admin-border)] rounded-lg">
+                                                    <span className="text-[10px] uppercase tracking-[0.2em] text-[var(--admin-accent)] font-black">Subject: {inq.subject}</span>
                                                 </div>
-                                                <p className="text-lg font-serif italic text-white/80 leading-relaxed font-light pl-6 border-l-2 border-[#D4DE95]/10">
+                                                <p className="text-lg font-serif italic text-[var(--admin-text)] opacity-80 leading-relaxed font-light pl-6 border-l-2 border-[var(--admin-border)]">
                                                     "{inq.message}"
                                                 </p>
                                             </div>
 
-                                            <div className="flex items-center gap-4 pt-6 border-t border-white/5">
+                                            <div className="flex items-center gap-4 pt-6 border-t border-[var(--admin-border)]">
                                                 <button 
                                                     onClick={() => window.location.href = `mailto:${inq.email}?subject=Re: ${inq.subject}`}
-                                                    className="flex items-center gap-2 px-6 py-3 bg-[#D4DE95] text-[#1A1F16] rounded-xl text-[10px] uppercase tracking-widest font-black hover:bg-[#F5F2ED] transition-all duration-500"
+                                                    className="flex items-center gap-2 px-6 py-3 bg-[var(--admin-accent)] text-[var(--admin-bg)] rounded-xl text-[10px] uppercase tracking-widest font-black hover:opacity-90 transition-all duration-500"
                                                 >
                                                     <Mail size={14} /> Respond via Email
                                                 </button>
@@ -112,7 +112,7 @@ export default function CommunicationHubPage() {
                             </motion.div>
                         ))
                     ) : (
-                        <div className="h-[40vh] border-2 border-dashed border-[#D4DE95]/10 rounded-[3rem] flex flex-col items-center justify-center text-[#D4DE95]/20 gap-4">
+                        <div className="h-[40vh] border-2 border-dashed border-[var(--admin-border)] rounded-[3rem] flex flex-col items-center justify-center text-[var(--admin-accent)] opacity-20 gap-4">
                             <MessageSquare size={48} strokeWidth={1} />
                             <p className="text-[10px] uppercase tracking-[0.5em] font-black italic">No transmissions recorded in the current cycle</p>
                         </div>

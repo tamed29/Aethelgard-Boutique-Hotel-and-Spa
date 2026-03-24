@@ -71,7 +71,8 @@ const createBooking = async (req, res) => {
         const { roomType, checkIn, checkOut, guestName, guestEmail, guestPhone, paymentMethod, guests, addons, specialRequests } = validated;
 
         // 1. Fetch Room Type and Units under transaction
-        let room = await Room.findOne({ roomType }).session(session);
+        const isId = mongoose.Types.ObjectId.isValid(roomType);
+        let room = await Room.findOne(isId ? { _id: roomType } : { roomType }).session(session);
         if (!room) {
             await session.abortTransaction();
             session.endSession();
@@ -135,6 +136,7 @@ const createBooking = async (req, res) => {
         await session.commitTransaction();
         session.endSession();
 
+        // 6. Real-time Dashboard Sync
         let fullBooking = null;
         try {
             fullBooking = await Booking.findById(booking[0]._id).populate('room', 'name roomType price');
@@ -145,15 +147,13 @@ const createBooking = async (req, res) => {
         // 6. Real-time Dashboard Sync
         const io = req.app.get('io');
         if (io) {
-            if (fullBooking) {
-                io.emit('newBooking', { 
-                    ...fullBooking.toObject(), 
-                    guestName, 
-                    guestEmail,
-                    isAtomic: true,
-                    timestamp: new Date()
-                });
-            }
+            io.emit('newBooking', { 
+                ...(fullBooking || booking[0]).toObject(), 
+                guestName, 
+                guestEmail,
+                isAtomic: true,
+                timestamp: new Date()
+            });
         }
 
         // 7. Non-blocking Email Alerts
@@ -161,6 +161,9 @@ const createBooking = async (req, res) => {
         if (fullBooking) {
             sendBookingConfirmation(fullBooking, guestUser, room).catch(err => console.error('Email failed:', err));
             sendNewBookingAlertToAdmin(fullBooking, guestUser, room).catch(err => console.error('Admin alert failed:', err));
+        } else {
+            // Final fallback: send basics if population failed but record was created
+            sendBookingConfirmation(booking[0], guestUser, room).catch(err => console.error('Email fallback failed:', err));
         }
 
         res.status(201).json({
@@ -225,7 +228,7 @@ const updateBookingStatus = async (req, res) => {
                     const unit = room.units.find(u => u.number === booking.assignedUnit);
                     if (unit) {
                         if (status === 'checked-in') unit.status = 'occupied';
-                        if (status === 'checked-out') unit.status = 'cleaning';
+                        if (status === 'checked-out') unit.status = 'available';
                         if (status === 'cancelled') unit.status = 'available';
                         await room.save();
                         

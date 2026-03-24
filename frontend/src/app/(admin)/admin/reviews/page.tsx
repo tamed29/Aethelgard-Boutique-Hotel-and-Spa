@@ -55,8 +55,8 @@ export default function AdminReviewsPage() {
     return (
         <div className="space-y-12">
             <div>
-                <h1 className="text-5xl font-serif text-[#F5F2ED] tracking-tight mb-2">Guest Voices</h1>
-                <p className="text-[10px] uppercase tracking-[0.4em] text-[#D4DE95]/40 font-black">Moderate the chronicles of the estate</p>
+                <h1 className="text-5xl font-serif text-[var(--admin-text)] tracking-tight mb-2">Guest Voices</h1>
+                <p className="text-[10px] uppercase tracking-[0.4em] text-[var(--admin-accent)] opacity-40 font-black">Moderate the chronicles of the estate</p>
             </div>
 
             <div className="grid grid-cols-1 gap-6">
@@ -84,14 +84,14 @@ export default function AdminReviewsPage() {
                                                 </span>
                                             )}
                                         </div>
-                                        <p className="text-lg font-serif italic text-white/80 leading-relaxed font-light">"{v.comment}"</p>
-                                        <div className="flex items-center gap-4 pt-4 border-t border-white/5">
-                                            <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-[#D4DE95] font-serif">
+                                        <p className="text-lg font-serif italic text-[var(--admin-text)] opacity-80 leading-relaxed font-light">"{v.comment}"</p>
+                                        <div className="flex items-center gap-4 pt-4 border-t border-[var(--admin-border)]">
+                                            <div className="w-10 h-10 rounded-full bg-[var(--admin-accent)]/5 border border-[var(--admin-border)] flex items-center justify-center text-[var(--admin-accent)] font-serif">
                                                 {v.user?.name?.[0] || 'G'}
                                             </div>
                                             <div>
-                                                <p className="text-[11px] text-[#F5F2ED] font-serif tracking-widest">{v.user?.name || 'Guest Resident'}</p>
-                                                <p className="text-[8px] uppercase tracking-[0.3em] text-[#D4DE95]/30 font-black">{new Date(v.createdAt).toLocaleDateString()}</p>
+                                                <p className="text-[11px] text-[var(--admin-text)] font-serif tracking-widest">{v.user?.name || 'Guest Resident'}</p>
+                                                <p className="text-[8px] uppercase tracking-[0.3em] text-[var(--admin-accent)] opacity-30 font-black">{new Date(v.createdAt).toLocaleDateString()}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -120,10 +120,10 @@ export default function AdminReviewsPage() {
             <AnimatePresence>
                 {editingReview && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/90 backdrop-blur-xl">
-                        <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }} className="w-full max-w-xl bg-[#3D4127] border border-[#D4DE95]/20 rounded-[3rem] overflow-hidden shadow-2xl">
-                            <div className="p-8 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
-                                <h3 className="text-2xl font-serif text-[#F5F2ED]">Edit Guest Voice</h3>
-                                <button onClick={() => setEditingReview(null)} className="p-2 text-[#D4DE95]/40 hover:text-[#D4DE95] transition-colors"><XCircle size={24} /></button>
+                        <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }} className="w-full max-w-xl bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[3rem] overflow-hidden shadow-2xl">
+                            <div className="p-8 border-b border-[var(--admin-border)] flex justify-between items-center bg-[var(--admin-accent)]/5 backdrop-blur-xl">
+                                <h3 className="text-2xl font-serif text-[var(--admin-text)]">Edit Guest Voice</h3>
+                                <button onClick={() => setEditingReview(null)} className="p-2 text-[var(--admin-accent)] opacity-40 hover:opacity-100 transition-colors"><XCircle size={24} /></button>
                             </div>
                             <form 
                                 onSubmit={(e) => {
@@ -138,18 +138,18 @@ export default function AdminReviewsPage() {
                                 className="p-10 space-y-8"
                             >
                                 <div className="space-y-3">
-                                    <label className="text-[10px] uppercase tracking-[0.4em] text-[#D4DE95]/40 font-black ml-1">Rating</label>
-                                    <select name="rating" defaultValue={editingReview.rating} className="w-full bg-[#1A1F16] border border-[#D4DE95]/10 rounded-2xl py-5 px-6 text-[#F5F2ED] outline-none [&>option]:bg-[#1A1F16]">
+                                    <label className="text-[10px] uppercase tracking-[0.4em] text-[var(--admin-accent)] opacity-40 font-black ml-1">Rating</label>
+                                    <select name="rating" defaultValue={editingReview.rating} className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-2xl py-5 px-6 text-[var(--admin-text)] outline-none [&>option]:bg-[var(--admin-bg)]">
                                         {[5,4,3,2,1].map(n => <option key={n} value={n}>{n} Stars</option>)}
                                     </select>
                                 </div>
                                 <div className="space-y-3">
-                                    <label className="text-[10px] uppercase tracking-[0.4em] text-[#D4DE95]/40 font-black ml-1">Narrative Content</label>
-                                    <textarea required name="comment" rows={4} defaultValue={editingReview.comment} className="w-full bg-white/[0.03] border border-[#D4DE95]/10 rounded-2xl py-5 px-6 text-[#F5F2ED] outline-none font-light italic leading-relaxed" />
+                                    <label className="text-[10px] uppercase tracking-[0.4em] text-[var(--admin-accent)] opacity-40 font-black ml-1">Narrative Content</label>
+                                    <textarea required name="comment" rows={4} defaultValue={editingReview.comment} className="w-full bg-[var(--admin-accent)]/5 border border-[var(--admin-border)] rounded-2xl py-5 px-6 text-[var(--admin-text)] outline-none font-light italic leading-relaxed" />
                                 </div>
-                                <div className="pt-6 flex justify-end gap-4 border-t border-white/5">
-                                    <button type="button" onClick={() => setEditingReview(null)} className="px-8 py-4 rounded-xl border border-white/5 text-[#D4DE95]/40 hover:bg-white/5 transition-all text-[10px] uppercase tracking-[0.4em] font-black">Abort</button>
-                                    <button type="submit" disabled={updateReview.isPending} className="px-10 py-5 rounded-xl bg-[#D4DE95] text-[#1A1F16] hover:bg-[#F5F2ED] transition-all text-[11px] uppercase tracking-[0.4em] font-black shadow-xl shadow-[#D4DE95]/10 flex items-center gap-3">
+                                <div className="pt-6 flex justify-end gap-4 border-t border-[var(--admin-border)]">
+                                    <button type="button" onClick={() => setEditingReview(null)} className="px-8 py-4 rounded-xl border border-[var(--admin-border)] text-[var(--admin-accent)] opacity-40 hover:opacity-100 transition-all text-[10px] uppercase tracking-[0.4em] font-black">Abort</button>
+                                    <button type="submit" disabled={updateReview.isPending} className="px-10 py-5 rounded-xl bg-[var(--admin-accent)] text-[var(--admin-bg)] hover:opacity-90 transition-all text-[11px] uppercase tracking-[0.4em] font-black shadow-xl shadow-[var(--admin-accent)]/10 flex items-center gap-3">
                                         {updateReview.isPending ? <Loader2 className="animate-spin" size={16} /> : <Check size={16} />}
                                         <span>Deploy Update</span>
                                     </button>

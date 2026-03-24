@@ -2,6 +2,7 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
+import { NotificationProvider } from '@/context/NotificationContext';
 import { useState } from 'react';
 import { Toaster } from 'sonner';
 
@@ -21,15 +22,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     return (
         <QueryClientProvider client={queryClient}>
-            <div className="flex min-h-screen bg-[#3D4127] text-[#F5F2ED] selection:bg-[#D4DE95] selection:text-[#1A1F16]">
+            <NotificationProvider>
+                <div className="flex min-h-screen bg-[var(--admin-bg)] text-[var(--admin-text)] transition-[background-color,color] duration-500 selection:bg-[var(--admin-accent)] selection:text-[var(--admin-bg)]">
                 {/* Fixed Sidebar */}
                 <AdminSidebar />
 
                 {/* Main Viewport */}
                 <main className="flex-1 min-h-screen relative overflow-hidden">
                     {/* Atmospheric Overlays */}
-                    <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#D4DE95]/5 rounded-full blur-[150px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />
-                    <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-black/20 rounded-full blur-[150px] translate-y-1/2 -translate-x-1/2 pointer-events-none" />
+                    <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[var(--admin-accent)] opacity-5 rounded-full blur-[150px] -translate-y-1/2 translate-x-1/2 pointer-events-none transition-opacity duration-1000" />
+                    <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-black opacity-10 rounded-full blur-[150px] translate-y-1/2 -translate-x-1/2 pointer-events-none transition-opacity duration-1000" />
 
                     {/* Content Scroll Area */}
                     <div className="relative z-10 p-12 max-w-[1600px] mx-auto">
@@ -50,6 +52,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     }}
                 />
             </div>
+          </NotificationProvider>
         </QueryClientProvider>
     );
 }

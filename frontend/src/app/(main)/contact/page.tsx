@@ -21,15 +21,40 @@ const fadeUp: Variants = {
 };
 
 export default function ContactPage() {
-    const [status, setStatus] = useState<'idle' | 'submitting' | 'success'>('idle');
+    const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
+    const [email, setEmail] = useState('');
+    const [subject, setSubject] = useState('General Restorative Enquiries');
+    const [message, setMessage] = useState('');
+    const [errorMsg, setErrorMsg] = useState('');
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setStatus('submitting');
-        // Simulate API call
-        setTimeout(() => {
+        setErrorMsg('');
+
+        try {
+            const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+            const res = await fetch(`${API_URL}/inquiries`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ firstName, lastName, email, subject, message }),
+            });
+
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.message || 'Submission failed');
+            }
+
             setStatus('success');
-        }, 1500);
+            // Reset fields
+            setFirstName(''); setLastName(''); setEmail('');
+            setMessage(''); setSubject('General Restorative Enquiries');
+        } catch (err: unknown) {
+            setStatus('error');
+            setErrorMsg(err instanceof Error ? err.message : 'An unexpected error occurred.');
+        }
     };
 
     return (
@@ -100,37 +125,41 @@ export default function ContactPage() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="space-y-2">
                                         <label className="text-xs uppercase tracking-widest text-foreground/60 font-medium">First Name</label>
-                                        <input required type="text" className="w-full bg-transparent border-b border-foreground/20 focus:border-moss-700 py-3 outline-none transition-colors" />
+                                        <input required type="text" value={firstName} onChange={e => setFirstName(e.target.value)} className="w-full bg-transparent border-b border-foreground/20 focus:border-moss-700 py-3 outline-none transition-colors" placeholder="Gwendolyn" />
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-xs uppercase tracking-widest text-foreground/60 font-medium">Last Name</label>
-                                        <input required type="text" className="w-full bg-transparent border-b border-foreground/20 focus:border-moss-700 py-3 outline-none transition-colors" />
+                                        <input required type="text" value={lastName} onChange={e => setLastName(e.target.value)} className="w-full bg-transparent border-b border-foreground/20 focus:border-moss-700 py-3 outline-none transition-colors" placeholder="Thorne" />
                                     </div>
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-xs uppercase tracking-widest text-foreground/60 font-medium">Email Address</label>
-                                    <input required type="email" className="w-full bg-transparent border-b border-foreground/20 focus:border-moss-700 py-3 outline-none transition-colors" />
+                                    <input required type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-transparent border-b border-foreground/20 focus:border-moss-700 py-3 outline-none transition-colors" placeholder="yourname@domain.com" />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-xs uppercase tracking-widest text-foreground/60 font-medium">Subject of Enquiry</label>
-                                    <select className="w-full bg-transparent border-b border-foreground/20 focus:border-moss-700 py-3 outline-none transition-colors text-foreground/80 font-light">
+                                    <select value={subject} onChange={e => setSubject(e.target.value)} className="w-full bg-transparent border-b border-foreground/20 focus:border-moss-700 py-3 outline-none transition-colors text-foreground/80 font-light">
                                         <option>General Restorative Enquiries</option>
-                                        <option>Private Events & Gatherings</option>
+                                        <option>Private Events &amp; Gatherings</option>
                                         <option>Culinary Narrative Requests</option>
                                         <option>Heritage Tour Bookings</option>
-                                        <option>Press & Media</option>
+                                        <option>Press &amp; Media</option>
                                     </select>
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-xs uppercase tracking-widest text-foreground/60 font-medium">Message</label>
-                                    <textarea rows={4} className="w-full bg-transparent border-b border-foreground/20 focus:border-moss-700 py-3 outline-none transition-colors resize-none" placeholder="How may we assist in your return to stillness?"></textarea>
+                                    <textarea required rows={4} value={message} onChange={e => setMessage(e.target.value)} className="w-full bg-transparent border-b border-foreground/20 focus:border-moss-700 py-3 outline-none transition-colors resize-none" placeholder="How may we assist in your return to stillness?" />
                                 </div>
+                                {status === 'error' && (
+                                    <p className="text-red-500 text-sm font-light">{errorMsg || 'Transmission failed. Please try again.'}</p>
+                                )}
                                 <MagneticHover intensity={0.15}>
                                     <button
+                                        type="submit"
                                         disabled={status === 'submitting'}
                                         className="w-full bg-foreground text-background py-5 rounded-sm uppercase tracking-[0.2em] text-sm font-semibold hover:bg-moss-900 hover:text-white transition-colors duration-300 disabled:opacity-50"
                                     >
-                                        {status === 'submitting' ? 'Transmitting...' : 'Transmit Enquire'}
+                                        {status === 'submitting' ? 'Transmitting...' : 'Transmit Enquiry'}
                                     </button>
                                 </MagneticHover>
                             </motion.form>

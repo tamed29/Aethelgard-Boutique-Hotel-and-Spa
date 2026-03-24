@@ -46,6 +46,8 @@ export default function RoomControlPage() {
     const [cleaningTimers, setCleaningTimers] = useState<Record<string, number>>({});
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingRoom, setEditingRoom] = useState<RoomType | null>(null);
+    const [newBedroomFiles, setNewBedroomFiles] = useState<File[]>([]);
+    const [newBathroomFiles, setNewBathroomFiles] = useState<File[]>([]);
 
     const { data: rooms = [], isLoading } = useQuery<RoomType[]>({
         queryKey: ['rooms'],
@@ -106,6 +108,8 @@ export default function RoomControlPage() {
         onSuccess: () => {
             setIsModalOpen(false);
             setEditingRoom(null);
+            setNewBedroomFiles([]);
+            setNewBathroomFiles([]);
             toast.success('Room Updated (Sync Active)');
         }
     });
@@ -156,17 +160,17 @@ export default function RoomControlPage() {
         <div className="space-y-12">
             <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
                 <div>
-                    <h1 className="text-5xl font-serif text-[#F5F2ED] tracking-tight mb-2">Room Control</h1>
-                    <p className="text-[10px] uppercase tracking-[0.4em] text-[#D4DE95]/40 font-black">7-Unit Inventory Cluster Management</p>
+                    <h1 className="text-5xl font-serif text-[var(--admin-text)] tracking-tight mb-2">Room Control</h1>
+                    <p className="text-[10px] uppercase tracking-[0.4em] text-[var(--admin-accent)] opacity-40 font-black">7-Unit Inventory Cluster Management</p>
                 </div>
                 <div className="relative w-full md:w-96">
-                    <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-[#D4DE95]/20" size={16} />
+                    <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-[var(--admin-accent)] opacity-20" size={16} />
                     <input 
                         type="text" 
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         placeholder="Search designations..."
-                        className="w-full bg-white/[0.03] border border-[#D4DE95]/10 rounded-full py-5 pl-16 pr-6 text-[#F5F2ED] outline-none focus:border-[#D4DE95]/40 transition-all text-sm font-light"
+                        className="w-full bg-[var(--admin-accent)]/5 border border-[var(--admin-border)] rounded-full py-5 pl-16 pr-6 text-[var(--admin-text)] outline-none focus:border-[var(--admin-accent)]/40 transition-all text-sm font-light"
                     />
                 </div>
             </header>
@@ -177,22 +181,22 @@ export default function RoomControlPage() {
                         <div 
                             onClick={() => toggleExpand(room._id)}
                             className={cn(
-                                "flex flex-col md:flex-row items-center justify-between p-8 bg-white/[0.02] border border-white/5 rounded-[2.5rem] cursor-pointer transition-all duration-700 hover:bg-white/[0.05] hover:border-[#D4DE95]/20",
-                                expandedTypes.includes(room._id) && "rounded-b-none border-b-transparent bg-white/[0.05]"
+                                "flex flex-col md:flex-row items-center justify-between p-8 bg-[var(--admin-card)] border border-[var(--admin-border)] rounded-[2.5rem] cursor-pointer transition-all duration-700 hover:opacity-90 hover:border-[var(--admin-accent)]/20",
+                                expandedTypes.includes(room._id) && "rounded-b-none border-b-transparent"
                             )}
                         >
                             <div className="flex items-center gap-8">
-                                <div className="w-16 h-16 rounded-2xl bg-[#D4DE95]/10 border border-[#D4DE95]/20 flex items-center justify-center text-[#D4DE95]">
+                                <div className="w-16 h-16 rounded-2xl bg-[var(--admin-accent)]/10 border border-[var(--admin-border)] flex items-center justify-center text-[var(--admin-accent)]">
                                     <Bed size={32} strokeWidth={1.2} />
                                 </div>
                                 <div>
-                                    <h3 className="text-2xl font-serif text-[#F5F2ED] tracking-tight">{room.name}</h3>
+                                    <h3 className="text-2xl font-serif text-[var(--admin-text)] tracking-tight">{room.name}</h3>
                                     <div className="flex items-center gap-4 mt-2">
-                                        <span className="text-[9px] uppercase tracking-widest text-[#D4DE95]/40 font-black px-3 py-1 bg-white/5 rounded-full border border-white/5">{room.roomType}</span>
-                                        <span className="text-[9px] uppercase tracking-widest text-[#D4DE95]/40 font-black px-3 py-1 bg-white/5 rounded-full border border-white/5">Floor 0{room.floor}</span>
+                                        <span className="text-[9px] uppercase tracking-widest text-[var(--admin-text)] opacity-40 font-black px-3 py-1 bg-[var(--admin-accent)]/5 rounded-full border border-[var(--admin-border)]">{room.roomType}</span>
+                                        <span className="text-[9px] uppercase tracking-widest text-[var(--admin-text)] opacity-40 font-black px-3 py-1 bg-[var(--admin-accent)]/5 rounded-full border border-[var(--admin-border)]">Floor 0{room.floor}</span>
                                         <button 
                                             onClick={(e) => { e.stopPropagation(); setEditingRoom(room); setIsModalOpen(true); }}
-                                            className="p-1.5 ml-2 hover:bg-[#D4DE95]/20 text-[#D4DE95]/40 hover:text-[#D4DE95] rounded-lg transition-colors"
+                                            className="p-1.5 ml-2 hover:bg-[var(--admin-accent)]/20 text-[var(--admin-accent)] opacity-40 hover:opacity-100 rounded-lg transition-colors"
                                         >
                                             <Edit2 size={12} />
                                         </button>
@@ -202,17 +206,17 @@ export default function RoomControlPage() {
                             <div className="flex items-center gap-12">
                                 <div className="text-right flex items-center gap-6">
                                     <div>
-                                        <p className="text-[8px] uppercase tracking-[0.4em] text-[#D4DE95]/20 font-black mb-1">Units</p>
-                                        <p className="text-lg font-serif text-[#F5F2ED]">{room.units?.length || 0}</p>
+                                        <p className="text-[8px] uppercase tracking-[0.4em] text-[var(--admin-accent)] opacity-20 font-black mb-1">Units</p>
+                                        <p className="text-lg font-serif text-[var(--admin-text)]">{room.units?.length || 0}</p>
                                     </div>
                                     <div>
-                                        <p className="text-[8px] uppercase tracking-[0.4em] text-[#D4DE95]/20 font-black mb-1">Base Price</p>
-                                        <p className="text-2xl font-serif text-[#F5F2ED]">${room.price}</p>
+                                        <p className="text-[8px] uppercase tracking-[0.4em] text-[var(--admin-accent)] opacity-20 font-black mb-1">Base Price</p>
+                                        <p className="text-2xl font-serif text-[var(--admin-text)]">${room.price}</p>
                                     </div>
                                 </div>
                                 <ChevronDown 
                                     size={24} 
-                                    className={cn("text-[#D4DE95]/20 transition-transform duration-700", expandedTypes.includes(room._id) && "rotate-180 text-[#D4DE95]")} 
+                                    className={cn("text-[var(--admin-text)] opacity-20 transition-transform duration-700", expandedTypes.includes(room._id) && "rotate-180 text-[var(--admin-accent)] opacity-100")} 
                                 />
                             </div>
                         </div>
@@ -223,7 +227,7 @@ export default function RoomControlPage() {
                                     initial={{ height: 0, opacity: 0 }}
                                     animate={{ height: 'auto', opacity: 1 }}
                                     exit={{ height: 0, opacity: 0 }}
-                                    className="bg-white/[0.03] border-x border-b border-white/5 rounded-b-[2.5rem] overflow-hidden"
+                                    className="bg-[var(--admin-accent)]/5 border-x border-b border-[var(--admin-border)] rounded-b-[2.5rem] overflow-hidden"
                                 >
                                     <div className="p-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-6">
                                         {room.units?.map((unit, idx) => {
@@ -231,11 +235,11 @@ export default function RoomControlPage() {
                                             const timeLeft = cleaningTimers[timerKey];
 
                                             return (
-                                                <div key={idx} className="relative group/unit bg-white/[0.02] border border-white/5 p-6 rounded-[2rem] hover:border-[#D4DE95]/40 transition-all duration-700">
+                                                <div key={idx} className="relative group/unit bg-[var(--admin-card)] border border-[var(--admin-border)] p-6 rounded-[2rem] hover:border-[var(--admin-accent)]/40 transition-all duration-700">
                                                     <div className="flex justify-between items-start mb-6">
                                                         <div>
-                                                            <p className="text-[7px] uppercase tracking-widest text-[#D4DE95]/30 font-black">Unit</p>
-                                                            <p className="text-lg font-serif text-[#F5F2ED]">{unit.number}</p>
+                                                            <p className="text-[7px] uppercase tracking-widest text-[var(--admin-accent)] opacity-30 font-black">Unit</p>
+                                                            <p className="text-lg font-serif text-[var(--admin-text)]">{unit.number}</p>
                                                         </div>
                                                         <div className={cn(
                                                             "w-2 h-2 rounded-full",
@@ -261,8 +265,8 @@ export default function RoomControlPage() {
                                                                 className={cn(
                                                                     "w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-[8px] uppercase tracking-widest font-black transition-all duration-500",
                                                                     unit.status === s.id 
-                                                                        ? "bg-[#D4DE95] text-[#1A1F16]" 
-                                                                        : "bg-white/5 text-[#D4DE95]/30 hover:bg-white/10 hover:text-[#D4DE95]"
+                                                                        ? "bg-[var(--admin-accent)] text-[var(--admin-bg)]" 
+                                                                        : "bg-[var(--admin-accent)]/5 text-[var(--admin-text)] opacity-30 hover:bg-[var(--admin-accent)]/10 hover:opacity-100"
                                                                 )}
                                                             >
                                                                 <span>{s.label}</span>
@@ -272,7 +276,7 @@ export default function RoomControlPage() {
                                                     </div>
 
                                                     {/* Quick Clean Trigger */}
-                                                    <div className="mt-4 pt-4 border-t border-white/5">
+                                                    <div className="mt-4 pt-4 border-t border-[var(--admin-border)]">
                                                         {timeLeft ? (
                                                             <div className="flex items-center justify-center gap-2 text-sky-400 font-mono text-[10px] bg-sky-400/5 py-2 rounded-xl border border-sky-400/10">
                                                                 <Clock size={12} className="animate-pulse" />
@@ -281,7 +285,7 @@ export default function RoomControlPage() {
                                                         ) : (
                                                             <button 
                                                                 onClick={() => handleQuickClean(room._id, unit.number)}
-                                                                className="w-full py-2 bg-[#D4DE95]/5 hover:bg-[#D4DE95]/10 text-[#D4DE95]/40 hover:text-[#D4DE95] rounded-xl border border-dashed border-[#D4DE95]/10 flex items-center justify-center gap-2 text-[8px] uppercase tracking-widest font-black transition-all"
+                                                                className="w-full py-2 bg-[var(--admin-accent)]/5 hover:bg-[var(--admin-accent)]/10 text-[var(--admin-accent)] opacity-40 hover:opacity-100 rounded-xl border border-dashed border-[var(--admin-border)] flex items-center justify-center gap-2 text-[8px] uppercase tracking-widest font-black transition-all"
                                                             >
                                                                 <Sparkles size={12} />
                                                                 <span>Quick Clean</span>
@@ -302,10 +306,10 @@ export default function RoomControlPage() {
             <AnimatePresence>
                 {isModalOpen && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/90 backdrop-blur-xl">
-                        <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }} className="w-full max-w-2xl bg-[#3D4127] border border-[#D4DE95]/20 rounded-[3rem] overflow-hidden shadow-2xl overflow-y-auto max-h-[90vh]">
-                            <div className="p-8 border-b border-white/5 flex justify-between items-center bg-white/[0.02] sticky top-0 z-10 backdrop-blur-xl">
-                                <h3 className="text-2xl font-serif text-[#F5F2ED]">Edit Room Inventory</h3>
-                                <button onClick={() => setIsModalOpen(false)} className="p-2 text-[#D4DE95]/40 hover:text-[#D4DE95] transition-colors"><XCircle size={24} /></button>
+                        <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }} className="w-full max-w-2xl bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[3rem] shadow-2xl overflow-y-auto max-h-[90vh]">
+                            <div className="p-8 border-b border-[var(--admin-border)] flex justify-between items-center bg-[var(--admin-accent)]/5 sticky top-0 z-10 backdrop-blur-xl">
+                                <h3 className="text-2xl font-serif text-[var(--admin-text)]">Edit Room Inventory</h3>
+                                <button onClick={() => { setIsModalOpen(false); setNewBedroomFiles([]); setNewBathroomFiles([]); }} className="p-2 text-[var(--admin-accent)] opacity-40 hover:opacity-100 transition-colors"><XCircle size={24} /></button>
                             </div>
                             <form 
                                 onSubmit={(e) => {
@@ -330,26 +334,30 @@ export default function RoomControlPage() {
                                     formData.set('current_images', JSON.stringify(editingRoom?.images || []));
                                     formData.set('current_bathroomImages', JSON.stringify(editingRoom?.bathroomImages || []));
 
+                                    // Append newly selected files
+                                    newBedroomFiles.forEach(file => formData.append('images', file));
+                                    newBathroomFiles.forEach(file => formData.append('bathroomImages', file));
+
                                     updateRoomDetails.mutate(formData);
                                 }} 
                                 className="p-10 space-y-8"
                             >
                                 <div className="space-y-3">
-                                    <label className="text-[10px] uppercase tracking-[0.4em] text-[#D4DE95]/40 font-black ml-1">Room Designation</label>
-                                    <input required name="name" defaultValue={editingRoom?.name} className="w-full bg-white/[0.03] border border-[#D4DE95]/10 rounded-2xl py-5 px-6 text-[#F5F2ED] outline-none font-serif" />
+                                    <label className="text-[10px] uppercase tracking-[0.4em] text-[var(--admin-accent)] opacity-40 font-black ml-1">Room Designation</label>
+                                    <input required name="name" defaultValue={editingRoom?.name} className="w-full bg-[var(--admin-accent)]/5 border border-[var(--admin-border)] rounded-2xl py-5 px-6 text-[var(--admin-text)] outline-none font-serif" />
                                 </div>
                                 <div className="grid grid-cols-2 gap-6">
                                     <div className="space-y-3">
-                                        <label className="text-[10px] uppercase tracking-[0.4em] text-[#D4DE95]/40 font-black ml-1">Base Nightly Rate ($)</label>
-                                        <input required name="price" type="number" defaultValue={editingRoom?.price} className="w-full bg-[#1A1F16] border border-[#D4DE95]/10 rounded-2xl py-5 px-6 text-[#F5F2ED] outline-none font-serif" />
+                                        <label className="text-[10px] uppercase tracking-[0.4em] text-[var(--admin-accent)] opacity-40 font-black ml-1">Base Nightly Rate ($)</label>
+                                        <input required name="price" type="number" defaultValue={editingRoom?.price} className="w-full bg-[var(--admin-accent)]/5 border border-[var(--admin-border)] rounded-2xl py-5 px-6 text-[var(--admin-text)] outline-none font-serif" />
                                     </div>
                                     <div className="space-y-3">
-                                        <label className="text-[10px] uppercase tracking-[0.4em] text-[#D4DE95]/40 font-black ml-1">Floor Level</label>
-                                        <input required name="floor" type="number" defaultValue={editingRoom?.floor} className="w-full bg-[#1A1F16] border border-[#D4DE95]/10 rounded-2xl py-5 px-6 text-[#F5F2ED] outline-none font-serif" />
+                                        <label className="text-[10px] uppercase tracking-[0.4em] text-[var(--admin-accent)] opacity-40 font-black ml-1">Floor Level</label>
+                                        <input required name="floor" type="number" defaultValue={editingRoom?.floor} className="w-full bg-[var(--admin-accent)]/5 border border-[var(--admin-border)] rounded-2xl py-5 px-6 text-[var(--admin-text)] outline-none font-serif" />
                                     </div>
                                 </div>
                                 <div className="space-y-3">
-                                    <label className="text-[10px] uppercase tracking-[0.4em] text-[#D4DE95]/40 font-black ml-1 flex justify-between">
+                                    <label className="text-[10px] uppercase tracking-[0.4em] text-[var(--admin-accent)] opacity-40 font-black ml-1 flex justify-between">
                                         <span>Inventory Units (Comma Separated)</span>
                                     </label>
                                     <textarea 
@@ -357,11 +365,11 @@ export default function RoomControlPage() {
                                         name="units_string" 
                                         rows={2}
                                         defaultValue={editingRoom?.units?.map(u => u.number).join(', ')} 
-                                        className="w-full bg-white/[0.03] border border-[#D4DE95]/10 rounded-2xl py-5 px-6 text-[#F5F2ED] outline-none font-mono text-sm leading-relaxed resize-none" 
+                                        className="w-full bg-[var(--admin-accent)]/5 border border-[var(--admin-border)] rounded-2xl py-5 px-6 text-[var(--admin-text)] outline-none font-mono text-sm leading-relaxed resize-none" 
                                     />
                                 </div>
-                                <div className="space-y-6 pt-4 border-t border-white/5">
-                                    <h4 className="text-[10px] uppercase tracking-[0.4em] text-[#D4DE95]/40 font-black ml-1">Visual Assets (Cloudinary Synergy)</h4>
+                                <div className="space-y-6 pt-4 border-t border-[var(--admin-border)]">
+                                    <h4 className="text-[10px] uppercase tracking-[0.4em] text-[var(--admin-accent)] opacity-40 font-black ml-1">Visual Assets (Cloudinary Synergy)</h4>
                                     
                                     {/* Main Images */}
                                     <div className="space-y-3">
@@ -382,9 +390,32 @@ export default function RoomControlPage() {
                                                     </button>
                                                 </div>
                                             ))}
+                                            {/* Previews for newly selected Bedroom files */}
+                                            {newBedroomFiles.map((file, i) => (
+                                                <div key={`new-bed-${i}`} className="relative w-20 h-20 rounded-xl overflow-hidden border border-[#D4DE95]/40 group ring-2 ring-[#D4DE95]/20">
+                                                    <img src={URL.createObjectURL(file)} className="w-full h-full object-cover" />
+                                                    <button 
+                                                        type="button"
+                                                        onClick={() => setNewBedroomFiles(prev => prev.filter((_, idx) => idx !== i))}
+                                                        className="absolute inset-0 bg-rose-500/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    >
+                                                        <Trash2 size={16} className="text-white" />
+                                                    </button>
+                                                </div>
+                                            ))}
                                             <label className="w-20 h-20 flex flex-col items-center justify-center border-2 border-dashed border-white/10 rounded-xl hover:border-[#D4DE95]/40 cursor-pointer transition-all bg-white/[0.02]">
                                                 <Plus size={16} className="text-[#D4DE95]/40" />
-                                                <input type="file" name="images" multiple accept="image/*" className="hidden" />
+                                                <input 
+                                                    type="file" 
+                                                    multiple 
+                                                    accept="image/*" 
+                                                    className="hidden" 
+                                                    onChange={(e) => {
+                                                        if (e.target.files) {
+                                                            setNewBedroomFiles(prev => [...prev, ...Array.from(e.target.files!)]);
+                                                        }
+                                                    }}
+                                                />
                                             </label>
                                         </div>
                                     </div>
@@ -408,17 +439,40 @@ export default function RoomControlPage() {
                                                     </button>
                                                 </div>
                                             ))}
+                                            {/* Previews for newly selected Bathroom files */}
+                                            {newBathroomFiles.map((file, i) => (
+                                                <div key={`new-bath-${i}`} className="relative w-20 h-20 rounded-xl overflow-hidden border border-[#D4DE95]/40 group ring-2 ring-[#D4DE95]/20">
+                                                    <img src={URL.createObjectURL(file)} className="w-full h-full object-cover" />
+                                                    <button 
+                                                        type="button"
+                                                        onClick={() => setNewBathroomFiles(prev => prev.filter((_, idx) => idx !== i))}
+                                                        className="absolute inset-0 bg-rose-500/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    >
+                                                        <Trash2 size={16} className="text-white" />
+                                                    </button>
+                                                </div>
+                                            ))}
                                             <label className="w-20 h-20 flex flex-col items-center justify-center border-2 border-dashed border-white/10 rounded-xl hover:border-[#D4DE95]/40 cursor-pointer transition-all bg-white/[0.02]">
                                                 <Plus size={16} className="text-[#D4DE95]/40" />
-                                                <input type="file" name="bathroomImages" multiple accept="image/*" className="hidden" />
+                                                <input 
+                                                    type="file" 
+                                                    multiple 
+                                                    accept="image/*" 
+                                                    className="hidden" 
+                                                    onChange={(e) => {
+                                                        if (e.target.files) {
+                                                            setNewBathroomFiles(prev => [...prev, ...Array.from(e.target.files!)]);
+                                                        }
+                                                    }}
+                                                />
                                             </label>
                                         </div>
                                     </div>
                                 </div>
                                 
-                                <div className="pt-6 flex justify-end gap-4 border-t border-white/5">
-                                    <button type="button" onClick={() => setIsModalOpen(false)} className="px-8 py-4 rounded-xl border border-white/5 text-[#D4DE95]/40 hover:bg-white/5 transition-all text-[10px] uppercase tracking-[0.4em] font-black">Abort</button>
-                                    <button type="submit" disabled={updateRoomDetails.isPending} className="px-10 py-5 rounded-xl bg-[#D4DE95] text-[#1A1F16] hover:bg-[#F5F2ED] transition-all text-[11px] uppercase tracking-[0.4em] font-black shadow-xl shadow-[#D4DE95]/10 flex items-center gap-3">
+                                <div className="pt-6 flex justify-end gap-4 border-t border-[var(--admin-border)]">
+                                    <button type="button" onClick={() => setIsModalOpen(false)} className="px-8 py-4 rounded-xl border border-[var(--admin-border)] text-[var(--admin-accent)] opacity-40 hover:bg-[var(--admin-accent)]/5 transition-all text-[10px] uppercase tracking-[0.4em] font-black">Abort</button>
+                                    <button type="submit" disabled={updateRoomDetails.isPending} className="px-10 py-5 rounded-xl bg-[var(--admin-accent)] text-[var(--admin-bg)] hover:opacity-90 transition-all text-[11px] uppercase tracking-[0.4em] font-black shadow-xl shadow-[var(--admin-accent)]/10 flex items-center gap-3">
                                         {updateRoomDetails.isPending ? <Loader2 className="animate-spin" size={16} /> : <Check size={16} />}
                                         <span>Deploy Changes</span>
                                     </button>

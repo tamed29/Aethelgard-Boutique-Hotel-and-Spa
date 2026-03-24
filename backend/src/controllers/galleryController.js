@@ -11,21 +11,27 @@ const getGalleryItems = async (req, res) => {
 
 const addGalleryItem = async (req, res) => {
     try {
+        console.log('Gallery upload request received');
         const { alt, category, size } = req.body;
         const savedItems = [];
 
         if (req.files && req.files.length > 0) {
-            // Handle multiple file uploads
+            console.log(`Processing ${req.files.length} files`);
+            // Helper to get value from potential array or string
+            const getVal = (val, index) => {
+                if (Array.isArray(val)) return val[index];
+                return val; // Return the single value for all if it's not an array
+            };
+
             for (let i = 0; i < req.files.length; i++) {
                 const file = req.files[i];
-                // Determine category for this file (specific or bulk)
-                const itemCategory = Array.isArray(category) ? category[i] : category;
-                const itemAlt = Array.isArray(alt) ? alt[i] : alt;
-                const itemSize = Array.isArray(size) ? size[i] : size;
+                const itemCategory = getVal(category, i);
+                const itemAlt = getVal(alt, i);
+                const itemSize = getVal(size, i);
 
                 const newItem = new Gallery({
                     url: file.path,
-                    alt: itemAlt || '',
+                    alt: itemAlt || 'Aethelgard Visual',
                     category: itemCategory || 'other',
                     size: itemSize || 'square'
                 });
@@ -33,22 +39,25 @@ const addGalleryItem = async (req, res) => {
                 savedItems.push(savedItem);
             }
         } else if (req.body.url) {
-            // Fallback for direct URL submission if still used
+            console.log('Processing URL-based upload');
             const newItem = new Gallery({ 
                 url: req.body.url, 
-                alt, 
-                category, 
-                size: size || 'square'
+                alt: Array.isArray(alt) ? alt[0] : alt, 
+                category: Array.isArray(category) ? category[0] : category, 
+                size: (Array.isArray(size) ? size[0] : size) || 'square'
             });
             const savedItem = await newItem.save();
             savedItems.push(savedItem);
         } else {
+            console.warn('No images or URL provided in gallery upload');
             return res.status(400).json({ message: 'No image source provided (files or URL required)' });
         }
 
+        console.log('Gallery upload successful');
         res.status(201).json(savedItems.length === 1 ? savedItems[0] : savedItems);
     } catch (error) {
-        res.status(400).json({ message: error.message });
+        console.error('Gallery upload error:', error);
+        res.status(500).json({ message: error.message }); // Changed to 500 for better visibility of real errors
     }
 };
 
