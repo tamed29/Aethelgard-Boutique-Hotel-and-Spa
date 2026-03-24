@@ -13,6 +13,13 @@ const createReservation = async (req, res) => {
     try {
         const newReservation = new SpaReservation(req.body);
         const savedReservation = await newReservation.save();
+
+        // Real-time notification to admin dashboard
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('newSpaBooking', savedReservation.toObject());
+        }
+
         res.status(201).json(savedReservation);
     } catch (error) {
         res.status(400).json({ message: error.message });
@@ -59,6 +66,9 @@ const deleteReservation = async (req, res) => {
     try {
         const reservation = await SpaReservation.findById(req.params.id);
         if (reservation) {
+            if (!['completed', 'cancelled'].includes(reservation.status)) {
+                return res.status(400).json({ message: 'Cannot delete an active spa reservation.' });
+            }
             await reservation.deleteOne();
             res.json({ message: 'Reservation removed' });
         } else {

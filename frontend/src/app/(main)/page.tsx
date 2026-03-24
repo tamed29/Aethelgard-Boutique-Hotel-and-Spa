@@ -15,6 +15,7 @@ import HeroSlideshow from "@/components/ui/HeroSlideshow";
 import OrganicTransition from "@/components/ui/OrganicTransition";
 import { AethelgardLogo } from "@/components/ui/AethelgardLogo";
 import { useState, useEffect } from "react";
+import NewsCard from "@/components/ui/NewsCard";
 
 export default function Home() {
   const [isDay, setIsDay] = useState(true);
@@ -318,45 +319,10 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
             {displayEvents.map((event, i) => (
-              <ScrollReveal key={i} delay={i * 0.2}>
-                <div className="group space-y-8">
-                  <div className="relative aspect-[4/5] rounded-[2.5rem] overflow-hidden shadow-2xl">
-                    <Image 
-                      src={event.image} 
-                      alt={event.title} 
-                      fill 
-                      sizes="(max-width: 1024px) 100vw, 33vw" 
-                      className="object-cover group-hover:scale-110 transition-transform duration-[2000ms]" 
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60" />
-                    <div className="absolute top-8 left-8">
-                      <span className="px-4 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-[10px] uppercase tracking-widest font-black text-white">
-                        {event.category}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="space-y-4 px-2 text-center">
-                    <h4 className="text-2xl font-serif text-white group-hover:text-moss-100 transition-colors duration-500 leading-tight">
-                      {event.title}
-                    </h4>
-                    <p className="text-white/50 text-sm italic font-serif leading-relaxed line-clamp-2">
-                      {event.desc}
-                    </p>
-                  </div>
-                </div>
-              </ScrollReveal>
+              <NewsCard key={i} event={event} delay={i * 0.2} />
             ))}
           </div>
 
-          <div className="mt-20 text-center">
-            <MagneticHover intensity={0.2} className="inline-block">
-              <Link href="/experience" className="px-8 py-4 sm:px-12 sm:py-5 bg-[#D4DE95] text-[#2B2E1C] hover:bg-white border border-white/10 rounded-full text-[9px] sm:text-[10px] uppercase tracking-[0.4em] sm:tracking-[0.5em] font-black transition-all duration-700 block">
-                <motion.span whileTap={{ scale: 0.95 }} className="block text-center">
-                  View All Stories
-                </motion.span>
-              </Link>
-            </MagneticHover>
-          </div>
         </div>
       </section>
 

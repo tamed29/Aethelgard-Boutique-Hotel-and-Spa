@@ -16,7 +16,7 @@ const newsEventSchema = new mongoose.Schema({
     },
     imageUrl: {
         type: String,
-        required: true
+        default: ''
     },
     type: {
         type: String,

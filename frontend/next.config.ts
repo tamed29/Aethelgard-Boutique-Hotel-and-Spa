@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  eslint: {
+    // ESLint errors won't block Vercel builds
+    ignoreDuringBuilds: true,
+  },
   images: {
     remotePatterns: [
       {

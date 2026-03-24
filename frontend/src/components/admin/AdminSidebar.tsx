@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
@@ -19,14 +19,16 @@ import {
     Bath,
     Mail,
     Sun,
-    Moon
+    Moon,
+    X,
+    CheckCheck,
+    Hotel,
+    MessageSquare,
+    Leaf
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
-import { useNotifications } from '@/context/NotificationContext';
-
-const SOCKET_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000';
+import { useNotifications, type Notification } from '@/context/NotificationContext';
 
 const NAV_ITEMS = [
     { label: 'Overview', href: '/admin', icon: LayoutDashboard },
@@ -42,15 +44,136 @@ const NAV_ITEMS = [
     { label: 'Terminal Settings', href: '/admin/settings', icon: Settings },
 ];
 
-export function AdminSidebar() {
-    const pathname = usePathname();
-    const [notifications, setNotifications] = useState(0);
-    const [isCollapsed, setIsCollapsed] = useState(false);
-    const [theme, setTheme] = useState<'dark' | 'light'>('dark');
-    const { unreadCount } = useNotifications();
+const NOTIF_ICON_MAP = {
+    'Booking': <Hotel size={16} />,
+    'Inquiry': <MessageSquare size={16} />,
+    'Spa Booking': <Leaf size={16} />,
+};
+
+function NotificationPanel({ onClose }: { onClose: () => void }) {
+    const { notifications, markAsRead, markAllAsRead, clearAll } = useNotifications();
+    const panelRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        // Load theme preference
+        const handler = (e: MouseEvent) => {
+            if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
+                onClose();
+            }
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, [onClose]);
+
+    const timeAgo = (date: Date) => {
+        const seconds = Math.floor((new Date().getTime() - new Date(date).getTime()) / 1000);
+        if (seconds < 60) return 'Just now';
+        if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+        if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+        return `${Math.floor(seconds / 86400)}d ago`;
+    };
+
+    return (
+        <motion.div
+            ref={panelRef}
+            initial={{ opacity: 0, x: -10, scale: 0.97 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, x: -10, scale: 0.97 }}
+            transition={{ duration: 0.2 }}
+            className="absolute left-full top-0 ml-3 w-[360px] bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[1.5rem] shadow-2xl shadow-black/40 overflow-hidden z-[100]"
+        >
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--admin-border)] bg-[var(--admin-accent)]/5">
+                <div>
+                    <h3 className="text-sm font-black uppercase tracking-[0.3em] text-[var(--admin-text)]">Signal Log</h3>
+                    <p className="text-[9px] uppercase tracking-widest text-[var(--admin-accent)] opacity-40 font-black mt-0.5">
+                        {notifications.length === 0 ? 'No transmissions' : `${notifications.length} total · ${notifications.filter(n => !n.read).length} unread`}
+                    </p>
+                </div>
+                <div className="flex items-center gap-2">
+                    {notifications.length > 0 && (
+                        <>
+                            <button
+                                onClick={markAllAsRead}
+                                title="Mark all as read"
+                                className="p-2 text-[var(--admin-accent)] opacity-40 hover:opacity-100 rounded-xl hover:bg-[var(--admin-accent)]/10 transition-all"
+                            >
+                                <CheckCheck size={16} />
+                            </button>
+                            <button
+                                onClick={clearAll}
+                                title="Clear all"
+                                className="p-2 text-rose-400 opacity-40 hover:opacity-100 rounded-xl hover:bg-rose-500/10 transition-all"
+                            >
+                                <X size={16} />
+                            </button>
+                        </>
+                    )}
+                    <button
+                        onClick={onClose}
+                        className="p-2 text-[var(--admin-text)] opacity-40 hover:opacity-100 rounded-xl hover:bg-[var(--admin-accent)]/10 transition-all"
+                    >
+                        <X size={16} />
+                    </button>
+                </div>
+            </div>
+
+            {/* Notifications list */}
+            <div className="max-h-[420px] overflow-y-auto">
+                {notifications.length === 0 ? (
+                    <div className="py-16 text-center space-y-3">
+                        <Bell size={32} className="mx-auto text-[var(--admin-accent)] opacity-20" strokeWidth={1} />
+                        <p className="text-[9px] uppercase tracking-[0.4em] font-black text-[var(--admin-text)] opacity-20">No signals received</p>
+                    </div>
+                ) : (
+                    <AnimatePresence>
+                        {notifications.map((n) => (
+                            <motion.a
+                                key={n.id}
+                                href={n.href}
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                onClick={() => markAsRead(n.id)}
+                                className={cn(
+                                    "flex gap-4 items-start px-6 py-5 border-b border-[var(--admin-border)] transition-all hover:bg-[var(--admin-accent)]/5 cursor-pointer",
+                                    !n.read && "bg-[var(--admin-accent)]/[0.04]"
+                                )}
+                            >
+                                <div className={cn(
+                                    "w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5",
+                                    n.type === 'Booking' ? 'bg-blue-500/15 text-blue-400' :
+                                    n.type === 'Inquiry' ? 'bg-amber-500/15 text-amber-400' :
+                                    'bg-emerald-500/15 text-emerald-400'
+                                )}>
+                                    {NOTIF_ICON_MAP[n.type]}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-start justify-between gap-2">
+                                        <p className="text-[11px] font-black uppercase tracking-wide text-[var(--admin-text)] leading-tight">{n.title}</p>
+                                        {!n.read && (
+                                            <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0 mt-1 shadow-[0_0_6px_rgba(244,63,94,0.7)]" />
+                                        )}
+                                    </div>
+                                    <p className="text-[11px] text-[var(--admin-text)] opacity-60 mt-1 leading-relaxed truncate">{n.description}</p>
+                                    <p className="text-[9px] uppercase tracking-widest font-black text-[var(--admin-accent)] opacity-40 mt-2">{timeAgo(n.timestamp)}</p>
+                                </div>
+                            </motion.a>
+                        ))}
+                    </AnimatePresence>
+                )}
+            </div>
+        </motion.div>
+    );
+}
+
+export function AdminSidebar() {
+    const pathname = usePathname();
+    const [isCollapsed, setIsCollapsed] = useState(false);
+    const [showNotifications, setShowNotifications] = useState(false);
+    const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+    const { unreadCount, notifications } = useNotifications();
+
+    useEffect(() => {
         const savedTheme = localStorage.getItem('admin-theme') as 'dark' | 'light';
         if (savedTheme) {
             setTheme(savedTheme);
@@ -66,7 +189,6 @@ export function AdminSidebar() {
     };
 
     const handleLogout = async () => {
-        // Clear JWT cookie and redirect
         document.cookie = 'jwt=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
         document.cookie = 'userRole=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
         window.location.href = '/login';
@@ -100,8 +222,12 @@ export function AdminSidebar() {
             <nav className="flex-1 px-4 py-8 space-y-2 overflow-y-auto relative">
                 {NAV_ITEMS.map((item) => {
                     const isActive = pathname === item.href;
-                    // Check if this link should show notifications
-                    const showNotifications = (item.href === '/admin/bookings' || item.href === '/admin/reviews' || item.href === '/admin/inquiries') && unreadCount > 0;
+                    // Determine which nav items should show notification badge
+                    const navUnread = notifications.filter(n =>
+                        (item.href === '/admin/bookings' && n.type === 'Booking') ||
+                        (item.href === '/admin/inquiries' && n.type === 'Inquiry') ||
+                        (item.href === '/admin/spa' && n.type === 'Spa Booking')
+                    ).filter(n => !n.read).length;
 
                     return (
                         <Link 
@@ -119,13 +245,6 @@ export function AdminSidebar() {
                                 <span className="text-[10px] uppercase tracking-[0.3em] font-black">{item.label}</span>
                             )}
                             
-                            {/* Notification Badge with Pulse Animation */}
-                            {showNotifications && (
-                                <span className="absolute right-4 bg-rose-500 text-white text-[8px] font-black px-2 py-0.5 rounded-full animate-pulse shadow-[0_0_10px_rgba(244,63,94,0.5)]">
-                                    {unreadCount}
-                                </span>
-                            )}
-
                             {isActive && (
                                 <motion.div 
                                     layoutId="active-pill"
@@ -133,12 +252,14 @@ export function AdminSidebar() {
                                 />
                             )}
                         </Link>
-                    )
+                    );
                 })}
             </nav>
 
             {/* Footer Actions */}
             <div className="p-6 border-t border-[var(--admin-border)] bg-[var(--admin-accent)]/5 space-y-2">
+
+
                 <button 
                     onClick={toggleTheme}
                     className="w-full flex items-center gap-4 px-4 py-4 text-[var(--admin-text)] opacity-40 hover:opacity-100 hover:bg-[var(--admin-accent)]/5 rounded-2xl transition-all group"

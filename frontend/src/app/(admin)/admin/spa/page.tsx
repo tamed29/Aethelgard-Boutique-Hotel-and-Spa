@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminAxios } from '@/lib/adminAxios';
-import { Search, Loader2, Edit2, Check, XCircle, Bath, Calendar, Clock, MapPin } from 'lucide-react';
+import { Search, Loader2, Edit2, Check, XCircle, Bath, Calendar, Clock, MapPin, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -44,6 +44,19 @@ export default function SpaManagementPage() {
             setIsModalOpen(false);
             setEditingRes(null);
             toast.success('Thermal Protocol Updated');
+        }
+    });
+
+    const deleteReservation = useMutation({
+        mutationFn: async (id: string) => {
+            await adminAxios.delete(`/spa/${id}`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['spaReservations'] });
+            toast.success('Reservation Purged');
+        },
+        onError: (err: any) => {
+            toast.error(err.response?.data?.message || 'Failed to delete');
         }
     });
 
@@ -100,7 +113,7 @@ export default function SpaManagementPage() {
 
             <div className="bg-[var(--admin-card)] border border-[var(--admin-border)] rounded-[2.5rem] overflow-hidden backdrop-blur-3xl shadow-2xl">
                 <div className="overflow-x-auto scrollbar-hide">
-                    <table className="w-full border-collapse text-left">
+                    <table className="w-full border-collapse text-left min-w-[800px]">
                         <thead className="sticky top-0 bg-[var(--admin-accent)] z-20">
                             <tr>
                                 {[
@@ -157,6 +170,15 @@ export default function SpaManagementPage() {
                                             >
                                                 <Edit2 size={14} />
                                             </button>
+                                            {['completed', 'cancelled'].includes(r.status) && (
+                                                <button 
+                                                    onClick={() => { if(confirm('Purge this completed record?')) deleteReservation.mutate(r._id); }}
+                                                    className="p-3 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white rounded-xl transition-all border border-rose-500/20"
+                                                    title="Delete Record"
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            )}
                                         </div>
                                     </td>
                                 </motion.tr>

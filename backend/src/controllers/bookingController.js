@@ -34,7 +34,7 @@ const checkAvailability = async (req, res) => {
         const results = await Promise.all(rooms.map(async (room) => {
             const overlappingBookings = await Booking.find({
                 room: room._id,
-                status: 'confirmed',
+                status: { $in: ['confirmed', 'checked-in'] },
                 $or: [
                     { checkIn: { $lt: new Date(checkOut) }, checkOut: { $gt: new Date(checkIn) } }
                 ]
@@ -82,7 +82,7 @@ const createBooking = async (req, res) => {
         // 2. Conflict Guard: Find overlapping bookings for this room type
         const overlappingBookings = await Booking.find({
             room: room._id,
-            status: 'confirmed',
+            status: { $in: ['confirmed', 'checked-in'] },
             $or: [
                 { checkIn: { $lt: new Date(checkOut) }, checkOut: { $gt: new Date(checkIn) } }
             ]
@@ -268,6 +268,29 @@ const updateBooking = async (req, res) => {
             const oldStatus = booking.status;
 
             const updatableFields = ['guestName', 'guestEmail', 'guestPhone', 'roomNumber', 'assignedUnit', 'totalPrice', 'status', 'checkIn', 'checkOut'];
+            
+            // Build temporary booking data to check for conflicts
+            const checkInDate = req.body.checkIn ? new Date(req.body.checkIn) : booking.checkIn;
+            const checkOutDate = req.body.checkOut ? new Date(req.body.checkOut) : booking.checkOut;
+            const newAssignedUnit = req.body.assignedUnit;
+            const newStatus = req.body.status !== undefined ? req.body.status : booking.status;
+
+            if (newAssignedUnit && newAssignedUnit !== 'Pending Assignment' && ['confirmed', 'checked-in'].includes(newStatus)) {
+                const conflict = await Booking.findOne({
+                    _id: { $ne: booking._id },
+                    room: booking.room,
+                    assignedUnit: newAssignedUnit,
+                    status: { $in: ['confirmed', 'checked-in'] },
+                    $or: [
+                        { checkIn: { $lt: checkOutDate }, checkOut: { $gt: checkInDate } }
+                    ]
+                });
+                
+                if (conflict) {
+                    return res.status(409).json({ message: `Unit ${newAssignedUnit} is already assigned to another guest during these dates.` });
+                }
+            }
+
             updatableFields.forEach(field => {
                 if (req.body[field] !== undefined) {
                     booking[field] = req.body[field];
@@ -293,7 +316,8 @@ const updateBooking = async (req, res) => {
                         const uNew = rNew.units.find(u => u.number === booking.assignedUnit);
                         if (uNew) {
                             if (booking.status === 'checked-in') uNew.status = 'occupied';
-                            else if (booking.status === 'checked-out') uNew.status = 'cleaning';
+                            else if (booking.status === 'checked-out') uNew.status = 'available';
+                            else if (booking.status === 'cancelled') uNew.status = 'available';
                             else uNew.status = 'reserved';
                         }
                         await rNew.save();
@@ -323,4 +347,31 @@ const updateBooking = async (req, res) => {
     }
 };
 
-module.exports = { createBooking, getBookings, getMyBookings, updateBookingStatus, checkAvailability, updateBooking };
+// @desc    Delete a booking
+// @route   DELETE /api/bookings/:id
+// @access  Private/Admin
+const deleteBooking = async (req, res) => {
+    try {
+        const booking = await Booking.findById(req.params.id);
+        if (booking) {
+            if (!['checked-out', 'cancelled'].includes(booking.status)) {
+                return res.status(400).json({ message: 'Cannot delete a booking that is not checked-out or cancelled.' });
+            }
+            await booking.deleteOne();
+            
+            // Emit socket event for dashboard update
+            const io = req.app.get('io');
+            if (io) {
+                io.emit('bookingUpdate', { type: 'deleted', id: req.params.id });
+            }
+
+            res.json({ message: 'Booking removed' });
+        } else {
+            res.status(404).json({ message: 'Booking not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+module.exports = { createBooking, getBookings, getMyBookings, updateBookingStatus, checkAvailability, updateBooking, deleteBooking };

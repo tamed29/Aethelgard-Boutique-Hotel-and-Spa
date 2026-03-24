@@ -217,7 +217,10 @@ export default function ReservationsPortal() {
                         </div>
                     </div>
 
-                    <p className="text-[10px] uppercase tracking-[0.6em] font-black opacity-30 mb-8">Capturing this manifest is recommended</p>
+                    <p className="text-[10px] uppercase tracking-[0.6em] font-black opacity-30 mb-4">Capturing this manifest is recommended</p>
+                    <p className="text-[11px] uppercase tracking-widest font-black text-[#1A1F16] mb-8 p-3 bg-[#D4DE95] border border-[#D4DE95]/30 rounded-xl inline-block shadow-[0_0_15px_rgba(212,222,149,0.3)]">
+                        📸 PLEASE TAKE A SCREENSHOT OF THIS REFERENCE NODE FOR CHECK-IN
+                    </p>
                     
                     <button 
                         onClick={() => window.location.href = '/'}
@@ -311,13 +314,13 @@ export default function ReservationsPortal() {
 
                                     <div className="space-y-8">
                                         {roomTypes.map((room) => {
-                                            const avail = availabilityData.find(a => a.roomType === room.id);
-                                            const isFullyBooked = avail && !avail.isAvailable;
+                                            const avail = availabilityData.find(a => a.roomId === room.id);
+                                            const isFullyBooked = avail ? !avail.isAvailable : false;
 
                                             return (
                                             <motion.div 
                                                 key={room.id}
-                                                whileHover={!isFullyBooked ? { scale: 1.01 } : {}}
+                                                whileHover={{ scale: 1.01 }}
                                                 className={`group relative grid grid-cols-1 md:grid-cols-12 gap-8 p-6 rounded-[2.5rem] border transition-all duration-700 ${isFullyBooked ? 'bg-[#1A1F16]/5 opacity-60 cursor-not-allowed border-black/5' : (selectedRoom?.id === room.id ? 'bg-[#3D4127] text-white border-[#3D4127] shadow-2xl cursor-pointer' : 'bg-white/60 text-[#1A1F16] border-black/5 hover:bg-white cursor-pointer')}`}
                                                 onClick={() => !isFullyBooked && setSelectedRoom(room)}
                                             >

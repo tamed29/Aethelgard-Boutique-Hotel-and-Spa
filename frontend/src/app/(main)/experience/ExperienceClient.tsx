@@ -3,7 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { Sparkles, Star, Moon, Footprints, ArrowRight, Sun, CloudRain as Rain, Snowflake, Wind, Quote } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import MagneticHover from '@/components/ui/MagneticHover';
 import ScrollReveal from '@/components/ui/ScrollReveal';
 import ParallaxSection from '@/components/ui/ParallaxSection';
@@ -169,62 +169,135 @@ export default function ExperiencePage() {
                                 </motion.div>
                             </div>
 
-                            <div className="w-full max-w-[120rem] mx-auto px-6 md:px-16 xl:px-32 grid grid-cols-1 lg:grid-cols-2 gap-20 items-center relative z-10">
+                            {idx === 0 ? (
+                                /* First block: full-width text only — no image column */
+                                <div className="w-full max-w-[120rem] mx-auto px-6 md:px-16 xl:px-32 relative z-10">
+                                    <div className="max-w-5xl">
+                                        <ScrollReveal delay={0.2} className="flex items-center gap-6 text-moss-700 mb-12">
+                                            <div className="p-4 rounded-full bg-moss-700/5">
+                                                {exp.icon}
+                                            </div>
+                                            <div>
+                                                <span className="uppercase tracking-[0.5em] text-[10px] font-black block">{exp.story}</span>
+                                                <span className="text-[10px] text-moss-800/60 uppercase tracking-[0.2em] font-medium mt-1 inline-block">{exp.duration} — {exp.price}</span>
+                                            </div>
+                                        </ScrollReveal>
 
-                                <ScrollReveal
-                                    delay={0.2}
-                                    className={`relative aspect-[4/5] lg:h-[600px] w-full max-w-[500px] mx-auto rounded-[3rem] md:rounded-[4rem] overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.3)] ${idx % 2 === 1 ? 'lg:order-2' : ''}`}
-                                >
-                                    <Image
-                                        src={exp.img}
-                                        alt={exp.title}
-                                        fill
-                                        sizes="(max-width: 1024px) 100vw, 50vw"
-                                        className="object-cover hover:scale-110 transition-transform duration-[4000ms]"
-                                        placeholder="blur"
-                                        blurDataURL={blurData}
-                                    />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-                                </ScrollReveal>
+                                        <ScrollReveal delay={0.3}>
+                                            <h2 className="text-5xl md:text-7xl xl:text-[7rem] font-serif text-foreground leading-[0.95] tracking-tighter mb-10">
+                                                {exp.title}
+                                            </h2>
+                                        </ScrollReveal>
 
-                                <div className={`space-y-12 ${idx % 2 === 1 ? 'lg:order-1' : ''}`}>
-                                    <ScrollReveal delay={0.4} className="flex items-center gap-6 text-moss-700">
-                                        <div className="p-4 rounded-full bg-moss-700/5">
-                                            {exp.icon}
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 mt-12">
+                                            <ScrollReveal delay={0.4} className="space-y-8">
+                                                <p className="text-2xl text-foreground/70 leading-relaxed font-serif italic border-l-2 border-moss-700/30 pl-8">
+                                                    {exp.desc}
+                                                </p>
+                                                <p className="text-lg text-foreground/50 leading-relaxed">
+                                                    Nestled in the sunken clearing of the Ancient Deep, our bonfire gatherings are curated for those who believe that the finest conversations happen when firelight flickers and the forest breathes around you. Each gathering is a private affair — lit at dusk and attended only by those who seek something more than the ordinary.
+                                                </p>
+                                                <p className="text-lg text-foreground/50 leading-relaxed">
+                                                    Our fire-wardens have kept this tradition alive for three generations, perfecting the art of warmth — from the slow-charred hardwood selection to the arrangement of seating designed to encourage closeness and candour.
+                                                </p>
+                                            </ScrollReveal>
+
+                                            <ScrollReveal delay={0.5} className="space-y-12">
+                                                <div className="space-y-6">
+                                                    {[
+                                                        { label: 'Setting', value: 'Sunken Clearing, Ancient Deep — private & candlelit' },
+                                                        { label: 'Capacity', value: 'Intimate groups of 2 to 8 guests' },
+                                                        { label: 'Season', value: 'Year-round — enchanting in all weathers' },
+                                                        { label: 'Includes', value: 'Artisanal mezze, vintage malts & dedicated fire-warden' },
+                                                    ].map((item) => (
+                                                        <div key={item.label} className="flex gap-8 group">
+                                                            <div className="w-px h-16 bg-foreground/10 group-hover:bg-moss-700/50 transition-colors duration-700 shrink-0" />
+                                                            <div>
+                                                                <p className="text-[9px] uppercase tracking-[0.4em] font-black text-moss-800 mb-1">{item.label}</p>
+                                                                <p className="text-base text-foreground/60 font-serif italic">{item.value}</p>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+
+                                                <div className="flex flex-wrap gap-4">
+                                                    {(exp as any).touches?.map((touch: string) => (
+                                                        <span key={touch} className="px-5 py-2 rounded-full border border-foreground/10 text-[9px] uppercase tracking-[0.3em] font-black text-moss-800 bg-moss-700/5">
+                                                            {touch}
+                                                        </span>
+                                                    ))}
+                                                </div>
+
+                                                <MagneticHover intensity={0.2} className="inline-block">
+                                                    <Link href="#inquire" className="group flex items-center gap-6 text-[10px] uppercase tracking-[0.6em] font-black text-foreground py-6 border-b border-foreground/20 hover:border-[#D4DE95] transition-all duration-700">
+                                                        <motion.span whileTap={{ scale: 0.95 }} className="flex items-center gap-6">
+                                                            Reserve the Bonfire <ArrowRight className="w-5 h-5 group-hover:translate-x-6 transition-transform duration-700" />
+                                                        </motion.span>
+                                                    </Link>
+                                                </MagneticHover>
+                                            </ScrollReveal>
                                         </div>
-                                        <div>
-                                            <span className="uppercase tracking-[0.5em] text-[10px] font-black block">{exp.story}</span>
-                                            <span className="text-[10px] text-moss-800/60 uppercase tracking-[0.2em] font-medium mt-1 inline-block">{exp.duration} — {exp.price}</span>
-                                        </div>
-                                    </ScrollReveal>
-                                    <ScrollReveal delay={0.6}>
-                                        <h2 className="text-4xl md:text-6xl font-serif text-foreground leading-[1.1] tracking-tighter mb-8">
-                                            {exp.title}
-                                        </h2>
-                                        <p className="text-xl text-foreground/70 leading-relaxed font-serif italic max-w-xl">
-                                            {exp.desc}
-                                        </p>
-                                    </ScrollReveal>
-
-                                    {/* Signature Touches Feature */}
-                                    <ScrollReveal delay={0.7} className="flex flex-wrap gap-4 pt-4">
-                                        {(exp as any).touches?.map((touch: string) => (
-                                            <span key={touch} className="px-5 py-2 rounded-full border border-foreground/10 text-[9px] uppercase tracking-[0.3em] font-black text-moss-800 bg-moss-700/5">
-                                                {touch}
-                                            </span>
-                                        ))}
-                                    </ScrollReveal>
-                                    <ScrollReveal delay={0.8} className="pt-12">
-                                        <MagneticHover intensity={0.2} className="inline-block">
-                                            <Link href="#inquire" className="group flex items-center gap-6 text-[10px] uppercase tracking-[0.6em] font-black text-foreground py-6 border-b border-foreground/20 hover:border-[#D4DE95] transition-all duration-700">
-                                                <motion.span whileTap={{ scale: 0.95 }} className="flex items-center gap-6">
-                                                    Curate Your Journey <ArrowRight className="w-5 h-5 group-hover:translate-x-6 transition-transform duration-700" />
-                                                </motion.span>
-                                            </Link>
-                                        </MagneticHover>
-                                    </ScrollReveal>
+                                    </div>
                                 </div>
-                            </div>
+                            ) : (
+                                /* All other blocks: standard two-column image + text layout */
+                                <div className="w-full max-w-[120rem] mx-auto px-6 md:px-16 xl:px-32 grid grid-cols-1 lg:grid-cols-2 gap-20 items-center relative z-10">
+
+                                    <ScrollReveal
+                                        delay={0.2}
+                                        className={`relative aspect-[4/5] lg:h-[600px] w-full max-w-[500px] mx-auto rounded-[3rem] md:rounded-[4rem] overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.3)] ${idx % 2 === 1 ? 'lg:order-2' : ''}`}
+                                    >
+                                        <Image
+                                            src={exp.img}
+                                            alt={exp.title}
+                                            fill
+                                            sizes="(max-width: 1024px) 100vw, 50vw"
+                                            className="object-cover hover:scale-110 transition-transform duration-[4000ms]"
+                                            placeholder="blur"
+                                            blurDataURL={blurData}
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                                    </ScrollReveal>
+
+                                    <div className={`space-y-12 ${idx % 2 === 1 ? 'lg:order-1' : ''}`}>
+                                        <ScrollReveal delay={0.4} className="flex items-center gap-6 text-moss-700">
+                                            <div className="p-4 rounded-full bg-moss-700/5">
+                                                {exp.icon}
+                                            </div>
+                                            <div>
+                                                <span className="uppercase tracking-[0.5em] text-[10px] font-black block">{exp.story}</span>
+                                                <span className="text-[10px] text-moss-800/60 uppercase tracking-[0.2em] font-medium mt-1 inline-block">{exp.duration} — {exp.price}</span>
+                                            </div>
+                                        </ScrollReveal>
+                                        <ScrollReveal delay={0.6}>
+                                            <h2 className="text-4xl md:text-6xl font-serif text-foreground leading-[1.1] tracking-tighter mb-8">
+                                                {exp.title}
+                                            </h2>
+                                            <p className="text-xl text-foreground/70 leading-relaxed font-serif italic max-w-xl">
+                                                {exp.desc}
+                                            </p>
+                                        </ScrollReveal>
+
+                                        {/* Signature Touches Feature */}
+                                        <ScrollReveal delay={0.7} className="flex flex-wrap gap-4 pt-4">
+                                            {(exp as any).touches?.map((touch: string) => (
+                                                <span key={touch} className="px-5 py-2 rounded-full border border-foreground/10 text-[9px] uppercase tracking-[0.3em] font-black text-moss-800 bg-moss-700/5">
+                                                    {touch}
+                                                </span>
+                                            ))}
+                                        </ScrollReveal>
+                                        <ScrollReveal delay={0.8} className="pt-12">
+                                            <MagneticHover intensity={0.2} className="inline-block">
+                                                <Link href="#inquire" className="group flex items-center gap-6 text-[10px] uppercase tracking-[0.6em] font-black text-foreground py-6 border-b border-foreground/20 hover:border-[#D4DE95] transition-all duration-700">
+                                                    <motion.span whileTap={{ scale: 0.95 }} className="flex items-center gap-6">
+                                                        Curate Your Journey <ArrowRight className="w-5 h-5 group-hover:translate-x-6 transition-transform duration-700" />
+                                                    </motion.span>
+                                                </Link>
+                                            </MagneticHover>
+                                        </ScrollReveal>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                     </React.Fragment>
@@ -242,10 +315,89 @@ export default function ExperiencePage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
                         {seasonalInsights.map((s, idx) => (
-                            <ScrollReveal key={idx} delay={idx * 0.1} className="glass p-12 rounded-[3rem] border-white/5 hover:bg-white/10 transition-all duration-700">
-                                <div className="text-moss-100 mb-8">{s.icon}</div>
-                                <h3 className="text-3xl font-serif mb-6">{s.season}</h3>
-                                <p className="text-white/60 font-serif italic text-lg leading-relaxed">{s.desc}</p>
+                            <ScrollReveal key={idx} delay={idx * 0.1}>
+                                <motion.div
+                                    whileHover="hovered"
+                                    initial="idle"
+                                    className="relative glass p-12 rounded-[3rem] border border-white/5 cursor-default overflow-hidden"
+                                    style={{ transformOrigin: 'center bottom' }}
+                                    variants={{
+                                        idle: { scale: 1, y: 0 },
+                                        hovered: { scale: 1.04, y: -8 }
+                                    }}
+                                    transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                                >
+                                    {/* Glow background */}
+                                    <motion.div
+                                        className="absolute inset-0 rounded-[3rem] pointer-events-none"
+                                        variants={{
+                                            idle: { opacity: 0 },
+                                            hovered: { opacity: 1 }
+                                        }}
+                                        transition={{ duration: 0.4 }}
+                                        style={{
+                                            background: 'radial-gradient(ellipse at 50% 80%, rgba(180,210,120,0.12) 0%, transparent 70%)',
+                                            boxShadow: '0 0 60px 0 rgba(180,210,120,0.15)'
+                                        }}
+                                    />
+
+                                    {/* Animated border glow */}
+                                    <motion.div
+                                        className="absolute inset-0 rounded-[3rem] pointer-events-none border"
+                                        variants={{
+                                            idle: { borderColor: 'rgba(255,255,255,0.05)' },
+                                            hovered: { borderColor: 'rgba(180,210,120,0.4)' }
+                                        }}
+                                        transition={{ duration: 0.4 }}
+                                    />
+
+                                    {/* Icon */}
+                                    <motion.div
+                                        className="text-moss-100 mb-8"
+                                        variants={{
+                                            idle: { scale: 1, color: '#d9e8a0' },
+                                            hovered: { scale: 1.3, color: '#b8d96a' }
+                                        }}
+                                        transition={{ duration: 0.4, ease: 'easeOut' }}
+                                    >
+                                        {s.icon}
+                                    </motion.div>
+
+                                    {/* Season title */}
+                                    <div className="relative mb-6 overflow-hidden">
+                                        <motion.h3
+                                            className="text-3xl font-serif relative"
+                                            variants={{
+                                                idle: { y: 0 },
+                                                hovered: { y: -2 }
+                                            }}
+                                            transition={{ duration: 0.3 }}
+                                        >
+                                            {s.season}
+                                        </motion.h3>
+                                        {/* Underline reveal */}
+                                        <motion.div
+                                            className="h-px bg-moss-300/60 mt-2"
+                                            variants={{
+                                                idle: { scaleX: 0, originX: 0 },
+                                                hovered: { scaleX: 1, originX: 0 }
+                                            }}
+                                            transition={{ duration: 0.5, ease: 'easeOut' }}
+                                        />
+                                    </div>
+
+                                    {/* Description */}
+                                    <motion.p
+                                        className="text-white/60 font-serif italic text-lg leading-relaxed relative z-10"
+                                        variants={{
+                                            idle: { opacity: 0.6 },
+                                            hovered: { opacity: 1 }
+                                        }}
+                                        transition={{ duration: 0.4 }}
+                                    >
+                                        {s.desc}
+                                    </motion.p>
+                                </motion.div>
                             </ScrollReveal>
                         ))}
                     </div>

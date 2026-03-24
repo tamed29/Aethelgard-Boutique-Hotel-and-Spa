@@ -22,7 +22,8 @@ import {
     Activity,
     ShieldCheck,
     Edit2,
-    Check
+    Check,
+    Trash2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -94,6 +95,19 @@ export default function ReservationHubPage() {
         }
     });
 
+    const deleteBooking = useMutation({
+        mutationFn: async (id: string) => {
+            await adminAxios.delete(`/bookings/${id}`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['bookings'] });
+            toast.success('Booking Purged');
+        },
+        onError: (err: any) => {
+            toast.error(err.response?.data?.message || 'Failed to delete');
+        }
+    });
+
     useEffect(() => {
         const socket = io(SOCKET_URL);
         console.log('Connecting to Protocol Socket at:', SOCKET_URL);
@@ -159,7 +173,7 @@ export default function ReservationHubPage() {
                         type="text" 
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Search Guest Name or Destination..."
+                        placeholder="Search Reference Node, Guest, or Destination..."
                         className="w-full bg-[var(--admin-accent)]/5 border border-[var(--admin-border)] rounded-2xl py-5 pl-16 pr-6 text-[var(--admin-text)] outline-none focus:border-[var(--admin-accent)]/40 transition-all font-light"
                     />
                 </div>
@@ -180,7 +194,7 @@ export default function ReservationHubPage() {
             {/* High-Performance Table */}
             <div className="bg-[var(--admin-card)] border border-[var(--admin-border)] rounded-[2.5rem] overflow-hidden backdrop-blur-3xl shadow-2xl">
                 <div className="overflow-x-auto scrollbar-hide">
-                    <table className="w-full border-collapse text-left">
+                    <table className="w-full border-collapse text-left min-w-[1000px]">
                         <thead className="sticky top-0 bg-[var(--admin-bg)] z-20">
                             <tr>
                                 {[
@@ -212,7 +226,10 @@ export default function ReservationHubPage() {
                                     <td className="px-8 py-8">
                                         <div className="flex flex-col gap-1">
                                             <span className="text-[var(--admin-text)] font-serif tracking-wide">{b.guestName}</span>
-                                            <span className="text-[9px] text-[var(--admin-accent)] opacity-20 font-black uppercase tracking-widest">{b.guestEmail}</span>
+                                            <span className="text-[9px] text-[var(--admin-accent)] opacity-40 font-black uppercase tracking-widest leading-normal">
+                                                {b.guestEmail}<br/>
+                                                REF: <span className="text-[var(--admin-accent)] font-mono tracking-tighter opacity-80">{b._id.substring(0, 8).toUpperCase()}</span>
+                                            </span>
                                         </div>
                                     </td>
                                     <td className="px-8 py-8">
@@ -246,6 +263,15 @@ export default function ReservationHubPage() {
                                             >
                                                 <Edit2 size={14} />
                                             </button>
+                                            {['checked-out', 'cancelled'].includes(b.status) && (
+                                                <button 
+                                                    onClick={() => { if(confirm('Purge this completed booking?')) deleteBooking.mutate(b._id); }}
+                                                    className="p-3 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white rounded-xl transition-all border border-rose-500/20"
+                                                    title="Delete Booking"
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            )}
                                             {b.status === 'confirmed' && (
                                                 <button 
                                                     onClick={() => updateStatus.mutate({ id: b._id, status: 'checked-in' })}

@@ -109,7 +109,7 @@ export default function DashboardPage() {
                                                     )}
                                                 >
                                                     <span className="text-[9px] uppercase tracking-widest font-black text-[var(--admin-accent)]">{n.type}</span>
-                                                    <p className="text-xs text-[var(--admin-text)] line-clamp-1">{n.data.guestName || 'Incoming Transmission'}</p>
+                                                    <p className="text-xs text-[var(--admin-text)] line-clamp-1">{n.description || 'Incoming Transmission'}</p>
                                                     <span className="text-[8px] font-mono opacity-40 uppercase mt-1">{new Date(n.timestamp).toLocaleTimeString()}</span>
                                                 </button>
                                             ))
