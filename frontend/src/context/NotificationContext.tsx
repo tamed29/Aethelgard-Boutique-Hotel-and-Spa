@@ -22,12 +22,39 @@ interface NotificationContextType {
     markAsRead: (id: number) => void;
     markAllAsRead: () => void;
     clearAll: () => void;
+    socket: Socket | null;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
 export function NotificationProvider({ children }: { children: ReactNode }) {
     const [notifications, setNotifications] = useState<Notification[]>([]);
+    const [socketInstance, setSocketInstance] = useState<Socket | null>(null);
+
+    // Load from Cache on Initialization
+    useEffect(() => {
+        const cached = localStorage.getItem('aethelgard_signals');
+        if (cached) {
+            try {
+                const parsed = JSON.parse(cached);
+                // Convert string dates back to Date objects
+                const restored = parsed.map((n: any) => ({
+                    ...n,
+                    timestamp: new Date(n.timestamp)
+                }));
+                setNotifications(restored);
+            } catch (e) {
+                console.error('Signal Cache Corruption:', e);
+            }
+        }
+    }, []);
+
+    // Persist on Changes
+    useEffect(() => {
+        if (notifications.length > 0) {
+            localStorage.setItem('aethelgard_signals', JSON.stringify(notifications));
+        }
+    }, [notifications]);
 
     const addNotification = useCallback((
         type: Notification['type'],
@@ -59,11 +86,13 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         const socket: Socket = io(SOCKET_URL, {
-            reconnectionAttempts: 5,
-            reconnectionDelay: 2000,
-            transports: ['polling', 'websocket'],
-            secure: true,
+            reconnectionAttempts: 10,
+            reconnectionDelay: 1000,
+            transports: ['websocket', 'polling'], // Prioritize websocket
+            secure: SOCKET_URL.startsWith('https'), // Dynamic security
         });
+
+        setSocketInstance(socket);
 
         socket.on('connect', () => {
             console.log('[Socket] Admin notification channel connected.');
@@ -141,7 +170,14 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     const unreadCount = notifications.filter(n => !n.read).length;
 
     return (
-        <NotificationContext.Provider value={{ notifications, unreadCount, markAsRead, markAllAsRead, clearAll }}>
+        <NotificationContext.Provider value={{ 
+            notifications, 
+            unreadCount, 
+            markAsRead, 
+            markAllAsRead, 
+            clearAll,
+            socket: socketInstance
+        }}>
             {children}
         </NotificationContext.Provider>
     );

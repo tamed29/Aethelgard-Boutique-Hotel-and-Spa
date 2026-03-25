@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminAxios } from '@/lib/adminAxios';
 import { Search, Loader2, Edit2, Check, XCircle, Bath, Calendar, Clock, MapPin, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { useNotifications } from '@/context/NotificationContext';
 
 interface SpaReservation {
     _id: string;
@@ -22,6 +23,7 @@ interface SpaReservation {
 
 export default function SpaManagementPage() {
     const queryClient = useQueryClient();
+    const { socket } = useNotifications();
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -59,6 +61,18 @@ export default function SpaManagementPage() {
             toast.error(err.response?.data?.message || 'Failed to delete');
         }
     });
+    
+    useEffect(() => {
+        if (!socket) return;
+        
+        const handleNewSpaBooking = (data: any) => {
+            console.log('Incoming Spa Sync:', data);
+            queryClient.invalidateQueries({ queryKey: ['spaReservations'] });
+        };
+
+        socket.on('newSpaBooking', handleNewSpaBooking);
+        return () => { socket.off('newSpaBooking', handleNewSpaBooking); };
+    }, [socket, queryClient]);
 
     const filteredReservations = reservations.filter(r => {
         const matchesSearch = r.guestName.toLowerCase().includes(search.toLowerCase()) || 

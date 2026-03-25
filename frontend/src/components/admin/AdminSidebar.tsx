@@ -255,7 +255,7 @@ export function AdminSidebar() {
                     // Determine which nav items should show notification badge
                     const navUnread = notifications.filter(n =>
                         (item.href === '/admin/bookings' && n.type === 'Booking') ||
-                        (item.href === '/admin/inquiries' && n.type === 'Inquiry') ||
+                        (item.href === '/admin/inquiries' && (n.type === 'Inquiry' || n.type === 'Message')) ||
                         (item.href === '/admin/spa' && n.type === 'Spa Booking')
                     ).filter(n => !n.read).length;
 

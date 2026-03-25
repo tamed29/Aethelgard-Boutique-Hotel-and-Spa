@@ -28,9 +28,9 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { io } from 'socket.io-client';
+import { useNotifications } from '@/context/NotificationContext';
 
-const SOCKET_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000';
+
 
 interface Booking {
     _id: string;
@@ -50,6 +50,7 @@ interface Booking {
 
 export default function ReservationHubPage() {
     const queryClient = useQueryClient();
+    const { socket } = useNotifications();
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -109,18 +110,16 @@ export default function ReservationHubPage() {
     });
 
     useEffect(() => {
-        const socket = io(SOCKET_URL);
-        console.log('Connecting to Protocol Socket at:', SOCKET_URL);
+        if (!socket) return;
         
-        socket.on('connect', () => console.log('Admin Socket Synchronized'));
-        socket.on('newBooking', (data) => {
-            console.log('Incoming Reservation Detected:', data);
+        const handleNewBooking = (data: any) => {
+            console.log('Incoming Reservation Sync:', data);
             queryClient.invalidateQueries({ queryKey: ['bookings'] });
-            toast.info('New Reservation Detected', { description: data?.guestName || 'Data Stream Active' });
-        });
-        
-        return () => { socket.disconnect(); };
-    }, [queryClient]);
+        };
+
+        socket.on('newBooking', handleNewBooking);
+        return () => { socket.off('newBooking', handleNewBooking); };
+    }, [socket, queryClient]);
 
     const filteredBookings = useMemo(() => {
         return bookings.filter(b => {
