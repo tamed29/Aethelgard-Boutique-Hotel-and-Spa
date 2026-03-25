@@ -61,10 +61,10 @@
   html, body {
     height: auto !important;
     overflow: visible !important;
-    background: var(--admin-bg) !important;
-    color: var(--admin-text) !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    background: white !important;
+    color: black !important;
   }
   aside, .no-print, button, .atmospheric-overlay, .AtmosphericOverlays {
     display: none !important;

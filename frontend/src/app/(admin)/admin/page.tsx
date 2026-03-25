@@ -61,8 +61,9 @@ export default function DashboardPage() {
 
     return (
         <div className="space-y-12">
-            {/* Header Section */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+            <div className="print:hidden space-y-12">
+                {/* Header Section */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
                 <div>
                     <h1 className="text-5xl font-serif text-[var(--admin-text)] tracking-tight mb-2">Command Center</h1>
                     <p className="text-[10px] uppercase tracking-[0.4em] text-[var(--admin-accent)] opacity-40 font-black">Full estate telemetry & predictive modelling</p>
@@ -264,10 +265,11 @@ export default function DashboardPage() {
                         </div>
                     </div>
                 </div>
+                </div>
             </div>
 
             {/* Professional Print Manifest (Hidden on UI, Visible in PDF) */}
-            <div className="hidden print:block space-y-12 p-12 bg-white">
+            <div className="hidden print:block p-12 bg-white print:bg-white text-black min-h-screen relative">
                 <div className="border-b-4 border-black pb-8 flex justify-between items-end">
                     <div>
                         <h1 className="text-6xl font-serif text-black uppercase tracking-tighter">Aethelgard Manifest</h1>
@@ -317,14 +319,43 @@ export default function DashboardPage() {
                     </div>
                 </div>
 
-                <div className="space-y-8">
+                <div className="space-y-8 mt-12">
                     <h3 className="text-xl font-black uppercase tracking-widest border-b border-black/10 pb-2 text-black">Narrative Overview</h3>
                     <p className="text-sm text-black/60 leading-relaxed font-serif italic">
                         The Aethelgard Boutique Hotel continues to demonstrate superior market positioning through its unique blend of heritage sanctuary and modern telemetry. Guest sentiment remains overwhelmingly affirmative, specifically highlighting the "ritual induction" and "impeccable service lineage." Current projections suggest a 14.2% increase in revenue velocity over the standard fiscal quarter. All systems reporting optimal stability.
                     </p>
                 </div>
 
-                <div className="space-y-8">
+                <div className="grid grid-cols-2 gap-12 mt-12">
+                    <div className="space-y-6">
+                        <h3 className="text-xl font-black uppercase tracking-widest border-b border-black/10 pb-2 text-black">Guest Sentiment Index</h3>
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-center">
+                                <span className="text-black/60 uppercase text-[10px] font-black tracking-widest max-w-[120px]">Global Score</span>
+                                <span className="text-2xl font-serif text-black leading-none">{analytics?.guestSentiment?.score || '9.8'}/10</span>
+                            </div>
+                            <div className="flex justify-between items-center pt-4 border-t border-black/5">
+                                <span className="text-black/60 uppercase text-[10px] font-black tracking-widest max-w-[120px]">Primary Descriptors</span>
+                                <span className="text-xs font-mono text-black text-right max-w-[150px]">{analytics?.guestSentiment?.topKeywords?.join(', ') || 'TRANQUIL, AUTHENTIC'}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="space-y-6">
+                        <h3 className="text-xl font-black uppercase tracking-widest border-b border-black/10 pb-2 text-black">Security Telemetry</h3>
+                        <div className="space-y-4">
+                             <div className="flex justify-between items-center">
+                                <span className="text-black/60 uppercase text-[10px] font-black tracking-widest">Active Sessions</span>
+                                <span className="text-2xl font-serif text-black leading-none">42</span>
+                            </div>
+                            <div className="flex justify-between items-center pt-4 border-t border-black/5">
+                                <span className="text-black/60 uppercase text-[10px] font-black tracking-widest">Threat Level</span>
+                                <span className="text-xs font-mono text-black">NEGLIGIBLE (0.001%)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="space-y-8 mt-12">
                     <h3 className="text-xl font-black uppercase tracking-widest border-b border-black/10 pb-2 text-black">System Integrity Log</h3>
                     <div className="grid grid-cols-1 gap-4">
                         {[
