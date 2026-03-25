@@ -234,10 +234,10 @@ export default function ContactPage() {
             {/* Expansive Custom Map Image Replacement */}
             <section className="h-[60vh] w-full relative bg-[#1A1A1A]">
                 <Image
-                    src="/images/spa/spa2.png"
+                    src="/images/contact/map.png"
                     alt="Aethelgard Location Map"
                     fill
-                    className="object-cover opacity-60 mix-blend-luminosity grayscale"
+                    className="object-cover opacity-80 mix-blend-luminosity grayscale"
                     placeholder="blur"
                     blurDataURL={blurData}
                 />

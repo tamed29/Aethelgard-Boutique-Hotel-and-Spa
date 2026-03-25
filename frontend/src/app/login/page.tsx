@@ -188,17 +188,17 @@ function LoginContent() {
                             </div>
 
                             <motion.button
-                                whileHover={{ scale: 1.02, backgroundColor: '#B91C1C' }}
+                                whileHover={{ scale: 1.02, backgroundColor: '#D4DE95', color: '#1A1F16' }}
                                 whileTap={{ scale: 0.98 }}
                                 type="submit"
                                 disabled={loading}
-                                className="w-full py-6 bg-red-600 rounded-2xl text-white text-[10px] uppercase tracking-[0.6em] font-black flex items-center justify-center gap-4 transition-all shadow-[0_10px_40px_rgba(220,38,38,0.3)] disabled:opacity-50 disabled:cursor-not-allowed group relative overflow-hidden"
+                                className="w-full py-6 bg-moss-700 rounded-2xl text-white text-[10px] uppercase tracking-[0.6em] font-black flex items-center justify-center gap-4 transition-all shadow-[0_10px_40px_rgba(99,107,47,0.3)] disabled:opacity-50 disabled:cursor-not-allowed group relative overflow-hidden"
                             >
                                 {loading ? (
                                     <Loader2 className="animate-spin" size={20} />
                                 ) : (
                                     <>
-                                        <span>Initiate Sequence</span>
+                                        <span>Login</span>
                                         <ShieldCheck className="w-5 h-5 group-hover:rotate-12 transition-transform" />
                                     </>
                                 )}

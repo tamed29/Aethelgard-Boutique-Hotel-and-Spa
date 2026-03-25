@@ -186,24 +186,24 @@ export default function SpaPage() {
                         <div className="w-24 h-px bg-white/20 mx-auto" />
                     </ScrollReveal>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 max-w-6xl mx-auto">
                         {treatments.map((t, i) => (
                             <ScrollReveal
                                 key={t.title}
                                 delay={i * 0.1}
-                                className="group bg-white/5 border border-white/10 rounded-[2.5rem] p-10 md:p-12 hover:bg-white/10 transition-all duration-700 hover:border-moss-100/30"
+                                className="group bg-white/5 border border-white/10 rounded-[2rem] p-8 md:p-10 hover:bg-white/15 transition-all duration-700 hover:border-moss-100/40 hover:scale-[1.01] hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)]"
                             >
-                                <div className="text-moss-100 mb-8 group-hover:scale-110 transition-transform origin-left">{t.icon}</div>
-                                <div className="flex items-start justify-between mb-8">
+                                <div className="text-moss-100 mb-6 group-hover:scale-110 transition-transform origin-left">{t.icon}</div>
+                                <div className="flex items-start justify-between mb-6">
                                     <div>
-                                        <h3 className="text-3xl md:text-4xl font-serif text-white group-hover:text-moss-100 transition-colors">{t.title}</h3>
-                                        <p className="text-moss-100 text-[10px] uppercase tracking-[0.3em] font-black mt-3">{t.duration}</p>
+                                        <h3 className="text-2xl md:text-3xl font-serif text-white group-hover:text-moss-100 transition-colors uppercase tracking-tight">{t.title}</h3>
+                                        <p className="text-moss-100 text-[9px] uppercase tracking-[0.3em] font-black mt-2">{t.duration}</p>
                                     </div>
-                                    <span className="text-[8px] uppercase tracking-[0.3em] font-black text-white/40 mt-2">Bespoke Pricing</span>
+                                    <span className="text-[7px] uppercase tracking-[0.3em] font-black text-white/40 mt-2">Bespoke Pricing</span>
                                 </div>
-                                <p className="text-lg text-white/60 leading-relaxed font-serif italic mb-10">{t.description}</p>
+                                <p className="text-base text-white/60 leading-relaxed font-serif italic mb-8 h-[4.5rem] line-clamp-3">{t.description}</p>
                                 <MagneticHover intensity={0.2} className="inline-block">
-                                    <Link href="/contact" className="group flex items-center gap-4 text-[9px] uppercase tracking-[0.4em] font-black text-white hover:text-[#D4DE95] transition-all duration-700 border-b border-white/10 hover:border-[#D4DE95] pb-3">
+                                    <Link href="/contact" className="group flex items-center gap-4 text-[8px] uppercase tracking-[0.4em] font-black text-white hover:text-[#D4DE95] transition-all duration-700 border-b border-white/10 hover:border-[#D4DE95] pb-2">
                                         <motion.span whileTap={{ scale: 0.95 }} className="flex items-center gap-4">
                                             Reserve Ritual <ArrowRight className="w-4 h-4 group-hover:translate-x-3 transition-transform duration-700" />
                                         </motion.span>
@@ -243,34 +243,35 @@ export default function SpaPage() {
                                 </p>
                             </ScrollReveal>
 
-                            <div className="grid grid-cols-2 gap-8 pt-8 border-t border-foreground/10">
+                            <div className="grid grid-cols-2 gap-6 pt-8 border-t border-foreground/10 max-w-lg">
                                 <ScrollReveal delay={0.4} className="space-y-4">
-                                    <div className="relative aspect-video rounded-xl overflow-hidden mb-2 shadow-lg">
-                                        <Image src="/images/gym/gym4.png" alt="Elite Prowess" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" />
+                                    <div className="relative aspect-[4/3] rounded-xl overflow-hidden mb-2 shadow-lg group/img">
+                                        <Image src="/images/gym/gym4.png" alt="Elite Prowess" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover group-hover/img:scale-110 transition-transform duration-700" />
                                     </div>
-                                    <h4 className="font-serif text-xl text-foreground">Elite Prowess</h4>
-                                    <p className="text-[10px] text-foreground/50 tracking-wide font-light">Custom mahogany gear.</p>
+                                    <h4 className="font-serif text-lg text-foreground">Elite Prowess</h4>
+                                    <p className="text-[9px] text-foreground/50 tracking-wide font-light">Custom mahogany gear.</p>
                                 </ScrollReveal>
                                 <ScrollReveal delay={0.6} className="space-y-4">
-                                    <div className="relative aspect-video rounded-xl overflow-hidden mb-2 shadow-lg">
-                                        <Image src="/images/gym/gym5.png" alt="Personal Labs" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" />
+                                    <div className="relative aspect-[4/3] rounded-xl overflow-hidden mb-2 shadow-lg group/img">
+                                        <Image src="/images/gym/gym5.png" alt="Personal Labs" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover group-hover/img:scale-110 transition-transform duration-700" />
                                     </div>
-                                    <h4 className="font-serif text-xl text-foreground">Personal Labs</h4>
-                                    <p className="text-[10px] text-foreground/50 tracking-wide font-light">Elite conditioning.</p>
+                                    <h4 className="font-serif text-lg text-foreground">Personal Labs</h4>
+                                    <p className="text-[9px] text-foreground/50 tracking-wide font-light">Elite conditioning.</p>
                                 </ScrollReveal>
                             </div>
                         </div>
 
                         <ScrollReveal
                             delay={0.4}
-                            className="aspect-[4/3] lg:aspect-[4/5] rounded-[3rem] overflow-hidden shadow-2xl relative order-1 lg:order-2"
+                            className="aspect-[4/3] lg:aspect-[3/4] rounded-[2.5rem] overflow-hidden shadow-2xl relative order-1 lg:order-2 max-w-xl ml-auto"
                         >
                              <Image
+                                id="fitness-main-image"
                                 src="/images/gym/gym1.png"
                                 alt="Forest Fitness Studio"
                                 fill
                                 sizes="(max-width: 1024px) 100vw, 50vw"
-                                className="object-cover hover:scale-110 transition-transform duration-[5000ms]"
+                                className="object-cover hover:scale-105 transition-transform duration-[5000ms]"
                             />
                             <div className="absolute inset-0 bg-black/10" />
                         </ScrollReveal>
