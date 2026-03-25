@@ -41,7 +41,6 @@ const STATIC_ROOMS = [
             '/images/rooms/forest/r3.png',
             '/images/rooms/forest/r4.png',
             '/images/rooms/forest/r5.png',
-            '/images/rooms/forest/r6.png',
             '/images/rooms/forest/r7.png',
             '/images/rooms/forest/r8.png',
             '/images/rooms/forest/r10.png',
@@ -59,13 +58,11 @@ const STATIC_ROOMS = [
         features: ['12th Century Exposed Beams', 'Velvet Suede Upholstery', 'Manor Courtyard Portal'],
         images: [
             '/images/rooms/double/d1.png',
-            '/images/rooms/double/d2.png',
             '/images/rooms/double/d3.png',
             '/images/rooms/double/d4.png',
+            '/images/rooms/double/d2.png',
             '/images/rooms/double/d5.png',
             '/images/rooms/double/d6.png',
-            '/images/rooms/double/d7.png',
-            '/images/rooms/double/d8.png',
         ]
     },
     {
@@ -86,8 +83,6 @@ const STATIC_ROOMS = [
             '/images/rooms/grand/g5.png',
             '/images/rooms/grand/g6.png',
             '/images/rooms/grand/g7.png',
-            '/images/rooms/grand/g8.png',
-            '/images/rooms/grand/g9.png',
         ]
     },
     {
@@ -104,12 +99,9 @@ const STATIC_ROOMS = [
             '/images/rooms/botanical/b1.png',
             '/images/rooms/botanical/b2.png',
             '/images/rooms/botanical/b3.png',
-            '/images/rooms/botanical/b4.png',
             '/images/rooms/botanical/b5.png',
-            '/images/rooms/botanical/b6.png',
             '/images/rooms/botanical/b7.png',
             '/images/rooms/botanical/b8.png',
-            '/images/rooms/botanical/b9.png',
         ]
     },
     {
@@ -128,8 +120,6 @@ const STATIC_ROOMS = [
             '/images/rooms/family/f3.png',
             '/images/rooms/family/f4.png',
             '/images/rooms/family/f5.png',
-            '/images/rooms/family/f6.png',
-            '/images/rooms/family/f7.png',
             '/images/rooms/family/f8.png',
             '/images/rooms/family/f9.png',
         ]
@@ -146,13 +136,11 @@ const STATIC_ROOMS = [
         features: ['Reflective Writing Nook', 'Library of Silence', 'Tapestry Garden Vista'],
         images: [
             '/images/rooms/single/s1.png',
-            '/images/rooms/single/s2.png',
-            '/images/rooms/single/s3.png',
             '/images/rooms/single/s4.png',
+            '/images/rooms/single/s3.png',
+            '/images/rooms/single/s2.png',
             '/images/rooms/single/s5.png',
             '/images/rooms/single/s6.png',
-            '/images/rooms/single/s7.png',
-            '/images/rooms/single/s8.png',
             '/images/rooms/single/s9.png',
         ]
     },
@@ -325,21 +313,31 @@ function RoomsContent() {
             {/* Room Listing */}
             <section id="room-listing" className="flex flex-col">
                 {filteredRooms.map((room, idx) => {
+                    // Find static data for variety
+                    const staticMatch = STATIC_ROOMS.find(s => 
+                        s._id === room._id || 
+                        s._id === (room.roomType?.toLowerCase()) ||
+                        room.name?.toLowerCase().includes(s._id)
+                    );
+
                     const roomImages = room.images || [];
-                    const primaryImg = roomImages[0] || '/images/rooms/forest/r1.png';
-                    const img2 = roomImages[1] || primaryImg;
-                    const img3 = roomImages[2] || primaryImg;
-                    const amenities = room.amenities || ['Forest View', 'Soaking Tub', 'Butler Service', 'Aesop Toiletries'];
+                    const staticImages = staticMatch?.images || [];
+                    
+                    // Priority: 1. Admin photo for primary, 2. Unique local photos for 2 and 3
+                    const primaryImg = roomImages[0] || staticImages[0] || '/images/rooms/forest/r1.png';
+                    const img2 = staticImages[1] || roomImages[1] || primaryImg;
+                    const img3 = staticImages[2] || roomImages[2] || primaryImg;
+                    const amenities = room.amenities || staticMatch?.amenities || ['Forest View', 'Soaking Tub', 'Butler Service', 'Aesop Toiletries'];
 
                     return (
-                        <div key={room._id} className="py-12 md:py-16 border-b border-foreground/5 last:border-0 relative overflow-hidden">
+                        <div key={room._id || idx} className="py-12 md:py-16 border-b border-foreground/5 last:border-0 relative overflow-hidden">
                             <div className="absolute inset-0 -z-10 overflow-hidden opacity-[0.02] pointer-events-none">
                                 <motion.div
                                     style={{ position: 'relative' }}
                                     initial={{ y: -50 }} whileInView={{ y: 50 }} viewport={{ margin: "100px" }}
                                     transition={{ duration: 15, ease: "linear" }}
                                     className="w-full h-[120%] relative grayscale">
-                                    <Image src={img2} alt="" fill sizes="100vw" className="object-cover" />
+                                    <Image src={staticImages[4] || img2} alt="" fill sizes="100vw" className="object-cover" />
                                 </motion.div>
                             </div>
 

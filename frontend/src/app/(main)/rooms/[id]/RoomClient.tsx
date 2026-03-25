@@ -22,6 +22,7 @@ interface RoomFeature {
 }
 
 interface RoomData {
+    roomType?: string;
     name: string;
     vibe: string;
     quote: string;
@@ -86,9 +87,9 @@ const ROOM_DATA: Record<string, RoomData> = {
         ],
         roomImages: [
             '/images/rooms/double/d1.png',
-            '/images/rooms/double/d2.png',
             '/images/rooms/double/d3.png',
             '/images/rooms/double/d4.png',
+            '/images/rooms/double/d2.png',
             '/images/rooms/double/d5.png',
             '/images/rooms/double/d6.png',
         ],
@@ -205,9 +206,9 @@ const ROOM_DATA: Record<string, RoomData> = {
         ],
         roomImages: [
             '/images/rooms/single/s1.png',
-            '/images/rooms/single/s2.png',
-            '/images/rooms/single/s3.png',
             '/images/rooms/single/s4.png',
+            '/images/rooms/single/s3.png',
+            '/images/rooms/single/s2.png',
             '/images/rooms/single/s5.png',
             '/images/rooms/single/s6.png',
             '/images/rooms/single/s9.png',
@@ -227,12 +228,23 @@ const NUMERIC_TO_SLUG: Record<string, string> = {
 
 interface RoomClientProps {
     params: Promise<{ id: string }>;
-    initialRoom?: Partial<RoomData> & { images?: string[] };
+    initialRoom?: Partial<RoomData> & { images?: string[]; roomType?: string };
 }
 
 export default function RoomClient({ params, initialRoom }: RoomClientProps) {
     const { id } = use(params);
-    const slug = ROOM_DATA[id] ? id : (NUMERIC_TO_SLUG[id] || 'double');
+    
+    // Find the correct static slug using robust matching
+    const slug = Object.keys(ROOM_DATA).find(key => {
+        const staticR = ROOM_DATA[key];
+        return (
+            key === id ||
+            key === initialRoom?.roomType?.toLowerCase() ||
+            initialRoom?.name?.toLowerCase().includes(key) ||
+            key === NUMERIC_TO_SLUG[id]
+        );
+    }) || 'forest'; // Default to forest which is a safe starting point if all fails
+
     const staticRoom = ROOM_DATA[slug];
 
     // Merge static structure with dynamic data
@@ -242,12 +254,16 @@ export default function RoomClient({ params, initialRoom }: RoomClientProps) {
         price: initialRoom?.price ?? staticRoom.price,
         amenities: initialRoom?.amenities ?? staticRoom.amenities,
         description: initialRoom?.description ?? staticRoom.description,
-        roomImages: (initialRoom?.images && initialRoom.images.length > 0) ? initialRoom.images : staticRoom.roomImages,
-        bathroomImages: (initialRoom?.bathroomImages && initialRoom.bathroomImages.length > 0) ? initialRoom.bathroomImages : staticRoom.bathroomImages,
+        roomImages: (initialRoom?.images && initialRoom.images.length > 0) 
+            ? [initialRoom.images[0], ...staticRoom.roomImages.slice(1)] 
+            : staticRoom.roomImages,
+        bathroomImages: (initialRoom?.bathroomImages && initialRoom.bathroomImages.length > 0) 
+            ? [...initialRoom.bathroomImages, ...staticRoom.bathroomImages].filter((v, i, a) => a.indexOf(v) === i)
+            : staticRoom.bathroomImages,
     };
 
     const { roomImages, bathroomImages, features } = room;
-    // Always show: hero + 3 room images + 2 bathroom images in gallery
+    // Always show: hero + 4 room images + all bathroom images in gallery
     const allBathrooms = bathroomImages;
     const galleryRoom = roomImages.slice(1, 5); // indices 1-4
 
