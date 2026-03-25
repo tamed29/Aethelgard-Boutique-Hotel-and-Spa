@@ -10,6 +10,8 @@ import Link from 'next/link';
 import { toast } from 'sonner';
 import { AethelgardLogo } from '@/components/ui/AethelgardLogo';
 
+console.log('--- AETHELGARD COMMAND TERMINAL [V2.1.0] ONLINE ---');
+
 function LoginContent() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -164,11 +166,11 @@ function LoginContent() {
                             </div>
 
                             <motion.button
-                                whileHover={{ scale: 1.02, y: -2 }}
+                                whileHover={{ scale: 1.02, backgroundColor: '#B91C1C' }}
                                 whileTap={{ scale: 0.98 }}
                                 type="submit"
                                 disabled={loading}
-                                className="w-full bg-[#D4DE95] hover:bg-[#F5F2ED] text-[#1A1F16] font-black py-6 rounded-2xl transition-all duration-700 flex items-center justify-center gap-4 shadow-xl shadow-[#D4DE95]/5 disabled:opacity-50 uppercase tracking-[0.5em] text-[12px] group"
+                                className="w-full py-6 bg-red-600 rounded-2xl text-white text-[10px] uppercase tracking-[0.6em] font-black flex items-center justify-center gap-4 transition-all shadow-[0_10px_40px_rgba(220,38,38,0.3)] disabled:opacity-50 disabled:cursor-not-allowed group relative overflow-hidden"
                             >
                                 {loading ? (
                                     <Loader2 className="animate-spin" size={20} />
