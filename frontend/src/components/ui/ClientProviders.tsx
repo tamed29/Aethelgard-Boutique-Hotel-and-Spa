@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useThemeEngine } from '@/hooks/useThemeEngine';
 import { io } from 'socket.io-client';
 import { useStore } from '@/store/useStore';
@@ -8,6 +8,7 @@ import { useStore } from '@/store/useStore';
 export default function ClientProviders({ children }: { children: React.ReactNode }) {
     useThemeEngine();
     const setRealtimePrice = useStore(state => state.setRealtimePrice);
+    const hasFetched = useRef(false);
 
     useEffect(() => {
         const setMaintenanceMode = useStore.getState().setMaintenanceMode;
@@ -41,7 +42,8 @@ export default function ClientProviders({ children }: { children: React.ReactNod
         const isAdminPath = typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
         const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('adminToken');
 
-        if (!isAdminPath || hasToken) {
+        if ((!isAdminPath || hasToken) && !hasFetched.current) {
+            hasFetched.current = true;
             fetch(`${API_URL}/admin/settings`)
                 .then(res => {
                     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
