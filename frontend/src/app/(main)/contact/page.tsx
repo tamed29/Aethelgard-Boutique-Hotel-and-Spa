@@ -231,25 +231,25 @@ export default function ContactPage() {
                 </div>
             </section>
 
-            {/* Expansive Custom Map Image Replacement */}
-            <section className="h-[60vh] w-full relative bg-[#1A1A1A]">
-                <Image
-                    src="/images/contact/map.png"
-                    alt="Aethelgard Location Map"
-                    fill
-                    className="object-cover opacity-80 mix-blend-luminosity grayscale"
-                    placeholder="blur"
-                    blurDataURL={blurData}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background" />
-
-                {/* Custom Map Pin Override */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
-                    <div className="w-16 h-16 bg-moss-900 rounded-full flex items-center justify-center shadow-2xl pulse-ring">
+            {/* Correct Map Embed */}
+            <section className="h-[60vh] w-full relative bg-zinc-950 overflow-hidden">
+                <iframe
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3952.5!2d37.5384637!3d6.0097247!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x17babb8b24687a2b:0xb4a961edb70f2c7e!2sEthiopian%20Insurance%20Corporation!5e0!3m2!1sen!2set!4v1234567890"
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0, filter: 'grayscale(0.8) invert(0.9) contrast(1.2) brightness(0.8)' }}
+                    allowFullScreen={true}
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    title="Aethelgard Location Map"
+                    className="opacity-70"
+                ></iframe>
+                <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-background via-transparent to-background" />
+                
+                {/* Overlay Pin indicator to keep the 'Aethelgard' feel */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-none">
+                    <div className="w-16 h-16 bg-moss-900/40 backdrop-blur-md rounded-full flex items-center justify-center shadow-2xl border border-moss-100/20 pulse-ring">
                         <MapPin className="w-8 h-8 text-moss-100" />
-                    </div>
-                    <div className="mt-4 glass bg-background/80 px-6 py-3 rounded-full border border-foreground/10">
-                        <p className="font-serif text-lg text-foreground">Aethelgard Estate</p>
                     </div>
                 </div>
             </section>

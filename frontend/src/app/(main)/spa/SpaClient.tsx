@@ -263,14 +263,14 @@ export default function SpaPage() {
 
                         <ScrollReveal
                             delay={0.4}
-                            className="aspect-[4/3] lg:aspect-[3/4] rounded-[2.5rem] overflow-hidden shadow-2xl relative order-1 lg:order-2 max-w-xl ml-auto"
+                            className="aspect-[4/5] rounded-[2.5rem] overflow-hidden shadow-2xl relative order-1 lg:order-2 w-full max-w-md ml-auto"
                         >
                              <Image
                                 id="fitness-main-image"
                                 src="/images/gym/gym1.png"
                                 alt="Forest Fitness Studio"
                                 fill
-                                sizes="(max-width: 1024px) 100vw, 50vw"
+                                sizes="(max-width: 1024px) 100vw, 33vw"
                                 className="object-cover hover:scale-105 transition-transform duration-[5000ms]"
                             />
                             <div className="absolute inset-0 bg-black/10" />
