@@ -401,14 +401,10 @@ function RoomsContent() {
                                             </ul>
                                         </motion.div>
 
-                                        {/* Price + Button — stacked on mobile, side by side on desktop */}
-                                        <motion.div variants={fadeUp} className="pt-4 flex flex-col sm:flex-row sm:items-center gap-4 sm:justify-between">
-                                            <div>
-                                                <p className="text-[10px] uppercase tracking-widest text-foreground/50 mb-0.5">Starting From</p>
-                                                <span className="text-2xl md:text-3xl font-serif text-moss-700 dark:text-moss-200 uppercase tracking-tighter">${room.price} <span className="text-xs">/ night</span></span>
-                                            </div>
+                                        {/* Explore Button — full width on mobile, right-aligned or auto on desktop */}
+                                        <motion.div variants={fadeUp} className="pt-6">
                                             <MagneticHover intensity={0.3} className="w-full sm:w-auto">
-                                                <Link href={`/rooms/${room._id}`} className="group relative block overflow-hidden bg-zinc-950 text-white px-6 py-3 sm:px-8 sm:py-4 border border-white/20 shadow-xl transition-all duration-700 w-full text-center hover:bg-[#D4DE95] hover:text-[#2B2E1C] hover:border-[#D4DE95]">
+                                                <Link href={`/rooms/${room._id}`} className="group relative block overflow-hidden bg-zinc-950 text-white px-6 py-3 sm:px-10 sm:py-5 border border-white/20 shadow-xl transition-all duration-700 w-full text-center hover:bg-[#D4DE95] hover:text-[#2B2E1C] hover:border-[#D4DE95]">
                                                     <motion.div whileTap={{ scale: 0.95 }} className="relative z-10 flex items-center justify-center gap-4">
                                                         <span className="text-xs sm:text-sm uppercase tracking-[0.2em] font-bold">Explore Suite</span>
                                                         <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform duration-700" />

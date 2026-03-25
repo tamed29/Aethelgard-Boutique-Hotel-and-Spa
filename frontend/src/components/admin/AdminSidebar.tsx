@@ -48,6 +48,7 @@ const NOTIF_ICON_MAP = {
     'Booking': <Hotel size={16} />,
     'Inquiry': <MessageSquare size={16} />,
     'Spa Booking': <Leaf size={16} />,
+    'Message': <MessageSquare size={16} />,
 };
 
 function NotificationPanel({ onClose }: { onClose: () => void }) {
@@ -143,7 +144,8 @@ function NotificationPanel({ onClose }: { onClose: () => void }) {
                                     "w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5",
                                     n.type === 'Booking' ? 'bg-blue-500/15 text-blue-400' :
                                     n.type === 'Inquiry' ? 'bg-amber-500/15 text-amber-400' :
-                                    'bg-emerald-500/15 text-emerald-400'
+                                    n.type === 'Spa Booking' ? 'bg-emerald-500/15 text-emerald-400' :
+                                    'bg-purple-500/15 text-purple-400'
                                 )}>
                                     {NOTIF_ICON_MAP[n.type]}
                                 </div>
@@ -202,21 +204,48 @@ export function AdminSidebar() {
                 isCollapsed ? "w-20" : "w-72"
             )}
         >
-            {/* Header / Logo */}
-            <div className="p-8 flex items-center gap-4 border-b border-[var(--admin-border)] bg-[var(--admin-accent)]/5">
-                <div className="w-10 h-10 rounded-xl bg-[var(--admin-accent)]/10 border border-[var(--admin-border)] flex items-center justify-center shrink-0">
-                    <span className="text-[var(--admin-accent)] font-serif text-xl">A</span>
+            {/* Header / Logo / Notification Bell */}
+            <div className="p-8 flex items-center justify-between border-b border-[var(--admin-border)] bg-[var(--admin-accent)]/5">
+                <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-[var(--admin-accent)]/10 border border-[var(--admin-border)] flex items-center justify-center shrink-0">
+                        <span className="text-[var(--admin-accent)] font-serif text-xl">A</span>
+                    </div>
+                    {!isCollapsed && (
+                        <motion.div
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            className="flex flex-col"
+                        >
+                            <span className="text-[var(--admin-text)] font-serif text-lg tracking-widest uppercase">Admin</span>
+                            <span className="text-[8px] uppercase tracking-[0.4em] text-[var(--admin-text)] opacity-40 font-black">Control Terminal</span>
+                        </motion.div>
+                    )}
                 </div>
-                {!isCollapsed && (
-                    <motion.div
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        className="flex flex-col"
+
+                <div className="relative">
+                    <button 
+                        onClick={() => setShowNotifications(!showNotifications)}
+                        className={cn(
+                            "p-2.5 rounded-xl transition-all duration-300 relative group",
+                            showNotifications 
+                                ? "bg-[var(--admin-accent)] text-[var(--admin-bg)]" 
+                                : "bg-[var(--admin-accent)]/5 text-[var(--admin-accent)] hover:bg-[var(--admin-accent)]/10"
+                        )}
                     >
-                        <span className="text-[var(--admin-text)] font-serif text-lg tracking-widest uppercase">Admin</span>
-                        <span className="text-[8px] uppercase tracking-[0.4em] text-[var(--admin-text)] opacity-40 font-black">Control Terminal</span>
-                    </motion.div>
-                )}
+                        <Bell size={18} className={cn(unreadCount > 0 && "animate-[bell-ring_1.5s_infinite]")} />
+                        {unreadCount > 0 && (
+                            <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white text-[9px] font-black rounded-full flex items-center justify-center shadow-[0_0_8px_rgba(244,63,94,0.6)]">
+                                {unreadCount > 9 ? '9+' : unreadCount}
+                            </span>
+                        )}
+                    </button>
+
+                    <AnimatePresence>
+                        {showNotifications && (
+                            <NotificationPanel onClose={() => setShowNotifications(false)} />
+                        )}
+                    </AnimatePresence>
+                </div>
             </div>
 
             {/* Navigation */}

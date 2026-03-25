@@ -8,7 +8,7 @@ const SOCKET_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http
 
 export interface Notification {
     id: number;
-    type: 'Booking' | 'Inquiry' | 'Spa Booking';
+    type: 'Booking' | 'Inquiry' | 'Spa Booking' | 'Message';
     title: string;
     description: string;
     href: string;
@@ -109,6 +109,18 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
                 `${name}${therapy}${dateStr}${data.timeSlot ? ' at ' + data.timeSlot : ''}`,
                 '/admin/spa'
             );
+        });
+
+        socket.on('receiveMessage', (data: { sender: string; text: string; roomId: string }) => {
+            // Only notify if not from 'Admin' and not already on the chat page for that room
+            if (data.sender !== 'Concierge' && data.sender !== 'Admin') {
+                addNotification(
+                    'Message',
+                    `💬 New Message from ${data.sender}`,
+                    data.text.substring(0, 60) + (data.text.length > 60 ? '...' : ''),
+                    `/admin/chat?room=${data.roomId}`
+                );
+            }
         });
 
         return () => {
