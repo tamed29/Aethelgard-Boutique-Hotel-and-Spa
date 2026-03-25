@@ -24,11 +24,15 @@ function LoginContent() {
 
     useEffect(() => {
         const token = localStorage.getItem('adminToken');
-        if (token) {
-            console.log('--- SESSION DETECTED. AUTO-ENTRY INITIATED. ---');
+        const isUnauthorized = searchParams.get('error') === 'unauthorized';
+        
+        if (token && !isUnauthorized) {
+            console.log('--- VALID SESSION DETECTED. AUTO-ENTRY INITIATED. ---');
             window.location.replace(redirectTo);
+        } else if (isUnauthorized) {
+            console.warn('--- AUTHENTICATION REJECTED BY SERVER. REMAINING ON LOGIN. ---');
         }
-    }, [redirectTo]);
+    }, [redirectTo, searchParams]);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();

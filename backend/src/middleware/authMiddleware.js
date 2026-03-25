@@ -20,7 +20,10 @@ const protect = async (req, res, next) => {
     }
 
     try {
+        console.log(`[Auth] Verifying token (first 10 chars): ${token.substring(0, 10)}...`);
+        console.log(`[Auth] JWT_SECRET detected: ${process.env.JWT_SECRET ? 'YES' : 'NO'}`);
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        console.log(`[Auth] Decoded Payload:`, JSON.stringify(decoded));
         
         // Handle fallback admin token
         if (decoded.userId === 'admin-001' && decoded.role === 'admin') {
