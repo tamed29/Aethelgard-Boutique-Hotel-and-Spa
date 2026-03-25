@@ -24,7 +24,8 @@ export default function ClientProviders({ children }: { children: React.ReactNod
         const socket = io(socketOrigin, {
             reconnectionAttempts: 5,
             timeout: 5000,
-            transports: ['polling', 'websocket'], // Allow polling for better compatibility
+            transports: ['websocket', 'polling'], // Try websocket first
+            withCredentials: true,
         });
 
         socket.on('priceUpdate', (data: { roomId: string; price: number }) => {

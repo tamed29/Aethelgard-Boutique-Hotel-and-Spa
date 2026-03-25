@@ -2,6 +2,9 @@ const Gallery = require('../models/Gallery');
 
 const getGalleryItems = async (req, res) => {
     try {
+        if (mongoose.connection.readyState !== 1) {
+            return res.status(503).json({ message: 'Database connecting/disconnected. Please try again in a moment.' });
+        }
         const items = await Gallery.find({}).sort({ createdAt: -1 });
         res.json(items);
     } catch (error) {

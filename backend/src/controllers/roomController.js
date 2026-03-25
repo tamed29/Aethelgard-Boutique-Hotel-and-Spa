@@ -1,9 +1,16 @@
 const mongoose = require('mongoose');
 const Room = require('../models/Room');
 
-const getRooms = async (req, res) => {
-    const rooms = await Room.find({});
-    res.json(rooms);
+const getRooms = async (req, res, next) => {
+    try {
+        if (mongoose.connection.readyState !== 1) {
+            return res.status(503).json({ message: 'Database connecting/disconnected. Please try again in a moment.' });
+        }
+        const rooms = await Room.find({});
+        res.json(rooms);
+    } catch (error) {
+        next(error);
+    }
 };
 
 const getRoomById = async (req, res) => {

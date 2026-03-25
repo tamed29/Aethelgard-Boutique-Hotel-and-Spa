@@ -22,8 +22,21 @@ const errorHandler = (err, req, res, next) => {
     }
 
     // Ensure CORS headers are present even on errors
-    res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
-    res.header('Access-Control-Allow-Credentials', 'true');
+    const origin = req.headers.origin;
+    const allowedOrigins = [
+        'http://localhost:3000', 
+        'http://localhost:5173', 
+        'https://aethelgard-boutique-hotel-spa.vercel.app',
+        'https://aethelgard-boutique-hotel-spa.vercel.app/'
+    ];
+
+    if (allowedOrigins.includes(origin)) {
+        res.header('Access-Control-Allow-Origin', origin);
+        res.header('Access-Control-Allow-Credentials', 'true');
+    } else {
+        res.header('Access-Control-Allow-Origin', '*'); // Fallback for simple requests
+    }
+    
     res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With');
 

@@ -157,6 +157,9 @@ const Settings = require('../models/Settings');
 
 const getSettings = async (req, res, next) => {
     try {
+        if (mongoose.connection.readyState !== 1) {
+            return res.status(503).json({ message: 'Database connecting/disconnected. Please try again in a moment.' });
+        }
         const settings = await Settings.find({});
         res.json(settings);
     } catch (error) {

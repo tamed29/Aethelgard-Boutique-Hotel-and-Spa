@@ -29,7 +29,6 @@ const io = new Server(server, {
     },
 });
 
-app.use(helmet());
 app.use(cors({ 
     origin: [
         'http://localhost:3000', 
@@ -40,6 +39,9 @@ app.use(cors({
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"]
+}));
+app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 app.use(express.json());
 app.use(cookieParser());
