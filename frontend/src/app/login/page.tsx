@@ -22,6 +22,14 @@ function LoginContent() {
     const redirectTo = searchParams.get('from') || '/admin';
     const errorParam = searchParams.get('error');
 
+    useEffect(() => {
+        const token = localStorage.getItem('adminToken');
+        if (token) {
+            console.log('--- SESSION DETECTED. AUTO-ENTRY INITIATED. ---');
+            window.location.replace(redirectTo);
+        }
+    }, [redirectTo]);
+
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
