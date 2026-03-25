@@ -58,6 +58,7 @@ export default function ClientProviders({ children }: { children: React.ReactNod
             .catch(err => {
                 console.warn('Failed to fetch initial settings:', err.message);
             });
+        }
 
         socket.on('connect_error', (error) => {
             console.warn('Realtime updates unavailable:', error.message);
