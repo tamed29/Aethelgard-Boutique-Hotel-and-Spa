@@ -37,12 +37,16 @@ export default function ClientProviders({ children }: { children: React.ReactNod
             if (data.key === 'showPrices') setShowPrices(data.value === 'true');
         });
 
-        // Initialize settings with better error handling
-        fetch(`${API_URL}/admin/settings`)
-            .then(res => {
-                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-                return res.json();
-            })
+        // Only fetch initial settings if it's not the admin area or we have a token
+        const isAdminPath = typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
+        const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('adminToken');
+
+        if (!isAdminPath || hasToken) {
+            fetch(`${API_URL}/admin/settings`)
+                .then(res => {
+                    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                    return res.json();
+                })
             .then(settings => {
                 if (Array.isArray(settings)) {
                     const maint = settings.find((s: any) => s.key === 'maintenanceMode');
