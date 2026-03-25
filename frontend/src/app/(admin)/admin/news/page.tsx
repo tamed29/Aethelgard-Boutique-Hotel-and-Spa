@@ -26,7 +26,7 @@ export default function NewsManagementPage() {
         queryKey: ['news'],
         queryFn: async () => {
             const res = await adminAxios.get('/news');
-            return res.data;
+            return Array.isArray(res.data) ? res.data : [];
         }
     });
 

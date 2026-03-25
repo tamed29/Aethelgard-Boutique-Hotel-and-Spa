@@ -53,7 +53,7 @@ export default function RoomControlPage() {
         queryKey: ['rooms'],
         queryFn: async () => {
             const res = await adminAxios.get('/rooms');
-            return res.data;
+            return Array.isArray(res.data) ? res.data : [];
         }
     });
 

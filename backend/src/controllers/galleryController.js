@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Gallery = require('../models/Gallery');
 
 const getGalleryItems = async (req, res) => {

@@ -26,7 +26,12 @@ export default function GalleryPage() {
             try {
                 const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/gallery`);
                 const data = await res.json();
-                setGalleryItems(data);
+                if (Array.isArray(data)) {
+                    setGalleryItems(data);
+                } else {
+                    console.error('Gallery API did not return an array:', data);
+                    setGalleryItems([]);
+                }
             } catch (err) {
                 console.error('Failed to fetch gallery', err);
             }

@@ -44,7 +44,7 @@ export default function MediaLibraryPage() {
         queryKey: ['gallery'],
         queryFn: async () => {
             const res = await adminAxios.get('/gallery');
-            return res.data;
+            return Array.isArray(res.data) ? res.data : [];
         }
     });
 

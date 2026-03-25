@@ -59,7 +59,7 @@ export default function ReservationHubPage() {
         queryKey: ['bookings'],
         queryFn: async () => {
             const res = await adminAxios.get('/bookings');
-            return res.data;
+            return Array.isArray(res.data) ? res.data : [];
         }
     });
 
@@ -67,7 +67,7 @@ export default function ReservationHubPage() {
         queryKey: ['rooms'],
         queryFn: async () => {
             const res = await adminAxios.get('/rooms');
-            return res.data;
+            return Array.isArray(res.data) ? res.data : [];
         }
     });
 
