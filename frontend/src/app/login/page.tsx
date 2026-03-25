@@ -30,17 +30,27 @@ function LoginContent() {
             console.log('Login Response:', res.status, res.data);
 
             if (res.data.role === 'admin') {
-                if (res.data.token) {
-                    localStorage.setItem('adminToken', res.data.token);
+                const token = res.data.token;
+                if (token) {
+                    localStorage.setItem('adminToken', token);
+                    console.log('Token stored in localStorage (len):', token.length);
                 }
+                
                 setLoginError(null);
+                setLoading(false);
                 toast.success('Access Granted. Welcome, Warden.');
-                console.log('Redirecting to:', redirectTo);
-                window.location.href = redirectTo;
+                console.log('Waiting 500ms before redirecting to:', redirectTo);
+                
+                // Short delay to ensure localStorage is flushed and user sees the success
+                setTimeout(() => {
+                    window.location.href = redirectTo;
+                }, 500);
             } else {
                 setLoginError('Access Denied: Insufficient permissions.');
+                setLoading(false);
             }
         } catch (err: any) {
+            setLoading(false);
             console.error('Admin Login Error:', err);
             const message = err.response?.data?.message || 'The Aethelgard grid is unresponsive. Check connection.';
             setLoginError(message);

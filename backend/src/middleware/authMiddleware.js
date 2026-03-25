@@ -39,8 +39,11 @@ const protect = async (req, res, next) => {
         }
         next();
     } catch (error) {
-        console.error('Auth Middleware Error:', error.message);
-        res.status(401).json({ message: 'Not authorized, token failed' });
+        console.error('[Auth Error] Verification failed:', error.message);
+        if (error.name === 'TokenExpiredError') {
+            return res.status(401).json({ message: 'Session expired. Please login again.' });
+        }
+        res.status(401).json({ message: `Authentication failed: ${error.message}` });
     }
 };
 
