@@ -11,7 +11,9 @@ const getReservations = async (req, res) => {
 
 const createReservation = async (req, res) => {
     try {
-        const newReservation = new SpaReservation(req.body);
+        // Generate unique reference number
+        const ref = 'SPA-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+        const newReservation = new SpaReservation({ ...req.body, referenceNumber: ref });
         const savedReservation = await newReservation.save();
 
         // Real-time notification to admin dashboard
@@ -23,6 +25,17 @@ const createReservation = async (req, res) => {
         res.status(201).json(savedReservation);
     } catch (error) {
         res.status(400).json({ message: error.message });
+    }
+};
+
+const getByReference = async (req, res) => {
+    try {
+        const { ref } = req.params;
+        const reservation = await SpaReservation.findOne({ referenceNumber: ref.toUpperCase() });
+        if (!reservation) return res.status(404).json({ message: 'No reservation found for this reference number.' });
+        res.json(reservation);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
 };
 
@@ -47,7 +60,7 @@ const updateReservation = async (req, res) => {
     try {
         const reservation = await SpaReservation.findById(req.params.id);
         if (reservation) {
-            ['guestName', 'guestEmail', 'therapyType', 'date', 'timeSlot', 'status', 'specialRequests'].forEach(field => {
+            ['guestName', 'guestEmail', 'therapyType', 'date', 'timeSlot', 'status', 'specialRequests', 'price', 'paymentStatus'].forEach(field => {
                 if (req.body[field] !== undefined) {
                     reservation[field] = req.body[field];
                 }
@@ -79,4 +92,5 @@ const deleteReservation = async (req, res) => {
     }
 };
 
-module.exports = { getReservations, createReservation, updateReservationStatus, updateReservation, deleteReservation };
+module.exports = { getReservations, createReservation, updateReservationStatus, updateReservation, deleteReservation, getByReference };
+

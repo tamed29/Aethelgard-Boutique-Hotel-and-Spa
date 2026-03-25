@@ -26,6 +26,20 @@ const spaReservationSchema = new mongoose.Schema({
         enum: ['pending', 'confirmed', 'completed', 'cancelled'],
         default: 'pending'
     },
+    price: {
+        type: Number,
+        default: 0
+    },
+    referenceNumber: {
+        type: String,
+        unique: true,
+        sparse: true
+    },
+    paymentStatus: {
+        type: String,
+        enum: ['unpaid', 'paid'],
+        default: 'unpaid'
+    },
     specialRequests: {
         type: String,
         default: ''

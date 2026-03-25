@@ -18,6 +18,9 @@ interface SpaReservation {
     timeSlot: string;
     status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
     specialRequests: string;
+    price: number;
+    referenceNumber?: string;
+    paymentStatus?: 'unpaid' | 'paid';
     createdAt: string;
 }
 
@@ -134,6 +137,8 @@ export default function SpaManagementPage() {
                                     { label: 'Individuation', icon: Bath },
                                     { label: 'Therapy Class', icon: MapPin },
                                     { label: 'Execution Time', icon: Clock },
+                                    { label: 'Reference', icon: Check },
+                                    { label: 'Rate', icon: Check },
                                     { label: 'Current State', icon: Check }
                                 ].map((h, i) => (
                                     <th key={i} className="px-8 py-6 border-b border-[var(--admin-border)]">
@@ -168,6 +173,21 @@ export default function SpaManagementPage() {
                                             <span className="text-[10px] text-[var(--admin-text)] opacity-60 font-mono tracking-tighter">{new Date(r.date).toLocaleDateString()}</span>
                                             <span className="text-[10px] text-[var(--admin-accent)] opacity-60 font-mono tracking-tighter">{r.timeSlot}</span>
                                         </div>
+                                    </td>
+                                    <td className="px-8 py-8">
+                                        <div className="flex flex-col gap-1">
+                                            {r.referenceNumber ? (
+                                                <span className="text-[10px] font-mono text-[var(--admin-accent)] tracking-widest font-bold">{r.referenceNumber}</span>
+                                            ) : <span className="text-[9px] opacity-20 italic">—</span>}
+                                            {r.paymentStatus === 'paid' && (
+                                                <span className="text-[8px] uppercase tracking-widest text-emerald-400 font-black">✓ Paid</span>
+                                            )}
+                                        </div>
+                                    </td>
+                                    <td className="px-8 py-8">
+                                        <span className="text-[var(--admin-accent)] font-serif text-lg font-bold">
+                                            {r.price ? `£${r.price.toLocaleString()}` : <span className="text-xs opacity-30 italic">Not set</span>}
+                                        </span>
                                     </td>
                                     <td className="px-8 py-8">
                                         <div className="flex items-center gap-4">
@@ -221,7 +241,8 @@ export default function SpaManagementPage() {
                                         therapyType: formData.get('therapyType'),
                                         timeSlot: formData.get('timeSlot'),
                                         status: formData.get('status'),
-                                        date: formData.get('date')
+                                        date: formData.get('date'),
+                                        price: Number(formData.get('price')) || 0,
                                     });
                                 }} 
                                 className="p-10 space-y-8"
@@ -238,10 +259,10 @@ export default function SpaManagementPage() {
                                     <div className="space-y-3">
                                         <label className="text-[10px] uppercase tracking-[0.4em] text-[var(--admin-accent)] opacity-40 font-black ml-1">Therapy Mode</label>
                                         <select name="therapyType" defaultValue={editingRes?.therapyType} className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-2xl py-5 px-6 text-[var(--admin-text)] outline-none cursor-pointer">
-                                            <option value="Nordic Thermal Cycle">Nordic Thermal Cycle</option>
-                                            <option value="Deep Tissue Alchemy">Deep Tissue Alchemy</option>
-                                            <option value="Forest Canopy Massage">Forest Canopy Massage</option>
-                                            <option value="Mineral Hot Spring Access">Mineral Hot Spring Access</option>
+                                            <option value="Forest Ritual">Forest Ritual</option>
+                                            <option value="River Stone Massage">River Stone Massage</option>
+                                            <option value="Nordic Sauna Journey">Nordic Sauna Journey</option>
+                                            <option value="Royal Radiance Facial">Royal Radiance Facial</option>
                                         </select>
                                     </div>
                                     <div className="space-y-3">
@@ -251,6 +272,10 @@ export default function SpaManagementPage() {
                                     <div className="space-y-3">
                                         <label className="text-[10px] uppercase tracking-[0.4em] text-[var(--admin-accent)] opacity-40 font-black ml-1">Execution Date</label>
                                         <input required name="date" type="date" defaultValue={editingRes?.date ? new Date(editingRes.date).toISOString().split('T')[0] : ''} className="w-full bg-[var(--admin-accent)]/5 border border-[var(--admin-border)] rounded-2xl py-5 px-6 text-[var(--admin-text)] outline-none [color-scheme:dark]" />
+                                    </div>
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] uppercase tracking-[0.4em] text-[var(--admin-accent)] opacity-40 font-black ml-1">Rate (£)</label>
+                                        <input name="price" type="number" min="0" step="1" defaultValue={(editingRes as any)?.price || ''} placeholder="e.g. 220" className="w-full bg-[var(--admin-accent)]/5 border border-[var(--admin-border)] rounded-2xl py-5 px-6 text-[var(--admin-text)] outline-none" />
                                     </div>
                                     <div className="space-y-3">
                                         <label className="text-[10px] uppercase tracking-[0.4em] text-[var(--admin-accent)] opacity-40 font-black ml-1">Status</label>

@@ -3,6 +3,7 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import { Leaf, Droplets, Flame, Sparkles, ArrowRight, Sun, Thermometer, Check, Maximize } from 'lucide-react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import MagneticHover from '@/components/ui/MagneticHover';
 import ScrollReveal from '@/components/ui/ScrollReveal';
@@ -295,6 +296,130 @@ export default function SpaPage() {
                     </div>
                 </div>
             </section>
+
+            {/* 7. Reference Lookup */}
+            <ReferenceSearch />
         </main>
+    );
+}
+
+function ReferenceSearch() {
+    const [ref, setRef] = useState('');
+    const [result, setResult] = useState<any>(null);
+    const [lookupStatus, setLookupStatus] = useState<'idle' | 'loading' | 'found' | 'notfound'>('idle');
+
+    const handleLookup = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!ref.trim()) return;
+        setLookupStatus('loading');
+        setResult(null);
+        try {
+            const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+            const res = await fetch(`${API_URL}/spa/lookup/${ref.trim().toUpperCase()}`);
+            if (!res.ok) throw new Error('Not found');
+            const data = await res.json();
+            setResult(data);
+            setLookupStatus('found');
+        } catch {
+            setLookupStatus('notfound');
+        }
+    };
+
+    const statusColors: Record<string, string> = {
+        pending: 'text-amber-400 border-amber-400/30 bg-amber-400/10',
+        confirmed: 'text-emerald-400 border-emerald-400/30 bg-emerald-400/10',
+        completed: 'text-sky-400 border-sky-400/30 bg-sky-400/10',
+        cancelled: 'text-rose-400 border-rose-400/30 bg-rose-400/10',
+    };
+
+    return (
+        <section className="py-16 md:py-24 bg-background">
+            <div className="max-w-xl mx-auto px-6">
+                <ScrollReveal className="text-center mb-10">
+                    <p className="text-moss-700 uppercase tracking-[0.5em] text-[11px] font-black mb-4">Already Booked?</p>
+                    <h2 className="text-3xl md:text-4xl font-serif text-foreground mb-4 tracking-tighter">Find Your Ritual</h2>
+                    <p className="text-foreground/50 font-serif italic text-sm">Enter the reference code from your confirmation to check your booking status.</p>
+                </ScrollReveal>
+
+                <form onSubmit={handleLookup} className="flex gap-3">
+                    <input
+                        type="text"
+                        value={ref}
+                        onChange={e => setRef(e.target.value.toUpperCase())}
+                        placeholder="e.g. SPA-A3F9B2"
+                        className="flex-1 bg-moss-50/50 border border-foreground/10 rounded-2xl py-5 px-6 text-foreground outline-none focus:border-moss-700 transition-all uppercase font-mono tracking-widest text-sm"
+                        maxLength={10}
+                    />
+                    <button
+                        type="submit"
+                        disabled={lookupStatus === 'loading'}
+                        className="px-8 py-5 bg-foreground text-background rounded-2xl uppercase tracking-[0.2em] text-[10px] font-black hover:bg-moss-900 hover:text-white transition-all disabled:opacity-50 flex items-center gap-2"
+                    >
+                        {lookupStatus === 'loading' ? (
+                            <span className="animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full" />
+                        ) : 'Find'}
+                    </button>
+                </form>
+
+                <AnimatePresence>
+                    {lookupStatus === 'found' && result && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0 }}
+                            className="mt-6 bg-background border border-foreground/10 rounded-3xl p-8 shadow-xl space-y-6"
+                        >
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-[9px] uppercase tracking-widest text-foreground/30 mb-1">Booking Reference</p>
+                                    <p className="text-2xl font-serif text-moss-700 font-bold tracking-widest">{result.referenceNumber}</p>
+                                </div>
+                                <span className={`inline-flex px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border ${statusColors[result.status] || ''}`}>
+                                    {result.status}
+                                </span>
+                            </div>
+                            <div className="h-px bg-foreground/5" />
+                            <div className="grid grid-cols-2 gap-6 text-sm">
+                                <div>
+                                    <p className="text-[9px] uppercase tracking-widest text-foreground/30 mb-1">Guest</p>
+                                    <p className="text-foreground font-serif">{result.guestName}</p>
+                                </div>
+                                <div>
+                                    <p className="text-[9px] uppercase tracking-widest text-foreground/30 mb-1">Ritual</p>
+                                    <p className="text-foreground font-serif italic">{result.therapyType}</p>
+                                </div>
+                                <div>
+                                    <p className="text-[9px] uppercase tracking-widest text-foreground/30 mb-1">Date & Time</p>
+                                    <p className="text-foreground font-serif">
+                                        {new Date(result.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
+                                        {' · '}{result.timeSlot}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-[9px] uppercase tracking-widest text-foreground/30 mb-1">Amount Paid</p>
+                                    <p className="text-moss-700 font-bold font-serif text-xl">£{result.price || '—'}</p>
+                                </div>
+                            </div>
+                            {result.paymentStatus === 'paid' && (
+                                <div className="flex items-center gap-2 text-emerald-600 text-[10px] uppercase tracking-widest font-black">
+                                    <Check className="w-4 h-4" />
+                                    Payment confirmed
+                                </div>
+                            )}
+                        </motion.div>
+                    )}
+                    {lookupStatus === 'notfound' && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0 }}
+                            className="mt-6 text-center text-foreground/40 text-sm italic py-8 border border-dashed border-foreground/10 rounded-2xl"
+                        >
+                            No booking found for <span className="font-mono text-foreground/60 font-bold">{ref}</span>. Please check your reference code.
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
+        </section>
     );
 }
