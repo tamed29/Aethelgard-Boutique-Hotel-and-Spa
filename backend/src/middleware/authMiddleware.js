@@ -4,10 +4,15 @@ const User = require('../models/User');
 const protect = async (req, res, next) => {
     let token;
 
-    if (req.cookies.jwt) {
-        token = req.cookies.jwt;
-    } else if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    // Check Authorization Header FIRST (more reliable for cross-domain)
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
         token = req.headers.authorization.split(' ')[1];
+        console.log('[Auth] Token found in Authorization header');
+    } 
+    // Fallback to cookie
+    else if (req.cookies && req.cookies.jwt) {
+        token = req.cookies.jwt;
+        console.log('[Auth] Token found in Cookie');
     }
 
     if (!token) {

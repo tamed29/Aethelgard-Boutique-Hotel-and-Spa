@@ -20,6 +20,9 @@ adminAxios.interceptors.request.use((config) => {
         const token = localStorage.getItem('adminToken');
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
+            console.log('[adminAxios] Attaching token to request:', config.url);
+        } else {
+            console.warn('[adminAxios] No token found in localStorage for:', config.url);
         }
     }
     return config;

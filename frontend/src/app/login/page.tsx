@@ -35,6 +35,7 @@ function LoginContent() {
                 }
                 setLoginError(null);
                 toast.success('Access Granted. Welcome, Warden.');
+                console.log('Redirecting to:', redirectTo);
                 window.location.href = redirectTo;
             } else {
                 setLoginError('Access Denied: Insufficient permissions.');
