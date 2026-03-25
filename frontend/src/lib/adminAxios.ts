@@ -13,6 +13,17 @@ export const adminAxios = axios.create({
         'Content-Type': 'application/json',
     },
 });
+ 
+// Request interceptor for Bearer token
+adminAxios.interceptors.request.use((config) => {
+    if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('adminToken');
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+    }
+    return config;
+});
 
 // Response interceptor for global error handling (e.g. 401 redirects)
 adminAxios.interceptors.response.use(

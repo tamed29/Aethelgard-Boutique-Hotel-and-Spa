@@ -30,6 +30,9 @@ function LoginContent() {
             console.log('Login Response:', res.status, res.data);
 
             if (res.data.role === 'admin') {
+                if (res.data.token) {
+                    localStorage.setItem('adminToken', res.data.token);
+                }
                 setLoginError(null);
                 toast.success('Access Granted. Welcome, Warden.');
                 window.location.href = redirectTo;

@@ -84,7 +84,8 @@ const authUser = async (req, res) => {
             _id: 'admin-001',
             name: 'Aethelgard Admin',
             email: adminEmail,
-            role: 'admin'
+            role: 'admin',
+            token: token
         });
     }
 
@@ -92,8 +93,14 @@ const authUser = async (req, res) => {
     try {
         const user = await User.findOne({ email });
         if (user && (await user.comparePassword(password))) {
-            generateToken(res, user._id, user.role);
-            return res.json({ _id: user._id, name: user.name, email: user.email, role: user.role });
+            const token = generateToken(res, user._id, user.role);
+            return res.json({ 
+                _id: user._id, 
+                name: user.name, 
+                email: user.email, 
+                role: user.role,
+                token: token
+            });
         }
     } catch (dbError) {
         console.error('DB lookup failed during login:', dbError.message);
