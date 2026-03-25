@@ -25,9 +25,9 @@ const COLORS = {
 };
 
 const menuItems = [
-    { icon: <Phone className="w-6 h-6" />, label: 'Phone', href: 'tel:+123456789' },
     { icon: <Mail className="w-6 h-6" />, label: 'Email', href: 'mailto:stay@aethelgard.com' },
     { icon: <Instagram className="w-6 h-6" />, label: 'Instagram', href: 'https://instagram.com/aethelgard' },
+    { icon: <Phone className="w-6 h-6" />, label: 'Inquiries', href: '/contact' },
     { icon: <MessageSquare className="w-6 h-6" />, label: 'Live Chat', action: 'chat' },
 ];
 
@@ -78,19 +78,23 @@ export default function RadiantConcierge() {
             const query = userMessage.content.toLowerCase();
 
             if (query.includes('room') || query.includes('stay') || query.includes('suites') || query.includes('booking') || query.includes('reserve')) {
-                aiResponse = "Welcome to Aethelgard. Our Royal Quarters are designed as private sanctuaries of stone and light. For more information or to make a reservation, please explore our collection in the 'Rooms' section or call our Concierge at +123456789 for a bespoke booking experience.";
+                aiResponse = "Welcome to Aethelgard. Our Royal Quarters are designed as private sanctuaries of stone and light. For more information or to make a reservation, please explore our collection in the 'Rooms' section or navigate to our Contact page for a bespoke booking experience.";
             } else if (query.includes('spa') || query.includes('ritual') || query.includes('massage') || query.includes('wellness')) {
-                aiResponse = "The Sanctuary is a haven of profound stillness, offering rituals inspired by the natural rhythms of Wychwood Forest. We invite you to browse our current ritual menu. For bookings and inquiries, please call us at +123456789.";
+                aiResponse = "The Sanctuary is a haven of profound stillness, offering rituals inspired by the natural rhythms of Wychwood Forest. We invite you to browse our current ritual menu. For bookings and inquiries, please visit our contact portal.";
             } else if (query.includes('dining') || query.includes('food') || query.includes('eat') || query.includes('restaurant') || query.includes('menu')) {
-                aiResponse = "Culinary artistry at Aethelgard is a dialogue with the forest. Our menus celebrate the wild bounty of the estate. I highly recommend a visit to The Cellar Vault. To reserve your table, please call us at +123456789.";
+                aiResponse = "Culinary artistry at Aethelgard is a dialogue with the forest. Our menus celebrate the wild bounty of the estate. I highly recommend a visit to The Cellar Vault. To reserve your table, please inquire at the front desk or via our contact page.";
             } else if (query.includes('history') || query.includes('old') || query.includes('heritage') || query.includes('about')) {
-                aiResponse = "Aethelgard's lineage traces back to 1142. For eight centuries, these stones have served as wardens of the forest. For a deeper historical tour, please contact our curators at +123456789.";
+                aiResponse = "Aethelgard's lineage traces back to 1142. For eight centuries, these stones have served as wardens of the forest. For a deeper historical tour, please contact our curators via the contact form.";
+            } else if (query.includes('name is') || query.includes('i am')) {
+                const nameMatch = userMessage.content.match(/(?:name is|i am)\s+([a-zA-Z]+)/i);
+                const name = nameMatch ? nameMatch[1] : 'friend';
+                aiResponse = `Greetings ${name}, it is a pleasure to meet you. Welcome to Aethelgard. The estate is particularly beautiful today—how can I assist your exploration and ensure your stay is comfortable?`;
             } else if (query.includes('hello') || query.includes('hi') || query.includes('greetings')) {
-                aiResponse = "Greetings! It is a pleasure to assist you. The estate is particularly beautiful today—how can I guide your exploration? You may also reach us directly at +123456789.";
+                aiResponse = "Greetings! It is a profound pleasure to assist you. The estate is particularly beautiful today—how can I guide your exploration or assist with your retreat?";
             } else if (query.includes('thank') || query.includes('thanks')) {
-                aiResponse = "It is my honor to serve. May your stay be as serene as the morning mist over the hollow. Is there any other detail I can illuminate for you? Our team is also available at +123456789.";
+                aiResponse = "It is my honor to serve. May your stay be as serene as the morning mist over the hollow. Is there any other detail I can illuminate for you?";
             } else {
-                aiResponse = "I apologize, but I didn't quite catch that. To provide the immediate and detailed assistance you deserve, I recommend calling our 24/7 Concierge team at +123456789. They will be delighted to help you.";
+                aiResponse = "I apologize, but I didn't quite catch that. To provide the immediate and detailed assistance you deserve, I recommend reaching out to our 24/7 Concierge team via the phone icon or our Contact page. They will be delighted to help you.";
             }
 
             setMessages(prev => [...prev, { role: 'ai', content: aiResponse }]);
@@ -201,7 +205,11 @@ export default function RadiantConcierge() {
                         </div>
 
                         {/* Messages Area */}
-                        <div className="flex-1 overflow-y-auto p-8 space-y-6 scrollbar-hide relative">
+                        <div 
+                            className="flex-1 overflow-y-auto p-8 space-y-6 relative rounded-b-none scroll-smooth" 
+                            style={{ scrollbarWidth: 'thin', scrollbarColor: `${COLORS.main}44 transparent` }}
+                            data-lenis-prevent
+                        >
                             {messages.map((msg, i) => (
                                 <motion.div
                                     key={i}

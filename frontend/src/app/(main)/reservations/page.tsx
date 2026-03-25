@@ -459,7 +459,7 @@ export default function ReservationsPortal() {
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                                     <div className="space-y-3">
                                                         <label className="text-[10px] uppercase tracking-widest font-black opacity-40">e-mail*</label>
-                                                        <input required type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-white/50 border border-black/10 p-5 rounded-2xl focus:outline-none focus:border-[#3D4127] transition-all" placeholder="yourname@domain.com" autoComplete="email" />
+                                                        <input required type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-white/50 border border-black/10 p-5 rounded-2xl focus:outline-none focus:border-[#3D4127] transition-all" placeholder="email" autoComplete="email" />
                                                     </div>
                                                     <div className="space-y-3">
                                                         <label className="text-[10px] uppercase tracking-widest font-black opacity-40">Telephone*</label>

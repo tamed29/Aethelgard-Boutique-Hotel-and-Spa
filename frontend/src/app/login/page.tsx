@@ -32,7 +32,7 @@ function LoginContent() {
             if (res.data.role === 'admin') {
                 setLoginError(null);
                 toast.success('Access Granted. Welcome, Warden.');
-                router.push(redirectTo);
+                window.location.href = redirectTo;
             } else {
                 setLoginError('Wrong email/password.');
             }

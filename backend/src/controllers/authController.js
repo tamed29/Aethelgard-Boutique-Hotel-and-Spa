@@ -9,17 +9,17 @@ const generateToken = (res, userId, role = 'user') => {
 
     res.cookie('jwt', token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV !== 'development',
-        sameSite: 'strict',
+        secure: true, // Always true for SameSite=None
+        sameSite: 'none',
         maxAge: 30 * 24 * 60 * 60 * 1000,
     });
 
     // Also set a non-httpOnly cookie for the role to simplify middleware checks if needed
     // or keep it httpOnly for security and decode JWT in middleware.
     res.cookie('userRole', role, {
-        httpOnly: false, // Accessible by middleware/client
-        secure: process.env.NODE_ENV !== 'development',
-        sameSite: 'strict',
+        httpOnly: false,
+        secure: true,
+        sameSite: 'none',
         maxAge: 30 * 24 * 60 * 60 * 1000,
     });
     
@@ -66,14 +66,14 @@ const authUser = async (req, res) => {
         );
         res.cookie('jwt', token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV !== 'development',
-            sameSite: 'strict',
+            secure: true,
+            sameSite: 'none',
             maxAge: 30 * 24 * 60 * 60 * 1000,
         });
         res.cookie('userRole', 'admin', {
             httpOnly: false,
-            secure: process.env.NODE_ENV !== 'development',
-            sameSite: 'strict',
+            secure: true,
+            sameSite: 'none',
             maxAge: 30 * 24 * 60 * 60 * 1000,
         });
         return res.json({
