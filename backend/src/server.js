@@ -16,25 +16,32 @@ const { errorHandler } = require('./middleware/errorMiddleware');
 
 const app = express();
 const server = http.createServer(app);
+const allowedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'https://aethelgard-boutique-hotel-spa.vercel.app'
+];
+
 const io = new Server(server, {
     cors: {
-        origin: [
-            'http://localhost:3000', 
-            'http://localhost:5173', 
-            'https://aethelgard-boutique-hotel-spa.vercel.app',
-            'https://aethelgard-boutique-hotel-spa.vercel.app/'
-        ],
+        origin: (origin, callback) => {
+            if (!origin) return callback(null, true);
+            const isAllowed = allowedOrigins.includes(origin) || 
+                             (origin.endsWith('.vercel.app') && origin.includes('aethelgard-boutique-hotel'));
+            
+            if (isAllowed) {
+                callback(null, true);
+            } else {
+                console.error(`[Socket.io] CORS Blocked: ${origin}`);
+                callback(new Error('Not allowed by CORS'));
+            }
+        },
         credentials: true,
         methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
     },
 });
 
 app.enable('trust proxy'); // Trust Render/Vercel // Robust CORS Configuration
-const allowedOrigins = [
-    'http://localhost:3000',
-    'http://localhost:5173',
-    'https://aethelgard-boutique-hotel-spa.vercel.app'
-];
 
 app.use(cors({
     origin: (origin, callback) => {

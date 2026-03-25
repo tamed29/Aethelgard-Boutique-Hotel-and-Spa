@@ -61,6 +61,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         const socket: Socket = io(SOCKET_URL, {
             reconnectionAttempts: 5,
             reconnectionDelay: 2000,
+            transports: ['polling', 'websocket'],
+            secure: true,
         });
 
         socket.on('connect', () => {
