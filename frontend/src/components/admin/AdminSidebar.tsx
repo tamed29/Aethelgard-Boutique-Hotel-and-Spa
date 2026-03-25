@@ -246,6 +246,10 @@ export function AdminSidebar() {
                                 <span className="text-[10px] uppercase tracking-[0.3em] font-black">{item.label}</span>
                             )}
                             
+                            {navUnread > 0 && (
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)] animate-pulse" />
+                            )}
+                            
                             {isActive && (
                                 <motion.div 
                                     layoutId="active-pill"

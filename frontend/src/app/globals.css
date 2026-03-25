@@ -54,25 +54,44 @@
 }
 
 @media print {
+  @page {
+    margin: 1.5cm;
+    size: A4 portrait;
+  }
+  html, body {
+    height: auto !important;
+    overflow: visible !important;
+    background: var(--admin-bg) !important;
+    color: var(--admin-text) !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
   aside, .no-print, button, .atmospheric-overlay, .AtmosphericOverlays {
     display: none !important;
+  }
+  #root, .flex, main, div, section {
+    height: auto !important;
+    min-height: auto !important;
+    overflow: visible !important;
+    position: static !important;
   }
   main {
     padding: 0 !important;
     margin: 0 !important;
-    background: white !important;
-    color: black !important;
   }
   .AdminCard, .StatCard {
     break-inside: avoid;
-    border: 1px solid #eee !important;
-    background: white !important;
-    color: black !important;
+    page-break-inside: avoid;
+    border: 1px solid var(--admin-border) !important;
+    background: var(--admin-card) !important;
+    box-shadow: none !important; 
+    margin-bottom: 24px !important;
   }
-  h1, h2, h3, p, span {
-    color: black !important;
+  h1, h2, h3, p, span, div {
+    color: inherit;
   }
 }
+
 
 @theme inline {
   --color-moss-100: var(--moss-100);

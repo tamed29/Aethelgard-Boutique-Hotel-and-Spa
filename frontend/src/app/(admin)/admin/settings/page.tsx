@@ -13,7 +13,9 @@ import {
     Terminal,
     Save,
     RefreshCw,
-    Loader2
+    Loader2,
+    Eye,
+    EyeOff
 } from 'lucide-react';
 import { AdminCard } from '@/components/admin/AdminCard';
 import { toast } from 'sonner';
@@ -21,6 +23,8 @@ import { motion } from 'framer-motion';
 
 export default function SettingsPage() {
     const [passwords, setPasswords] = useState({ current: '', next: '', confirm: '' });
+    const [showCurrent, setShowCurrent] = useState(false);
+    const [showNew, setShowNew] = useState(false);
 
     const changePassword = useMutation({
         mutationFn: async (data: any) => {
@@ -64,35 +68,60 @@ export default function SettingsPage() {
                                 <div className="relative">
                                     <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-[var(--admin-accent)] opacity-20" size={16} />
                                     <input 
-                                        type="password"
+                                        type={showCurrent ? "text" : "password"}
                                         required
                                         value={passwords.current}
                                         onChange={(e) => setPasswords({ ...passwords, current: e.target.value })}
-                                        className="w-full bg-[var(--admin-accent)]/5 border border-[var(--admin-border)] rounded-2xl py-4 pl-14 pr-6 text-[var(--admin-text)] outline-none focus:border-[var(--admin-accent)]/40 transition-all font-light"
+                                        className="w-full bg-[var(--admin-accent)]/5 border border-[var(--admin-border)] rounded-2xl py-4 pl-14 pr-12 text-[var(--admin-text)] outline-none focus:border-[var(--admin-accent)]/40 transition-all font-light"
                                     />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowCurrent(!showCurrent)}
+                                        className="absolute right-5 top-1/2 -translate-y-1/2 text-[var(--admin-accent)] opacity-40 hover:opacity-100 transition-opacity"
+                                    >
+                                        {showCurrent ? <EyeOff size={16} /> : <Eye size={16} />}
+                                    </button>
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <label className="text-[9px] uppercase tracking-[0.4em] text-[var(--admin-text)] opacity-40 font-black ml-1">New Password</label>
-                                    <input 
-                                        type="password"
-                                        required
-                                        value={passwords.next}
-                                        onChange={(e) => setPasswords({ ...passwords, next: e.target.value })}
-                                        className="w-full bg-[var(--admin-accent)]/5 border border-[var(--admin-border)] rounded-2xl py-4 px-6 text-[var(--admin-text)] outline-none focus:border-[var(--admin-accent)]/40 transition-all font-light"
-                                    />
+                                    <div className="relative">
+                                        <input 
+                                            type={showNew ? "text" : "password"}
+                                            required
+                                            value={passwords.next}
+                                            onChange={(e) => setPasswords({ ...passwords, next: e.target.value })}
+                                            className="w-full bg-[var(--admin-accent)]/5 border border-[var(--admin-border)] rounded-2xl py-4 pl-6 pr-12 text-[var(--admin-text)] outline-none focus:border-[var(--admin-accent)]/40 transition-all font-light"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowNew(!showNew)}
+                                            className="absolute right-5 top-1/2 -translate-y-1/2 text-[var(--admin-accent)] opacity-40 hover:opacity-100 transition-opacity"
+                                        >
+                                            {showNew ? <EyeOff size={16} /> : <Eye size={16} />}
+                                        </button>
+                                    </div>
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[9px] uppercase tracking-[0.4em] text-[var(--admin-text)] opacity-40 font-black ml-1">Confirm Alignment</label>
-                                    <input 
-                                        type="password"
-                                        required
-                                        value={passwords.confirm}
-                                        onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })}
-                                        className="w-full bg-[var(--admin-accent)]/5 border border-[var(--admin-border)] rounded-2xl py-4 px-6 text-[var(--admin-text)] outline-none focus:border-[var(--admin-accent)]/40 transition-all font-light"
-                                    />
+                                    <div className="relative">
+                                        <input 
+                                            type={showNew ? "text" : "password"}
+                                            required
+                                            value={passwords.confirm}
+                                            onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })}
+                                            className="w-full bg-[var(--admin-accent)]/5 border border-[var(--admin-border)] rounded-2xl py-4 pl-6 pr-12 text-[var(--admin-text)] outline-none focus:border-[var(--admin-accent)]/40 transition-all font-light"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowNew(!showNew)}
+                                            className="absolute right-5 top-1/2 -translate-y-1/2 text-[var(--admin-accent)] opacity-40 hover:opacity-100 transition-opacity"
+                                        >
+                                            {showNew ? <EyeOff size={16} /> : <Eye size={16} />}
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
