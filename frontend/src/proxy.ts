@@ -14,17 +14,6 @@ export function proxy(request: NextRequest) {
     const isNight = hour >= 20 || hour <= 6;
     const natureMode = isNight ? 'deep-forest' : 'morning-mist';
 
-    // 3. Admin Route Protection
-    if (request.nextUrl.pathname.startsWith('/admin')) {
-        const token = request.cookies.get('jwt');
-        const role = request.cookies.get('userRole')?.value;
-
-        if (!token || role !== 'admin') {
-            const loginUrl = new URL('/login', request.url);
-            loginUrl.searchParams.set('from', request.nextUrl.pathname);
-            return NextResponse.redirect(loginUrl);
-        }
-    }
 
     // 4. Set custom headers or cookies for the frontend to consume
     response.headers.set('x-aethelgard-geo', country);
