@@ -56,6 +56,13 @@ app.use(cors({
     allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Cookie"],
     exposedHeaders: ["Set-Cookie"]
 }));
+
+// Global Request Logger
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.path} - Origin: ${req.headers.origin}`);
+    next();
+});
+
 app.use(helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
