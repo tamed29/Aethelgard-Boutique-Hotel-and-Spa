@@ -29,16 +29,28 @@ const io = new Server(server, {
     },
 });
 
+app.enable('trust proxy'); // Trust Render/Vercel proxies for 'Secure' cookies
+
+const allowedOrigins = [
+    'http://localhost:3000', 
+    'http://localhost:5173', 
+    'https://aethelgard-boutique-hotel-spa.vercel.app',
+    'https://aethelgard-boutique-hotel-spa.vercel.app/'
+];
+
 app.use(cors({ 
-    origin: [
-        'http://localhost:3000', 
-        'http://localhost:5173', 
-        'https://aethelgard-boutique-hotel-spa.vercel.app',
-        'https://aethelgard-boutique-hotel-spa.vercel.app/'
-    ], 
+    origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps or curl)
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            console.error(`CORS Blocked: ${origin}`);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"]
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
 }));
 app.use(helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" }

@@ -58,7 +58,7 @@ const authUser = async (req, res) => {
     const adminPassword = process.env.ADMIN_PASSWORD || 'AdminPassword123!';
 
     if (email === adminEmail && password === adminPassword) {
-        console.log('Admin authenticated via environment fallback');
+        console.log(`Admin authenticated via environment fallback for ${email}`);
         const token = jwt.sign(
             { userId: 'admin-001', role: 'admin' },
             process.env.JWT_SECRET,
@@ -93,10 +93,9 @@ const authUser = async (req, res) => {
         }
     } catch (dbError) {
         console.error('DB lookup failed during login:', dbError.message);
-        // DB is down and admin fallback didn't match — credentials are wrong
     }
 
-    console.log('Invalid credentials');
+    console.warn(`Login Failed: No match found for ${email}`);
     return res.status(401).json({ message: 'Invalid email or password' });
 };
 

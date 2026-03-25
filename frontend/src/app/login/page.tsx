@@ -34,10 +34,12 @@ function LoginContent() {
                 toast.success('Access Granted. Welcome, Warden.');
                 window.location.href = redirectTo;
             } else {
-                setLoginError('Wrong email/password.');
+                setLoginError('Access Denied: Insufficient permissions.');
             }
-        } catch {
-            setLoginError('Wrong email/password.');
+        } catch (err: any) {
+            console.error('Admin Login Error:', err);
+            const message = err.response?.data?.message || 'The Aethelgard grid is unresponsive. Check connection.';
+            setLoginError(message);
         } finally {
             setLoading(false);
         }
