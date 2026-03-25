@@ -22,17 +22,20 @@ function LoginContent() {
     const redirectTo = searchParams.get('from') || '/admin';
     const errorParam = searchParams.get('error');
 
+    const [isRedirecting, setIsRedirecting] = useState(false);
+ 
     useEffect(() => {
         const token = localStorage.getItem('adminToken');
         const isUnauthorized = searchParams.get('error') === 'unauthorized';
         
-        if (token && !isUnauthorized) {
+        if (token && !isUnauthorized && !isRedirecting) {
             console.log('--- VALID SESSION DETECTED. AUTO-ENTRY INITIATED. ---');
+            setIsRedirecting(true);
             window.location.replace(redirectTo);
         } else if (isUnauthorized) {
             console.warn('--- AUTHENTICATION REJECTED BY SERVER. REMAINING ON LOGIN. ---');
         }
-    }, [redirectTo, searchParams]);
+    }, [redirectTo, searchParams, isRedirecting]);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();

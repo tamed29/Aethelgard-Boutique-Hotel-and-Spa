@@ -57,9 +57,13 @@ app.use(cors({
     exposedHeaders: ["Set-Cookie"]
 }));
 
-// Global Request Logger
+// Global Request Logger with Status
 app.use((req, res, next) => {
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.path} - Origin: ${req.headers.origin}`);
+    const start = Date.now();
+    res.on('finish', () => {
+        const duration = Date.now() - start;
+        console.log(`[${new Date().toISOString()}] ${req.method} ${req.path} - ${res.statusCode} (${duration}ms) - Origin: ${req.headers.origin}`);
+    });
     next();
 });
 
