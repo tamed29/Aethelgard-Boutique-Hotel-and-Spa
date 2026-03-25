@@ -29,19 +29,22 @@ const io = new Server(server, {
     },
 });
 
-app.enable('trust proxy'); // Trust Render/Vercel proxies for 'Secure' cookies
-
+app.enable('trust proxy'); // Trust Render/Vercel // Robust CORS Configuration
 const allowedOrigins = [
-    'http://localhost:3000', 
-    'http://localhost:5173', 
-    'https://aethelgard-boutique-hotel-spa.vercel.app',
-    'https://aethelgard-boutique-hotel-spa.vercel.app/'
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'https://aethelgard-boutique-hotel-spa.vercel.app'
 ];
 
-app.use(cors({ 
+app.use(cors({
     origin: (origin, callback) => {
         // Allow requests with no origin (like mobile apps or curl)
-        if (!origin || allowedOrigins.includes(origin)) {
+        if (!origin) return callback(null, true);
+        
+        const isAllowed = allowedOrigins.includes(origin) || 
+                         origin.endsWith('.vercel.app') && origin.includes('aethelgard-boutique-hotel');
+        
+        if (isAllowed) {
             callback(null, true);
         } else {
             console.error(`CORS Blocked: ${origin}`);
