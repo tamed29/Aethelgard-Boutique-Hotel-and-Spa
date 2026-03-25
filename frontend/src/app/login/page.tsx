@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Suspense, useEffect } from 'react';
+import { useState, Suspense, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import axios from 'axios';
 import { adminAxios } from '@/lib/adminAxios';
@@ -28,13 +28,14 @@ function LoginContent() {
     useEffect(() => {
         const token = localStorage.getItem('adminToken');
         const isUnauthorized = searchParams.get('error') === 'unauthorized';
+        const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
         
-        if (token && !isUnauthorized && !redirectDone.current) {
+        // Only redirect if token exists, no error, and we aren't already at the target
+        if (token && !isUnauthorized && !redirectDone.current && currentPath !== redirectTo) {
             console.log('--- VALID SESSION DETECTED. AUTO-ENTRY INITIATED. ---');
             redirectDone.current = true;
             setIsRedirecting(true);
             
-            // Short timeout to ensure the state update doesn't race with the redirect
             setTimeout(() => {
                 window.location.assign(redirectTo);
             }, 100);
