@@ -17,7 +17,7 @@ export default function PageLoader() {
             } else {
                 window.addEventListener('load', hide, { once: true });
             }
-        }, 800);
+        }, 300);
 
         return () => clearTimeout(minTimer);
     }, []);

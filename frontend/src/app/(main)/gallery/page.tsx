@@ -35,11 +35,14 @@ export default function GalleryPage() {
     }, []);
 
     const getImageUrl = (url: string) => {
-        if (!url) return '';
-        if (url.startsWith('http')) return url;
-        const baseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api').split('/api')[0];
-        const cleanUrl = url.startsWith('/') ? url : `/${url}`;
-        return `${baseUrl}${cleanUrl}`;
+        if (!url) return '/images/hotel/h2.png'; // Fallback image
+        if (url.startsWith('http') || url.startsWith('blob:') || url.startsWith('data:')) return url;
+        
+        let baseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api').split('/api')[0];
+        if (baseUrl.endsWith('/')) baseUrl = baseUrl.slice(0, -1);
+        
+        const cleanPath = url.startsWith('/') ? url : `/${url}`;
+        return `${baseUrl}${cleanPath}`;
     };
 
     const filteredItems = galleryItems.filter(item => item.category === activeCategory);

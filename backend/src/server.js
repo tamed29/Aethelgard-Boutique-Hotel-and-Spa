@@ -18,13 +18,29 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: ['http://localhost:3000', 'http://localhost:5173'],
+        origin: [
+            'http://localhost:3000', 
+            'http://localhost:5173', 
+            'https://aethelgard-boutique-hotel-spa.vercel.app',
+            'https://aethelgard-boutique-hotel-spa.vercel.app/'
+        ],
         credentials: true,
+        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
     },
 });
 
 app.use(helmet());
-app.use(cors({ origin: ['http://localhost:3000', 'http://localhost:5173'], credentials: true }));
+app.use(cors({ 
+    origin: [
+        'http://localhost:3000', 
+        'http://localhost:5173', 
+        'https://aethelgard-boutique-hotel-spa.vercel.app',
+        'https://aethelgard-boutique-hotel-spa.vercel.app/'
+    ], 
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"]
+}));
 app.use(express.json());
 app.use(cookieParser());
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
