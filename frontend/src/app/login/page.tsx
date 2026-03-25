@@ -2,6 +2,7 @@
 
 import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import axios from 'axios';
 import { adminAxios } from '@/lib/adminAxios';
 import { Lock, Mail, Loader2, ArrowLeft, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -24,10 +25,9 @@ function LoginContent() {
         setLoading(true);
 
         try {
-            const res = await adminAxios.post('/auth/login', {
-                email,
-                password,
-            });
+            console.log('Initiating Sequence...', { email, target: process.env.NEXT_PUBLIC_API_URL });
+            const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/auth/login`, { email, password }, { withCredentials: true });
+            console.log('Login Response:', res.status, res.data);
 
             if (res.data.role === 'admin') {
                 setLoginError(null);

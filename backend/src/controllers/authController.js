@@ -9,8 +9,9 @@ const generateToken = (res, userId, role = 'user') => {
 
     res.cookie('jwt', token, {
         httpOnly: true,
-        secure: true, // Always true for SameSite=None
+        secure: true,
         sameSite: 'none',
+        partitioned: true, // Support CHIPS for third-party contexts
         maxAge: 30 * 24 * 60 * 60 * 1000,
     });
 
@@ -20,6 +21,7 @@ const generateToken = (res, userId, role = 'user') => {
         httpOnly: false,
         secure: true,
         sameSite: 'none',
+        partitioned: true,
         maxAge: 30 * 24 * 60 * 60 * 1000,
     });
     
@@ -68,12 +70,14 @@ const authUser = async (req, res) => {
             httpOnly: true,
             secure: true,
             sameSite: 'none',
+            partitioned: true,
             maxAge: 30 * 24 * 60 * 60 * 1000,
         });
         res.cookie('userRole', 'admin', {
             httpOnly: false,
             secure: true,
             sameSite: 'none',
+            partitioned: true,
             maxAge: 30 * 24 * 60 * 60 * 1000,
         });
         return res.json({

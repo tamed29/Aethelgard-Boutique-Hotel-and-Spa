@@ -50,7 +50,8 @@ app.use(cors({
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Cookie"],
+    exposedHeaders: ["Set-Cookie"]
 }));
 app.use(helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" }
