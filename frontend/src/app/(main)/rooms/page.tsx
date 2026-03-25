@@ -345,6 +345,14 @@ function RoomsContent() {
                                 {/* Mobile: stack vertically — image first, then content */}
                                 <div className={`grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-20 items-start lg:items-center`}>
 
+                                    {/* Mobile Header: vibe + name — only visible below lg breakpoint */}
+                                    <motion.div 
+                                        initial="hidden" whileInView="show" viewport={{ once: true, margin: "-100px" }} variants={staggerContainer}
+                                        className="lg:hidden space-y-2 mb-2">
+                                        <motion.p variants={fadeUp} className="text-moss-700 dark:text-moss-200 text-[10px] uppercase tracking-[0.25em]">Ancestral Vibe: {room.vibe}</motion.p>
+                                        <motion.h2 variants={fadeUp} className="text-3xl font-serif text-foreground leading-tight">{room.name}</motion.h2>
+                                    </motion.div>
+
                                     {/* Gallery — on mobile always shows first */}
                                     <motion.div
                                         style={{ position: 'relative' }}
@@ -359,7 +367,7 @@ function RoomsContent() {
                                         <div className="relative rounded-sm overflow-hidden h-[130px] sm:h-[160px] md:h-[200px]">
                                             <Image src={img2} alt={`${room.name} interior`} fill sizes="(max-width: 1024px) 50vw, 33vw" className="object-cover" placeholder="blur" blurDataURL={blurData} />
                                         </div>
-                                        <div className="relative rounded-sm overflow-hidden h-[130px] sm:h-[160px] md:h-[200px]">
+                                        <div className="relative rounded-sm overflow-hidden h-[130px] sm:h dust:h-[160px] md:h-[200px]">
                                             <Image src={img3} alt={`${room.name} detail`} fill sizes="(max-width: 1024px) 50vw, 33vw" className="object-cover" placeholder="blur" blurDataURL={blurData} />
                                         </div>
                                     </motion.div>
@@ -369,7 +377,7 @@ function RoomsContent() {
                                         style={{ position: 'relative' }}
                                         initial="hidden" whileInView="show" viewport={{ once: true, margin: "-100px" }} variants={staggerContainer}
                                         className={`lg:col-span-5 space-y-5 ${idx % 2 === 1 ? 'lg:order-2' : 'lg:order-1'} order-2`}>
-                                        <div>
+                                        <div className="hidden lg:block">
                                             <motion.p variants={fadeUp} className="text-moss-700 dark:text-moss-200 text-xs uppercase tracking-[0.25em] mb-2">Ancestral Vibe: {room.vibe}</motion.p>
                                             <motion.h2 variants={fadeUp} className="text-3xl md:text-5xl font-serif text-foreground leading-tight">{room.name}</motion.h2>
                                         </div>
