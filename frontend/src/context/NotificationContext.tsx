@@ -74,22 +74,27 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
         setNotifications(prev => [newNotif, ...prev.slice(0, 49)]); // Keep max 50
 
-        toast.info(title, {
-            description,
-            duration: 6000,
-            action: {
-                label: 'View →',
-                onClick: () => { window.location.href = href; },
-            },
-        });
+        // Only show toast if in admin area
+        const isAdmin = typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
+        if (isAdmin) {
+            toast.info(title, {
+                description,
+                duration: 6000,
+                action: {
+                    label: 'View →',
+                    onClick: () => { window.location.href = href; },
+                },
+            });
+        }
     }, []);
 
     useEffect(() => {
         const socket: Socket = io(SOCKET_URL, {
             reconnectionAttempts: 10,
             reconnectionDelay: 1000,
-            transports: ['websocket', 'polling'], // Prioritize websocket
-            secure: SOCKET_URL.startsWith('https'), // Dynamic security
+            transports: ['websocket', 'polling'], 
+            secure: SOCKET_URL.startsWith('https'),
+            withCredentials: true,
         });
 
         setSocketInstance(socket);

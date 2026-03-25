@@ -63,8 +63,8 @@ export default function ContactPage() {
             <section className="relative h-[60vh] flex items-center justify-center overflow-hidden">
                 <div className="absolute inset-0">
                     <Image
-                        src="/images/rooms/forest/r2.png"
-                        alt="Wychwood Forest Canopy"
+                        src="/images/hotel/h2.png"
+                        alt="Aethelgard Estate Exterior"
                         fill
                         sizes="100vw"
                         className="object-cover"
@@ -78,7 +78,7 @@ export default function ContactPage() {
                     initial="hidden" animate="show" variants={staggerContainer}
                     className="relative z-10 text-center px-4 mt-20"
                 >
-                    <motion.p variants={fadeUp} className="text-white/80 uppercase tracking-[0.3em] text-sm mb-4">Connect with the Estate</motion.p>
+                    <motion.p variants={fadeUp} className="text-white/80 uppercase tracking-[0.3em] text-sm mb-4">A Legacy of Connection</motion.p>
                     <motion.h1 variants={fadeUp} className="text-6xl md:text-8xl font-serif text-white tracking-wide drop-shadow-lg">Enquiries</motion.h1>
                 </motion.div>
             </section>

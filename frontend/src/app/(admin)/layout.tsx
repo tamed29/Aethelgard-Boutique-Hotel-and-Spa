@@ -2,7 +2,6 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
-import { NotificationProvider } from '@/context/NotificationContext';
 import { useState } from 'react';
 import { Toaster } from 'sonner';
 
@@ -22,7 +21,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     return (
         <QueryClientProvider client={queryClient}>
-            <NotificationProvider>
                 <div className="flex min-h-screen bg-[var(--admin-bg)] text-[var(--admin-text)] transition-[background-color,color] duration-500 selection:bg-[var(--admin-accent)] selection:text-[var(--admin-bg)]">
                 {/* Fixed Sidebar */}
                 <AdminSidebar />
@@ -52,7 +50,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     }}
                 />
             </div>
-          </NotificationProvider>
         </QueryClientProvider>
     );
 }

@@ -8,6 +8,7 @@ import PageLoader from '@/components/ui/PageLoader';
 import RadiantConcierge from '@/components/ui/RadiantConcierge';
 import MaintenanceOverlay from '@/components/ui/MaintenanceOverlay';
 import LenisProvider from '@/components/providers/LenisProvider';
+import { NotificationProvider } from '@/context/NotificationContext';
 import './globals.css';
 
 const playfair = Playfair_Display({
@@ -50,9 +51,11 @@ export default function RootLayout({
       <body className="antialiased min-h-screen relative font-sans">
         <NextTopLoader color="#D4DE95" showSpinner={false} />
         <PageLoader />
-        <ClientProviders>
-          {children}
-        </ClientProviders>
+        <NotificationProvider>
+          <ClientProviders>
+            {children}
+          </ClientProviders>
+        </NotificationProvider>
       </body>
     </html>
   );
