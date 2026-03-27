@@ -77,12 +77,16 @@ export default function SpaManagementPage() {
         return () => { socket.off('newSpaBooking', handleNewSpaBooking); };
     }, [socket, queryClient]);
 
-    const filteredReservations = reservations.filter(r => {
-        const matchesSearch = r.guestName.toLowerCase().includes(search.toLowerCase()) || 
-                              r.therapyType.toLowerCase().includes(search.toLowerCase());
-        const matchesStatus = statusFilter === 'all' || r.status === statusFilter;
-        return matchesSearch && matchesStatus;
-    });
+    const filteredReservations = reservations
+        .filter(r => {
+            const matchesSearch = r.guestName.toLowerCase().includes(search.toLowerCase()) || 
+                                  r.therapyType.toLowerCase().includes(search.toLowerCase()) ||
+                                  r._id.toLowerCase().includes(search.toLowerCase()) ||
+                                  r.referenceNumber?.toLowerCase().includes(search.toLowerCase());
+            const matchesStatus = statusFilter === 'all' || r.status === statusFilter;
+            return matchesSearch && matchesStatus;
+        })
+        .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
 
     const getStatusColor = (status: string) => {
         switch (status) {

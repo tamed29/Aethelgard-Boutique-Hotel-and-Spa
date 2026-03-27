@@ -122,20 +122,23 @@ export default function ReservationHubPage() {
     }, [socket, queryClient]);
 
     const filteredBookings = useMemo(() => {
-        return bookings.filter(b => {
-            const roomName = b.room?.name || b.roomNumber || '';
-            const matchesSearch = b.guestName.toLowerCase().includes(search.toLowerCase()) || 
-                                 roomName.toLowerCase().includes(search.toLowerCase()) ||
-                                 b._id.toLowerCase().includes(search.toLowerCase());
-            
-            const matchesStatus = statusFilter === 'all' 
-                ? true 
-                : statusFilter === 'pending-assignment'
-                    ? b.assignedUnit === 'Pending Assignment' || !b.assignedUnit
-                    : b.status === statusFilter;
+        return bookings
+            .filter(b => {
+                const roomName = b.room?.name || b.roomNumber || '';
+                const matchesSearch = b.guestName.toLowerCase().includes(search.toLowerCase()) || 
+                                     roomName.toLowerCase().includes(search.toLowerCase()) ||
+                                     b._id.toLowerCase().includes(search.toLowerCase()) ||
+                                     (b as any).referenceNumber?.toLowerCase().includes(search.toLowerCase());
+                
+                const matchesStatus = statusFilter === 'all' 
+                    ? true 
+                    : statusFilter === 'pending-assignment'
+                        ? b.assignedUnit === 'Pending Assignment' || !b.assignedUnit
+                        : b.status === statusFilter;
 
-            return matchesSearch && matchesStatus;
-        });
+                return matchesSearch && matchesStatus;
+            })
+            .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
     }, [bookings, search, statusFilter]);
 
     const getStatusColor = (status: string) => {
