@@ -101,7 +101,7 @@ export default function Home() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1.5, delay: 0.2 }}
-            className="text-6xl md:text-8xl font-serif tracking-[0.2em] mb-8 drop-shadow-[0_10px_30px_rgba(0,0,0,0.5)] text-white"
+            className="text-[2.5rem] sm:text-6xl md:text-8xl font-serif tracking-[0.1em] sm:tracking-[0.2em] mb-6 sm:mb-8 drop-shadow-[0_10px_30px_rgba(0,0,0,0.5)] text-white"
           >
             Aethelgard
           </motion.h1>
@@ -111,7 +111,7 @@ export default function Home() {
             transition={{ duration: 1.2, delay: 0.8 }}
             className="flex flex-col items-center gap-6"
           >
-            <p className="text-2xl md:text-3xl text-white/80 italic mt-8 max-w-2xl font-serif">
+            <p className="text-sm sm:text-xl md:text-3xl text-white/80 italic mt-4 sm:mt-8 max-w-2xl font-serif px-2">
               Centuries of silence, curated for the modern soul. A sanctuary where the ancient oaks whisper legends of rest.
             </p>
             <div className="w-24 h-px bg-white/40" />
@@ -256,7 +256,7 @@ export default function Home() {
               transition={{ duration: 1.5 }}
             >
               <p className="uppercase tracking-[0.5em] text-[15px] font-black text-moss-100 mb-8">Exclusively Curated</p>
-              <h2 className="text-6xl md:text-8xl font-serif text-white mb-12 leading-[1.1]">Personalized <br />Concierge</h2>
+              <h2 className="text-4xl md:text-6xl lg:text-8xl font-serif text-white mb-8 sm:mb-12 leading-[1.1]">Personalized <br />Concierge</h2>
               <p className="text-2xl text-white/70 mb-16 leading-relaxed font-serif italic">
                 At Aethelgard, we believe luxury is a private dialogue. Our dedicated concierge team handpicks the finest local secrets, tailored to your unique rhythm.
               </p>

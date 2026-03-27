@@ -29,6 +29,14 @@ export default function ReservationsPortal() {
     const [roomTypes, setRoomTypes] = useState<any[]>([]);
     const [selectedRoom, setSelectedRoom] = useState<any | null>(null);
     const [selectedEnhancements, setSelectedEnhancements] = useState<string[]>([]);
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 768);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
 
 
     useEffect(() => {
@@ -272,13 +280,13 @@ export default function ReservationsPortal() {
                                         <p className="text-[#1A1F16]/60 font-serif italic">Minimum stay: 2 nights for deep restoration.</p>
                                     </div>
                                     
-                                    <div className="flex flex-col md:flex-row gap-12 items-center justify-center">
-                                        <div className="bg-white p-6 rounded-3xl shadow-xl border border-black/5">
+                                    <div className="flex flex-col md:flex-row gap-12 items-center justify-center w-full">
+                                        <div className="bg-white p-4 md:p-6 rounded-3xl shadow-xl border border-black/5 w-full md:w-auto overflow-x-auto flex justify-center">
                                             <DayPicker
                                                 mode="range"
                                                 selected={range}
                                                 onSelect={(r: any) => setRange(r)}
-                                                numberOfMonths={2}
+                                                numberOfMonths={isMobile ? 1 : 2}
                                                 className="rdp-custom"
                                                 disabled={{ before: new Date() }}
                                             />

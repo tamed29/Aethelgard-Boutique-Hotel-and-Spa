@@ -19,13 +19,20 @@ export default function ClientProviders({ children }: { children: React.ReactNod
         try {
             socketOrigin = new URL(API_URL).origin;
         } catch (e) {
-            console.error('Invalid NEXT_PUBLIC_API_URL:', API_URL);
+            // fallback is already set
         }
 
+        const isAdminPath = typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
+        const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('adminToken');
+        const shouldConnect = isAdminPath || hasToken;
+
+        // Use polling-first transport — required for Vercel/edge deployments where raw
+        // WebSocket upgrades fail before the HTTP handshake completes.
         const socket = io(socketOrigin, {
+            autoConnect: shouldConnect,
             reconnectionAttempts: 5,
-            timeout: 5000,
-            transports: ['websocket', 'polling'], // Try websocket first
+            timeout: 8000,
+            transports: ['polling', 'websocket'], // polling first, then upgrade
             withCredentials: true,
         });
 
@@ -38,33 +45,28 @@ export default function ClientProviders({ children }: { children: React.ReactNod
             if (data.key === 'showPrices') setShowPrices(data.value === 'true');
         });
 
-        // Only fetch initial settings if it's not the admin area or we have a token
-        const isAdminPath = typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
-        const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('adminToken');
+        socket.on('connect_error', () => {
+            // Suppress console noise on public pages — realtime is optional here
+        });
 
-        if ((!isAdminPath || hasToken) && !hasFetched.current) {
+        // Fetch initial settings via HTTP (no socket needed)
+        if (!hasFetched.current) {
             hasFetched.current = true;
             fetch(`${API_URL}/admin/settings`)
                 .then(res => {
-                    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
                     return res.json();
                 })
-            .then(settings => {
-                if (Array.isArray(settings)) {
-                    const maint = settings.find((s: any) => s.key === 'maintenanceMode');
-                    const prices = settings.find((s: any) => s.key === 'showPrices');
-                    if (maint) setMaintenanceMode(maint.value === 'true');
-                    if (prices) setShowPrices(prices.value === 'true');
-                }
-            })
-            .catch(err => {
-                console.warn('Failed to fetch initial settings:', err.message);
-            });
+                .then(settings => {
+                    if (Array.isArray(settings)) {
+                        const maint = settings.find((s: any) => s.key === 'maintenanceMode');
+                        const prices = settings.find((s: any) => s.key === 'showPrices');
+                        if (maint) setMaintenanceMode(maint.value === 'true');
+                        if (prices) setShowPrices(prices.value === 'true');
+                    }
+                })
+                .catch(() => { /* settings fetch is optional */ });
         }
-
-        socket.on('connect_error', (error) => {
-            console.warn('Realtime updates unavailable:', error.message);
-        });
 
         return () => {
             socket.disconnect();

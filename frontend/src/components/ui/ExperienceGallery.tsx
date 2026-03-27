@@ -138,11 +138,15 @@ export default function ExperienceGallery() {
                         </motion.div>
                     </div>
 
-                    {/* Infinite rail — translates via motion value */}
                     <motion.div
-                        className="flex gap-8 will-change-transform"
+                        className="flex gap-8 will-change-transform cursor-grab active:cursor-grabbing"
                         style={{ x }}
                         animate={controls}
+                        drag="x"
+                        dragConstraints={{ left: -TOTAL_BASE * 2, right: 0 }}
+                        dragElastic={0.05}
+                        onDragStart={() => setIsPaused(true)}
+                        onDragEnd={() => setIsPaused(false)}
                     >
                         {IMAGES.map((img, idx) => (
                             <motion.div

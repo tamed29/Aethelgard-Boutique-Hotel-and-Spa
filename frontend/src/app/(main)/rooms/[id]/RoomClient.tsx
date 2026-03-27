@@ -307,60 +307,101 @@ export default function RoomClient({ params, initialRoom }: RoomClientProps) {
             </section>
 
             {/* 3. Full Gallery — ALL images used, none left out */}
-            <section className="py-32 w-full max-w-[120rem] mx-auto px-6 md:px-16 xl:px-32 space-y-6">
-                <div className="text-center mb-16">
+            <section className="py-20 md:py-32 w-full max-w-[120rem] mx-auto px-0 md:px-16 xl:px-32 space-y-6">
+                <div className="text-center mb-12 md:mb-16 px-6">
                     <p className="text-[10px] uppercase tracking-[0.4em] text-moss-700 font-black mb-3">Visual Archive</p>
-                    <h2 className="text-4xl font-serif text-foreground">Room & Bathroom Gallery</h2>
+                    <h2 className="text-3xl md:text-4xl font-serif text-foreground">Room &amp; Bathroom Gallery</h2>
                 </div>
 
-                {/* Row 1: Hero shot spans full width */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-[500px]">
-                    <ScrollReveal className="relative rounded-[2rem] overflow-hidden shadow-2xl md:col-span-2 h-[500px]">
-                        <Image src={roomImages[0]} alt={`${room.name} — Main View`} fill sizes="(max-width: 1024px) 100vw, 66vw" className="object-cover hover:scale-105 transition-transform duration-[4000ms]" placeholder="blur" blurDataURL={blurData} />
+                {/* ── MOBILE: horizontal snap-scroll carousels ─────────────────── */}
+                <div className="md:hidden">
+                    {/* All room images carousel */}
+                    <div
+                        className="flex gap-4 overflow-x-auto snap-x snap-mandatory px-6 pb-4 scrollbar-none"
+                        style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}
+                    >
+                        {roomImages.map((img: string, i: number) => (
+                            <div key={img} className="relative min-w-[88vw] h-[60vw] rounded-[1.5rem] overflow-hidden shadow-xl flex-shrink-0 snap-start">
+                                <Image src={img} alt={`${room.name} — View ${i + 1}`} fill sizes="88vw" className="object-cover" placeholder="blur" blurDataURL={blurData} />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                                {i === 0 && <div className="absolute bottom-5 left-5 text-white/90 uppercase tracking-widest text-[9px] font-black">Restoration Chamber</div>}
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Bathroom images carousel */}
+                    <div className="mt-8 px-6">
+                        <div className="flex items-center gap-4 mb-5">
+                            <div className="h-px flex-1 bg-foreground/10" />
+                            <p className="text-[9px] uppercase tracking-[0.5em] font-black text-moss-700">En-Suite</p>
+                            <div className="h-px flex-1 bg-foreground/10" />
+                        </div>
+                    </div>
+                    <div
+                        className="flex gap-4 overflow-x-auto snap-x snap-mandatory px-6 pb-4 scrollbar-none"
+                        style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}
+                    >
+                        {allBathrooms.map((img: string, i: number) => (
+                            <div key={img} className="relative min-w-[88vw] h-[60vw] rounded-[1.5rem] overflow-hidden shadow-xl flex-shrink-0 snap-start">
+                                <Image src={img} alt={`${room.name} — Bathroom ${i + 1}`} fill sizes="88vw" className="object-cover" placeholder="blur" blurDataURL={blurData} />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                                <div className="absolute bottom-5 left-5 text-white/90 uppercase tracking-widest text-[9px] font-black">
+                                    {i === 0 ? 'En-Suite Ritual' : i === 1 ? 'Sanctuary Bath' : 'Bath Detail'}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* ── DESKTOP: original grid layout ───────────────────────────── */}
+                <div className="hidden md:block px-0 space-y-6">
+                    {/* Row 1: Hero shot */}
+                    <ScrollReveal className="relative rounded-[2rem] overflow-hidden shadow-2xl h-[500px]">
+                        <Image src={roomImages[0]} alt={`${room.name} — Main View`} fill sizes="100vw" className="object-cover hover:scale-105 transition-transform duration-[4000ms]" placeholder="blur" blurDataURL={blurData} />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                         <div className="absolute bottom-8 left-8 text-white/90 uppercase tracking-widest text-[10px] font-black">Restoration Chamber</div>
                     </ScrollReveal>
-                </div>
 
-                {/* Row 2: Room images */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 h-[320px]">
-                    {galleryRoom.map((img: string, i: number) => (
-                        <ScrollReveal key={img} delay={i * 0.1} className="relative rounded-[1.5rem] overflow-hidden shadow-xl h-[320px]">
-                            <Image src={img} alt={`${room.name} — Detail ${i + 1}`} fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover hover:scale-105 transition-transform duration-[3000ms]" placeholder="blur" blurDataURL={blurData} />
-                        </ScrollReveal>
-                    ))}
-                </div>
-
-                {/* Row 3: Bathroom images — ALL of them, labeled */}
-                <div className="mt-8">
-                    <div className="flex items-center gap-4 mb-6">
-                        <div className="h-px flex-1 bg-foreground/10" />
-                        <p className="text-[9px] uppercase tracking-[0.5em] font-black text-moss-700">The Ritual Space — En-Suite</p>
-                        <div className="h-px flex-1 bg-foreground/10" />
-                    </div>
-                    <div className={`grid gap-4 h-[340px] ${allBathrooms.length === 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
-                        {allBathrooms.map((img: string, i: number) => (
-                            <ScrollReveal key={img} delay={i * 0.15} className="relative rounded-[1.5rem] overflow-hidden shadow-xl h-[340px]">
-                                <Image src={img} alt={`${room.name} — Bathroom ${i + 1}`} fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover hover:scale-105 transition-transform duration-[3000ms]" placeholder="blur" blurDataURL={blurData} />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                                <div className="absolute bottom-6 left-6 text-white/90 uppercase tracking-widest text-[10px] font-black">
-                                    {i === 0 ? 'En-Suite Ritual' : i === 1 ? 'Sanctuary Bath' : 'Bath Detail'}
-                                </div>
+                    {/* Row 2: Room images */}
+                    <div className="grid grid-cols-4 gap-4 h-[320px]">
+                        {galleryRoom.map((img: string, i: number) => (
+                            <ScrollReveal key={img} delay={i * 0.1} className="relative rounded-[1.5rem] overflow-hidden shadow-xl h-[320px]">
+                                <Image src={img} alt={`${room.name} — Detail ${i + 1}`} fill sizes="25vw" className="object-cover hover:scale-105 transition-transform duration-[3000ms]" placeholder="blur" blurDataURL={blurData} />
                             </ScrollReveal>
                         ))}
                     </div>
-                </div>
 
-                {/* Row 4: Remaining room images (if any beyond index 4) */}
-                {roomImages.length > 5 && (
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 h-[280px]">
-                        {roomImages.slice(5).map((img: string, i: number) => (
-                            <ScrollReveal key={img} delay={i * 0.1} className="relative rounded-[1.5rem] overflow-hidden shadow-xl h-[280px]">
-                                <Image src={img} alt={`${room.name} — View ${i + 5}`} fill sizes="(max-width: 1024px) 50vw, 25vw" className="object-cover hover:scale-105 transition-transform duration-[3000ms]" placeholder="blur" blurDataURL={blurData} />
-                            </ScrollReveal>
-                        ))}
+                    {/* Row 3: Bathroom images */}
+                    <div className="mt-8">
+                        <div className="flex items-center gap-4 mb-6">
+                            <div className="h-px flex-1 bg-foreground/10" />
+                            <p className="text-[9px] uppercase tracking-[0.5em] font-black text-moss-700">The Ritual Space — En-Suite</p>
+                            <div className="h-px flex-1 bg-foreground/10" />
+                        </div>
+                        <div className={`grid gap-4 h-[340px] ${allBathrooms.length === 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
+                            {allBathrooms.map((img: string, i: number) => (
+                                <ScrollReveal key={img} delay={i * 0.15} className="relative rounded-[1.5rem] overflow-hidden shadow-xl h-[340px]">
+                                    <Image src={img} alt={`${room.name} — Bathroom ${i + 1}`} fill sizes="50vw" className="object-cover hover:scale-105 transition-transform duration-[3000ms]" placeholder="blur" blurDataURL={blurData} />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                                    <div className="absolute bottom-6 left-6 text-white/90 uppercase tracking-widest text-[10px] font-black">
+                                        {i === 0 ? 'En-Suite Ritual' : i === 1 ? 'Sanctuary Bath' : 'Bath Detail'}
+                                    </div>
+                                </ScrollReveal>
+                            ))}
+                        </div>
                     </div>
-                )}
+
+                    {/* Row 4: Remaining room images */}
+                    {roomImages.length > 5 && (
+                        <div className="grid grid-cols-3 gap-4 h-[280px]">
+                            {roomImages.slice(5).map((img: string, i: number) => (
+                                <ScrollReveal key={img} delay={i * 0.1} className="relative rounded-[1.5rem] overflow-hidden shadow-xl h-[280px]">
+                                    <Image src={img} alt={`${room.name} — View ${i + 5}`} fill sizes="33vw" className="object-cover hover:scale-105 transition-transform duration-[3000ms]" placeholder="blur" blurDataURL={blurData} />
+                                </ScrollReveal>
+                            ))}
+                        </div>
+                    )}
+                </div>
             </section>
 
             {/* 4. Architecture of Rest + Unique Features + Booking */}

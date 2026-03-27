@@ -91,8 +91,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         const socket: Socket = io(SOCKET_URL, {
             reconnectionAttempts: 10,
-            reconnectionDelay: 1000,
-            transports: ['websocket', 'polling'], 
+            reconnectionDelay: 2000,
+            transports: ['polling', 'websocket'], // polling-first for Vercel edge compatibility
             secure: SOCKET_URL.startsWith('https'),
             withCredentials: true,
         });
