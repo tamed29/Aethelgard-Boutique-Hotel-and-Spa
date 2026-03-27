@@ -170,6 +170,12 @@ const getSettings = async (req, res, next) => {
 
 const changePassword = async (req, res) => {
     try {
+        if (req.user && req.user._id === 'admin-001') {
+            return res.status(400).json({ 
+                message: 'You are logged in via the fallback environment Admin. To change this password, you must update ADMIN_PASSWORD in your Render .env variables and restart the server.' 
+            });
+        }
+
         const { currentPassword, newPassword } = req.body;
         const user = await User.findById(req.user._id);
 
