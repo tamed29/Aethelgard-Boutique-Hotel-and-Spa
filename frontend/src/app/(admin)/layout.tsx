@@ -2,7 +2,8 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Toaster } from 'sonner';
 
 /**
@@ -15,9 +16,34 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             queries: {
                 staleTime: 1000 * 60, // 1 minute
                 refetchOnWindowFocus: false,
+                retry: (failureCount, error: any) => {
+                    // Don't retry on 401/403
+                    if (error?.response?.status === 401 || error?.response?.status === 403) return false;
+                    return failureCount < 3;
+                }
             },
         },
     }));
+
+    const router = useRouter();
+    const [isAuthenticating, setIsAuthenticating] = useState(true);
+
+    useEffect(() => {
+        const token = localStorage.getItem('adminToken');
+        if (!token) {
+            router.replace('/login');
+        } else {
+            setIsAuthenticating(false);
+        }
+    }, [router]);
+
+    if (isAuthenticating) {
+        return (
+            <div className="flex min-h-screen bg-[#1A1F16] items-center justify-center">
+                <div className="w-8 h-8 rounded-full border-2 border-[#D4DE95]/20 border-t-[#D4DE95] animate-spin" />
+            </div>
+        );
+    }
 
     return (
         <QueryClientProvider client={queryClient}>

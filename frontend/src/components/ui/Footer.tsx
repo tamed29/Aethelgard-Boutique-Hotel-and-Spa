@@ -1,11 +1,18 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Facebook, Instagram, Twitter, Mail, MapPin, Phone, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import MagneticHover from "./MagneticHover";
 
 const Footer = () => {
     const currentYear = new Date().getFullYear();
+    const [adminHref, setAdminHref] = useState('/login');
+
+    useEffect(() => {
+        const hasToken = !!localStorage.getItem('adminToken');
+        setAdminHref(hasToken ? '/admin/dashboard' : '/login');
+    }, []);
 
     const footerLinks = [
         {
@@ -24,7 +31,7 @@ const Footer = () => {
                 { name: "About Us", href: "/heritage" },
                 { name: "Reservations", href: "/reservations" },
                 { name: "Contact", href: "/contact" },
-                { name: "Admin", href: "/login" },
+                { name: "Admin", href: adminHref },
             ],
         },
     ];
@@ -115,7 +122,7 @@ const Footer = () => {
                 <div className="pt-16 border-t border-white/5 flex flex-col md:flex-row gap-8 justify-between items-center text-[10px] uppercase tracking-[0.4em] text-white/20 font-black">
                     <div className="flex flex-col md:flex-row items-center gap-8">
                         <p>© {currentYear} Aethelgard Boutique Hotel &amp; Spa. All Rights Reserved.</p>
-                        <Link href="/login" className="hover:text-white/40 transition-colors duration-500 opacity-20 hover:opacity-100">Staff Portal</Link>
+                        <Link href={adminHref} className="hover:text-white/40 transition-colors duration-500 opacity-20 hover:opacity-100">Staff Portal</Link>
                     </div>
                     <div className="flex gap-12">
                         <Link href="/contact" className="hover:text-white transition-colors duration-500">Privacy Policy</Link>
