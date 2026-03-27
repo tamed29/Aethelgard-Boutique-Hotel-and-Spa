@@ -24,7 +24,7 @@ const Footer = () => {
                 { name: "About Us", href: "/heritage" },
                 { name: "Reservations", href: "/reservations" },
                 { name: "Contact", href: "/contact" },
-                { name: "Admin", href: "/admin" },
+                { name: "Admin", href: "/admin/login" },
             ],
         },
     ];
