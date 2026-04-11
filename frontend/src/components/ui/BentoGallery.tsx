@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { useStore } from '@/store/useStore';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import MagneticHover from './MagneticHover';
 import ScrollReveal from './ScrollReveal';
 import Link from 'next/link';
@@ -48,17 +48,59 @@ const rooms = [
 
 export default function BentoGallery() {
     const realtimePrices = useStore(state => state.realtimePrices);
+    const scrollRef = useRef<HTMLDivElement>(null);
+    const [activeIndex, setActiveIndex] = useState(0);
+
+    useEffect(() => {
+        const container = scrollRef.current;
+        if (!container) return;
+
+        const interval = setInterval(() => {
+            if (window.innerWidth >= 768) return;
+            
+            let nextIndex = activeIndex + 1;
+            if (nextIndex >= rooms.length) nextIndex = 0;
+            
+            const child = container.children[nextIndex] as HTMLElement;
+            if (child) {
+                container.scrollTo({ left: child.offsetLeft, behavior: 'smooth' });
+                setActiveIndex(nextIndex);
+            }
+        }, 4000);
+
+        const handleScroll = () => {
+            const index = Math.round(container.scrollLeft / container.clientWidth);
+            setActiveIndex(index);
+        };
+
+        container.addEventListener('scroll', handleScroll, { passive: true });
+        return () => {
+            clearInterval(interval);
+            container.removeEventListener('scroll', handleScroll);
+        };
+    }, [activeIndex]);
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[420px]">
-            {rooms.map((room, idx) => (
-                <BentoCard
-                    key={room.slug}
-                    room={room}
-                    price={realtimePrices[room.slug] || room.defaultPrice}
-                    index={idx}
-                />
-            ))}
+        <div className="relative">
+            <div ref={scrollRef} className="flex overflow-x-auto md:grid md:grid-cols-3 gap-6 md:auto-rows-[420px] pb-8 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] scroll-smooth">
+                {rooms.map((room, idx) => (
+                    <BentoCard
+                        key={room.slug}
+                        room={room}
+                        price={realtimePrices[room.slug] || room.defaultPrice}
+                        index={idx}
+                    />
+                ))}
+            </div>
+            {/* Mobile Pagination Indicators */}
+            <div className="md:hidden flex justify-center gap-2 mt-2 pb-6">
+                {rooms.map((_, i) => (
+                    <div 
+                        key={i} 
+                        className={`h-1.5 rounded-full transition-all duration-500 ${activeIndex === i ? 'w-6 bg-moss-100' : 'w-2 bg-moss-100/20'}`}
+                    />
+                ))}
+            </div>
         </div>
     );
 }
@@ -76,7 +118,7 @@ function BentoCard({ room, price, index }: { room: typeof rooms[0]; price: numbe
     }, [price, prevPrice]);
 
     return (
-        <ScrollReveal delay={index * 0.1} className={room.colSpan === 2 ? 'md:col-span-2' : 'col-span-1'}>
+        <ScrollReveal delay={index * 0.1} className={`shrink-0 w-[85vw] sm:w-[60vw] md:w-auto h-[420px] md:h-auto snap-center md:snap-align-none ${room.colSpan === 2 ? 'md:col-span-2' : 'col-span-1'}`}>
             <MagneticHover intensity={0.1} className="h-full w-full">
                 <Link href={`/rooms/${room.slug}`} className="block relative h-full w-full group rounded-[2.5rem] overflow-hidden shadow-2xl">
                     <Image

@@ -70,6 +70,38 @@ const guestStories = [
 ];
 
 export default function ExperiencePage() {
+    const seasonalScrollRef = React.useRef<HTMLDivElement>(null);
+    const [activeSeason, setActiveSeason] = React.useState(0);
+
+    React.useEffect(() => {
+        const container = seasonalScrollRef.current;
+        if (!container) return;
+        
+        const interval = setInterval(() => {
+            if (window.innerWidth >= 768) return; 
+            
+            let nextIndex = activeSeason + 1;
+            if (nextIndex >= seasonalInsights.length) nextIndex = 0;
+            
+            const child = container.children[nextIndex] as HTMLElement;
+            if (child) {
+                container.scrollTo({ left: child.offsetLeft, behavior: 'smooth' });
+                setActiveSeason(nextIndex);
+            }
+        }, 4000);
+
+        const handleScroll = () => {
+            const index = Math.round(container.scrollLeft / container.clientWidth);
+            setActiveSeason(index);
+        };
+
+        container.addEventListener('scroll', handleScroll, { passive: true });
+        return () => {
+            clearInterval(interval);
+            container.removeEventListener('scroll', handleScroll);
+        };
+    }, [activeSeason]);
+
     return (
         <main className="min-h-screen bg-zinc-950">
             {/* 1. Immersive Narrative Hero */}
@@ -194,12 +226,6 @@ export default function ExperiencePage() {
                                                 <p className="text-2xl text-foreground/70 leading-relaxed font-serif italic border-l-2 border-moss-700/30 pl-8">
                                                     {exp.desc}
                                                 </p>
-                                                <p className="text-lg text-foreground/50 leading-relaxed">
-                                                    Nestled in the sunken clearing of the Ancient Deep, our bonfire gatherings are curated for those who believe that the finest conversations happen when firelight flickers and the forest breathes around you. Each gathering is a private affair — lit at dusk and attended only by those who seek something more than the ordinary.
-                                                </p>
-                                                <p className="text-lg text-foreground/50 leading-relaxed">
-                                                    Our fire-wardens have kept this tradition alive for three generations, perfecting the art of warmth — from the slow-charred hardwood selection to the arrangement of seating designed to encourage closeness and candour.
-                                                </p>
                                             </ScrollReveal>
 
                                             <ScrollReveal delay={0.5} className="space-y-12">
@@ -313,93 +339,105 @@ export default function ExperiencePage() {
                         <div className="w-32 h-px bg-white/10 mx-auto" />
                     </ScrollReveal>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
-                        {seasonalInsights.map((s, idx) => (
-                            <ScrollReveal key={idx} delay={idx * 0.1}>
-                                <motion.div
-                                    whileHover="hovered"
-                                    initial="idle"
-                                    className="relative glass p-12 rounded-[3rem] border border-white/5 cursor-default overflow-hidden"
-                                    style={{ transformOrigin: 'center bottom' }}
-                                    variants={{
-                                        idle: { scale: 1, y: 0 },
-                                        hovered: { scale: 1.04, y: -8 }
-                                    }}
-                                    transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                                >
-                                    {/* Glow background */}
+                    <div className="relative">
+                        <div ref={seasonalScrollRef} className="flex overflow-x-auto md:grid md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-12 pb-8 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] scroll-smooth">
+                            {seasonalInsights.map((s, idx) => (
+                                <ScrollReveal key={idx} delay={idx * 0.1} className="shrink-0 w-[85vw] sm:w-[50vw] md:w-auto snap-center md:snap-align-none">
                                     <motion.div
-                                        className="absolute inset-0 rounded-[3rem] pointer-events-none"
+                                        whileHover="hovered"
+                                        initial="idle"
+                                        className="relative glass p-12 rounded-[3rem] border border-white/5 cursor-default overflow-hidden"
+                                        style={{ transformOrigin: 'center bottom' }}
                                         variants={{
-                                            idle: { opacity: 0 },
-                                            hovered: { opacity: 1 }
+                                            idle: { scale: 1, y: 0 },
+                                            hovered: { scale: 1.04, y: -8 }
                                         }}
-                                        transition={{ duration: 0.4 }}
-                                        style={{
-                                            background: 'radial-gradient(ellipse at 50% 80%, rgba(180,210,120,0.12) 0%, transparent 70%)',
-                                            boxShadow: '0 0 60px 0 rgba(180,210,120,0.15)'
-                                        }}
-                                    />
-
-                                    {/* Animated border glow */}
-                                    <motion.div
-                                        className="absolute inset-0 rounded-[3rem] pointer-events-none border"
-                                        variants={{
-                                            idle: { borderColor: 'rgba(255,255,255,0.05)' },
-                                            hovered: { borderColor: 'rgba(180,210,120,0.4)' }
-                                        }}
-                                        transition={{ duration: 0.4 }}
-                                    />
-
-                                    {/* Icon */}
-                                    <motion.div
-                                        className="text-moss-100 mb-8"
-                                        variants={{
-                                            idle: { scale: 1, color: '#d9e8a0' },
-                                            hovered: { scale: 1.3, color: '#b8d96a' }
-                                        }}
-                                        transition={{ duration: 0.4, ease: 'easeOut' }}
+                                        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                                     >
-                                        {s.icon}
-                                    </motion.div>
-
-                                    {/* Season title */}
-                                    <div className="relative mb-6 overflow-hidden">
-                                        <motion.h3
-                                            className="text-3xl font-serif relative"
-                                            variants={{
-                                                idle: { y: 0 },
-                                                hovered: { y: -2 }
-                                            }}
-                                            transition={{ duration: 0.3 }}
-                                        >
-                                            {s.season}
-                                        </motion.h3>
-                                        {/* Underline reveal */}
+                                        {/* Glow background */}
                                         <motion.div
-                                            className="h-px bg-moss-300/60 mt-2"
+                                            className="absolute inset-0 rounded-[3rem] pointer-events-none"
                                             variants={{
-                                                idle: { scaleX: 0, originX: 0 },
-                                                hovered: { scaleX: 1, originX: 0 }
+                                                idle: { opacity: 0 },
+                                                hovered: { opacity: 1 }
                                             }}
-                                            transition={{ duration: 0.5, ease: 'easeOut' }}
+                                            transition={{ duration: 0.4 }}
+                                            style={{
+                                                background: 'radial-gradient(ellipse at 50% 80%, rgba(180,210,120,0.12) 0%, transparent 70%)',
+                                                boxShadow: '0 0 60px 0 rgba(180,210,120,0.15)'
+                                            }}
                                         />
-                                    </div>
 
-                                    {/* Description */}
-                                    <motion.p
-                                        className="text-white/60 font-serif italic text-lg leading-relaxed relative z-10"
-                                        variants={{
-                                            idle: { opacity: 0.6 },
-                                            hovered: { opacity: 1 }
-                                        }}
-                                        transition={{ duration: 0.4 }}
-                                    >
-                                        {s.desc}
-                                    </motion.p>
-                                </motion.div>
-                            </ScrollReveal>
-                        ))}
+                                        {/* Animated border glow */}
+                                        <motion.div
+                                            className="absolute inset-0 rounded-[3rem] pointer-events-none border"
+                                            variants={{
+                                                idle: { borderColor: 'rgba(255,255,255,0.05)' },
+                                                hovered: { borderColor: 'rgba(180,210,120,0.4)' }
+                                            }}
+                                            transition={{ duration: 0.4 }}
+                                        />
+
+                                        {/* Icon */}
+                                        <motion.div
+                                            className="text-moss-100 mb-8"
+                                            variants={{
+                                                idle: { scale: 1, color: '#d9e8a0' },
+                                                hovered: { scale: 1.3, color: '#b8d96a' }
+                                            }}
+                                            transition={{ duration: 0.4, ease: 'easeOut' }}
+                                        >
+                                            {s.icon}
+                                        </motion.div>
+
+                                        {/* Season title */}
+                                        <div className="relative mb-6 overflow-hidden">
+                                            <motion.h3
+                                                className="text-3xl font-serif relative"
+                                                variants={{
+                                                    idle: { y: 0 },
+                                                    hovered: { y: -2 }
+                                                }}
+                                                transition={{ duration: 0.3 }}
+                                            >
+                                                {s.season}
+                                            </motion.h3>
+                                            {/* Underline reveal */}
+                                            <motion.div
+                                                className="h-px bg-moss-300/60 mt-2"
+                                                variants={{
+                                                    idle: { scaleX: 0, originX: 0 },
+                                                    hovered: { scaleX: 1, originX: 0 }
+                                                }}
+                                                transition={{ duration: 0.5, ease: 'easeOut' }}
+                                            />
+                                        </div>
+
+                                        {/* Description */}
+                                        <motion.p
+                                            className="text-white/60 font-serif italic text-lg leading-relaxed relative z-10"
+                                            variants={{
+                                                idle: { opacity: 0.6 },
+                                                hovered: { opacity: 1 }
+                                            }}
+                                            transition={{ duration: 0.4 }}
+                                        >
+                                            {s.desc}
+                                        </motion.p>
+                                    </motion.div>
+                                </ScrollReveal>
+                            ))}
+                        </div>
+
+                        {/* Mobile Pagination Indicators */}
+                        <div className="md:hidden flex justify-center gap-2 mt-4 pb-6">
+                            {seasonalInsights.map((_, i) => (
+                                <div 
+                                    key={i} 
+                                    className={`h-1.5 rounded-full transition-all duration-500 ${activeSeason === i ? 'w-6 bg-moss-100' : 'w-2 bg-moss-100/20'}`}
+                                />
+                            ))}
+                        </div>
                     </div>
                 </div>
             </section>
