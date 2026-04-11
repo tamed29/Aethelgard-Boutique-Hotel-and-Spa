@@ -90,6 +90,11 @@ const galleryRoutes = require('./routes/galleryRoutes');
 const newsRoutes = require('./routes/newsRoutes');
 const spaRoutes = require('./routes/spaRoutes');
 
+const paymentRoutes = require('./routes/paymentRoutes');
+const checkDbConnection = require('./middleware/dbStatusMiddleware');
+
+app.use('/api', checkDbConnection); // Apply global DB status check to all /api routes
+
 app.use('/api/rooms', roomRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/bookings', bookingRoutes);
@@ -99,6 +104,7 @@ app.use('/api/auth', apiRoutes);
 app.use('/api/gallery', galleryRoutes);
 app.use('/api/news', newsRoutes);
 app.use('/api/spa', spaRoutes);
+app.use('/api/payments', paymentRoutes);
 
 // Error Middleware
 app.use(errorHandler);

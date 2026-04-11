@@ -12,6 +12,55 @@ import ScrollReveal from '@/components/ui/ScrollReveal';
 
 
 
+const EXCHANGE_RATE = 140;
+
+const fallbackRooms = [
+    {
+        id: 'fallback-grand',
+        name: 'Grand Estate Suite',
+        roomType: 'grand',
+        price: 950,
+        sqm: 140,
+        view: 'Valley & Forest Panoramas',
+        bed: 'Sovereign King',
+        images: ['/images/rooms/grand/g1.png'],
+        desc: 'Sovereign luxury at the pinnacle of the Wychwood.'
+    },
+    {
+        id: 'fallback-forest',
+        name: 'Forest Retreat',
+        roomType: 'forest',
+        price: 320,
+        sqm: 65,
+        view: 'Ancient Pine Canopy',
+        bed: 'Artisan King',
+        images: ['/images/rooms/forest/r1.png'],
+        desc: 'Muted luxury amidst the ancient whispering pines.'
+    },
+    {
+        id: 'fallback-double',
+        name: 'Double Heritage Room',
+        roomType: 'double',
+        price: 280,
+        sqm: 45,
+        view: 'Garden Courtyard',
+        bed: 'Twin Heritage Beds',
+        images: ['/images/rooms/double/d1.png'],
+        desc: 'Storied comfort in the original 12th-century wing.'
+    },
+    {
+        id: 'fallback-botanical',
+        name: 'Botanical Oasis Suite',
+        roomType: 'botanical',
+        price: 380,
+        sqm: 85,
+        view: 'Living Blossom Walls',
+        bed: 'King Garden Bed',
+        images: ['/images/rooms/botanical/b1.png'],
+        desc: 'Secluded sanctuary wrapped in living blossom walls.'
+    }
+];
+
 const enhancements = [
     { id: 'breakfast', name: 'Artisan Breakfast Buffet', price: 45, icon: <Coffee className="w-5 h-5" />, desc: 'Farm-to-table morning spread in the Conservatory.' },
     { id: 'spa', name: 'Private Thermal Access', price: 120, icon: <Bath className="w-5 h-5" />, desc: 'Exclusive 1-hour midnight access to the thermal pools.' },
@@ -30,6 +79,7 @@ export default function ReservationsPortal() {
     const [selectedRoom, setSelectedRoom] = useState<any | null>(null);
     const [selectedEnhancements, setSelectedEnhancements] = useState<string[]>([]);
     const [isMobile, setIsMobile] = useState(false);
+    const [currency, setCurrency] = useState<'USD' | 'ETB'>('USD');
 
     useEffect(() => {
         const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -46,6 +96,10 @@ export default function ReservationsPortal() {
                 const res = await fetch(`${API_URL}/rooms`);
                 const data = await res.json();
                 
+                if (!Array.isArray(data)) {
+                    throw new Error('Invalid API response format');
+                }
+                
                 const mappedRooms = data.map((r: any) => ({
                     id: r._id,
                     name: r.name,
@@ -59,7 +113,8 @@ export default function ReservationsPortal() {
                 }));
                 setRoomTypes(mappedRooms);
             } catch (err) {
-                console.error('Failed to fetch rooms', err);
+                console.error('Failed to fetch rooms, using fallback data', err);
+                setRoomTypes(fallbackRooms);
             }
         };
         fetchRooms();
@@ -82,6 +137,7 @@ export default function ReservationsPortal() {
     const [expiryDate, setExpiryDate] = useState('');
     const [cvv, setCvv] = useState('');
     const [paymentMethod, setPaymentMethod] = useState('Credit Card');
+    const [isRedirecting, setIsRedirecting] = useState(false);
 
     const [isChecking, setIsChecking] = useState(false);
     const [availabilityData, setAvailabilityData] = useState<any[]>([]);
@@ -126,7 +182,15 @@ export default function ReservationsPortal() {
             const enh = enhancements.find(e => e.id === id);
             return acc + (enh?.price || 0);
         }, 0);
-        return roomTotal + enhancementTotal;
+        const totalInUSD = roomTotal + enhancementTotal;
+        return currency === 'ETB' ? totalInUSD * EXCHANGE_RATE : totalInUSD;
+    };
+
+    const formatPrice = (amount: number) => {
+        if (currency === 'ETB') {
+            return new Intl.NumberFormat('en-ET', { style: 'currency', currency: 'ETB', maximumFractionDigits: 0 }).format(amount);
+        }
+        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
     };
 
     const handleFinalSubmit = async (e: React.FormEvent) => {
@@ -141,6 +205,11 @@ export default function ReservationsPortal() {
         if (!firstName || !lastName || !email || !phone || !address || !city || !country) {
             toast.error('Information Required', { description: 'Please complete all mandatory guest details.' });
             return;
+        }
+
+        if (currency === 'ETB' && paymentMethod !== 'Chapa') {
+            toast.info('Currency Alignment', { description: 'For ETB payments, Chapa is our primary gateway.' });
+            setPaymentMethod('Chapa');
         }
 
         if (!email.includes('@')) {
@@ -181,6 +250,34 @@ export default function ReservationsPortal() {
             if (!res.ok) throw new Error(data.message || 'Booking failed');
 
             setBookingCode(data.booking._id.substring(0, 8).toUpperCase());
+
+            // Handle Chapa Redirect
+            if (paymentMethod === 'Chapa') {
+                setIsRedirecting(true);
+                toast.loading('Redirecting to Chapa Secure Checkout...');
+                
+                const payRes = await fetch(`${API_URL}/payments/chapa/initialize`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        bookingId: data.booking._id,
+                        amount: calculateTotal(),
+                        email: email,
+                        firstName: firstName,
+                        lastName: lastName,
+                        phone: phone
+                    })
+                });
+                
+                const payData = await payRes.json();
+                if (payData.status === 'success' && payData.data.checkout_url) {
+                    window.location.href = payData.data.checkout_url;
+                    return;
+                } else {
+                    throw new Error('Chapa Initialization Failed');
+                }
+            }
+
             setStatus('success');
             toast.success('Booking Confirmed', { description: 'Your reservation has been confirmed.' });
         } catch (error: any) {
@@ -249,6 +346,30 @@ export default function ReservationsPortal() {
                     <ScrollReveal>
                         <p className="text-[10px] uppercase tracking-[0.5em] font-black text-[#3D4127] mb-4">Confirm Booking</p>
                         <h1 className="text-4xl md:text-6xl font-serif tracking-tight">Reservations Portal</h1>
+                        
+                        {/* Currency Toggle */}
+                        <div className="flex justify-center mt-8">
+                            <div className="p-1.5 bg-black/5 rounded-2xl flex gap-1">
+                                <button 
+                                    onClick={() => {
+                                        setCurrency('USD');
+                                        setPaymentMethod('Credit Card');
+                                    }}
+                                    className={`px-6 py-2 rounded-xl text-[9px] uppercase tracking-widest font-black transition-all ${currency === 'USD' ? 'bg-[#3D4127] text-white shadow-lg' : 'text-[#3D4127]/40 hover:text-[#3D4127]'}`}
+                                >
+                                    USD $
+                                </button>
+                                <button 
+                                    onClick={() => {
+                                        setCurrency('ETB');
+                                        setPaymentMethod('Chapa');
+                                    }}
+                                    className={`px-6 py-2 rounded-xl text-[9px] uppercase tracking-widest font-black transition-all ${currency === 'ETB' ? 'bg-[#3D4127] text-white shadow-lg' : 'text-[#3D4127]/40 hover:text-[#3D4127]'}`}
+                                >
+                                    ETB ብር
+                                </button>
+                            </div>
+                        </div>
                         {/* Progress Bar */}
                         <div className="flex items-center justify-center mt-12 gap-4">
                             {[1, 2, 3, 4].map(i => (
@@ -344,7 +465,14 @@ export default function ReservationsPortal() {
                                                     <div>
                                                         <div className="flex justify-between items-start mb-4">
                                                             <h3 className="text-2xl font-serif">{room.name}</h3>
-                                                            <span className={`text-2xl font-serif ${selectedRoom?.id === room.id ? 'text-white' : 'text-[#3D4127]'}`}>${room.price}</span>
+                                                            <div className="text-right">
+                                                                <span className={`text-2xl font-serif block ${selectedRoom?.id === room.id ? 'text-white' : 'text-[#3D4127]'}`}>
+                                                                    {formatPrice(currency === 'ETB' ? room.price * EXCHANGE_RATE : room.price)}
+                                                                </span>
+                                                                <span className={`text-[9px] uppercase tracking-widest opacity-40 block mt-1 ${selectedRoom?.id === room.id ? 'text-white/60' : ''}`}>
+                                                                    {currency === 'ETB' ? `(${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(room.price)})` : `(${new Intl.NumberFormat('en-ET', { style: 'currency', currency: 'ETB', maximumFractionDigits: 0 }).format(room.price * EXCHANGE_RATE)})`}
+                                                                </span>
+                                                            </div>
                                                         </div>
                                                         <p className={`text-sm mb-6 ${selectedRoom?.id === room.id ? 'text-white/70' : 'text-[#1A1F16]/60'} font-light`}>{room.desc}</p>
                                                         <div className="flex flex-wrap gap-4">
@@ -416,7 +544,7 @@ export default function ReservationsPortal() {
                                                     </div>
                                                 </div>
                                                 <div className="text-right">
-                                                    <p className="text-lg font-serif mb-2">+${enh.price}</p>
+                                                    <p className="text-lg font-serif mb-2">+{formatPrice(currency === 'ETB' ? enh.price * EXCHANGE_RATE : enh.price)}</p>
                                                     <div className={`w-6 h-6 rounded-full border flex items-center justify-center transition-all ${selectedEnhancements.includes(enh.id) ? 'bg-[#D4DE95] border-[#D4DE95]' : 'border-black/20'}`}>
                                                         {selectedEnhancements.includes(enh.id) && <Check className="w-3 h-3 text-[#1A1F16]" />}
                                                     </div>
@@ -520,40 +648,64 @@ export default function ReservationsPortal() {
                                                     <label className="text-[10px] uppercase tracking-widest font-black opacity-40 flex items-center gap-2">
                                                         <CreditCard className="w-3 h-3" /> Secure Payment Guarantee
                                                     </label>
-                                                    <div className="flex gap-2 opacity-40">
+                                                <div className="flex gap-2 opacity-40">
                                                         <div className="w-8 h-5 bg-black/10 rounded flex items-center justify-center text-[6px] font-black italic">VISA</div>
                                                         <div className="w-8 h-5 bg-black/10 rounded flex items-center justify-center text-[6px] font-black italic">MC</div>
                                                         <div className="w-8 h-5 bg-black/10 rounded flex items-center justify-center text-[6px] font-black italic">AMEX</div>
+                                                        {currency === 'ETB' && <div className="w-12 h-5 bg-black/10 rounded flex items-center justify-center text-[6px] font-black font-serif italic text-blue-600">CHAPA</div>}
                                                     </div>
                                                 </div>
 
-                                                <div className="bg-white/40 border border-black/5 rounded-3xl p-8 space-y-6">
-                                                    <div className="space-y-3">
-                                                        <label className="text-[9px] uppercase tracking-widest font-black opacity-30">Cardholder Name</label>
-                                                        <input required type="text" value={cardHolderName} onChange={e => setCardHolderName(e.target.value)} className="w-full bg-white border border-black/5 p-4 rounded-xl focus:outline-none focus:border-[#3D4127] transition-all font-serif" placeholder="Gwendolyn Thorne" />
-                                                    </div>
+                                                {currency === 'USD' ? (
+                                                    <div className="bg-white/40 border border-black/5 rounded-3xl p-8 space-y-6">
+                                                        <div className="flex items-center gap-4 mb-4 opacity-40">
+                                                            <CreditCard className="w-4 h-4" />
+                                                            <span className="text-[10px] uppercase tracking-widest font-black">Secure Credit Card Payment (USD)</span>
+                                                        </div>
+                                                        {/* Static Card Inputs */}
+                                                        <div className="space-y-3">
+                                                            <label className="text-[9px] uppercase tracking-widest font-black opacity-30">Cardholder Name</label>
+                                                            <input required type="text" value={cardHolderName} onChange={e => setCardHolderName(e.target.value)} className="w-full bg-white border border-black/5 p-4 rounded-xl focus:outline-none focus:border-[#3D4127] transition-all font-serif" placeholder="Gwendolyn Thorne" />
+                                                        </div>
 
-                                                    <div className="space-y-3">
-                                                        <label className="text-[9px] uppercase tracking-widest font-black opacity-30">Card Number</label>
-                                                        <div className="relative">
-                                                            <input required type="text" value={cardNumber} onChange={e => setCardNumber(e.target.value)} className="w-full bg-white border border-black/5 p-4 rounded-xl focus:outline-none focus:border-[#3D4127] transition-all font-mono tracking-widest" placeholder="•••• •••• •••• ••••" maxLength={19} />
-                                                            <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                                                                <ShieldCheck className="w-4 h-4 text-[#3D4127] opacity-40" />
+                                                        <div className="space-y-3">
+                                                            <label className="text-[9px] uppercase tracking-widest font-black opacity-30">Card Number</label>
+                                                            <div className="relative">
+                                                                <input required type="text" value={cardNumber} onChange={e => setCardNumber(e.target.value)} className="w-full bg-white border border-black/5 p-4 rounded-xl focus:outline-none focus:border-[#3D4127] transition-all font-mono tracking-widest" placeholder="•••• •••• •••• ••••" maxLength={19} />
+                                                                <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                                                                    <ShieldCheck className="w-4 h-4 text-[#3D4127] opacity-40" />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="grid grid-cols-2 gap-6">
+                                                            <div className="space-y-3">
+                                                                <label className="text-[9px] uppercase tracking-widest font-black opacity-30">Expiry Date</label>
+                                                                <input required type="text" value={expiryDate} onChange={e => setExpiryDate(e.target.value)} className="w-full bg-white border border-black/5 p-4 rounded-xl focus:outline-none focus:border-[#3D4127] transition-all font-mono" placeholder="MM / YY" maxLength={5} />
+                                                            </div>
+                                                            <div className="space-y-3">
+                                                                <label className="text-[9px] uppercase tracking-widest font-black opacity-30">CVV</label>
+                                                                <input required type="password" value={cvv} onChange={e => setCvv(e.target.value)} className="w-full bg-white border border-black/5 p-4 rounded-xl focus:outline-none focus:border-[#3D4127] transition-all font-mono" placeholder="•••" maxLength={4} />
                                                             </div>
                                                         </div>
                                                     </div>
-
-                                                    <div className="grid grid-cols-2 gap-6">
-                                                        <div className="space-y-3">
-                                                            <label className="text-[9px] uppercase tracking-widest font-black opacity-30">Expiry Date</label>
-                                                            <input required type="text" value={expiryDate} onChange={e => setExpiryDate(e.target.value)} className="w-full bg-white border border-black/5 p-4 rounded-xl focus:outline-none focus:border-[#3D4127] transition-all font-mono" placeholder="MM / YY" maxLength={5} />
-                                                        </div>
-                                                        <div className="space-y-3">
-                                                            <label className="text-[9px] uppercase tracking-widest font-black opacity-30">CVV</label>
-                                                            <input required type="password" value={cvv} onChange={e => setCvv(e.target.value)} className="w-full bg-white border border-black/5 p-4 rounded-xl focus:outline-none focus:border-[#3D4127] transition-all font-mono" placeholder="•••" maxLength={4} />
-                                                        </div>
+                                                ) : (
+                                                    <div className="bg-[#1A1F16] text-white rounded-3xl p-10 space-y-8 relative overflow-hidden">
+                                                        <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/20 blur-3xl pointer-events-none" />
+                                                        <h3 className="text-xl font-serif">Chapa Secure ETB Payment</h3>
+                                                        <p className="text-xs text-white/60 leading-relaxed font-light">
+                                                            You will be redirected to Chapa's secure environment to finalize your payment of <span className="text-[#D4DE95] font-black">{formatPrice(calculateTotal())}</span>. 
+                                                            Once confirmed, your sanctuary will be immediately secured.
+                                                        </p>
+                                                        <ul className="space-y-4">
+                                                            {['Telebirr', 'CBE Birr', 'Mobile Banking'].map(m => (
+                                                                <li key={m} className="flex items-center gap-3 text-[9px] uppercase tracking-widest opacity-40">
+                                                                    <div className="w-1 h-1 bg-blue-500 rounded-full" /> {m}
+                                                                </li>
+                                                            ))}
+                                                        </ul>
                                                     </div>
-                                                </div>
+                                                )}
 
                                                 <p className="text-[8px] uppercase tracking-[0.2em] font-black opacity-30 italic text-center">Your card is required only for guarantee. Aethelgard Boutique uses bank-grade encryption to protect your sanctuary details.</p>
                                             </div>
@@ -568,7 +720,7 @@ export default function ReservationsPortal() {
                                                 disabled={!isPrivacyAccepted || status === 'submitting'}
                                                 className="px-12 py-6 bg-[#D4DE95] text-[#1A1F16] rounded-full font-black text-[10px] uppercase tracking-[0.6em] flex items-center gap-4 transition-all hover:bg-black hover:text-white shadow-2xl group disabled:opacity-30"
                                             >
-                                                {status === 'submitting' ? 'Processing...' : 'Pay & Book Now'}
+                                                {status === 'submitting' ? (isRedirecting ? 'Redirecting...' : 'Processing...') : (paymentMethod === 'Chapa' ? 'Pay with Chapa' : 'Pay & Book Now')}
                                                 <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
                                             </button>
                                         </div>
@@ -641,7 +793,10 @@ export default function ReservationsPortal() {
                                     <p className="text-[10px] uppercase tracking-widest opacity-40">Total Narrative</p>
                                     <div className="text-right">
                                         <p className="text-4xl font-serif text-[#D4DE95]">
-                                            ${calculateTotal()}
+                                            {formatPrice(calculateTotal())}
+                                        </p>
+                                        <p className="text-[9px] uppercase tracking-widest text-[#D4DE95]/40 mt-1">
+                                            {currency === 'ETB' ? `~ $${(calculateTotal() / EXCHANGE_RATE).toFixed(2)}` : `~ ${new Intl.NumberFormat('en-ET', { style: 'currency', currency: 'ETB', maximumFractionDigits: 0 }).format(calculateTotal() * EXCHANGE_RATE)}`}
                                         </p>
                                     </div>
                                 </div>
